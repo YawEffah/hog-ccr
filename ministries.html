@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ministries — CCR House of Grace</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+
+<body>
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo">
+        <img src="assets/images/logo.png" alt="Logo">
+      </div>
+      <span>
+        <h1>House of Grace</h1>
+        <p>CCR Management</p>
+      </span>
+    </div>
+
+
+    <nav style="flex:1; overflow-y:auto; padding: 8px 0;">
+      <div class="nav-section-label">Overview</div>
+      <a href="index.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+        Dashboard
+      </a>
+
+      <div class="nav-section-label">Congregation</div>
+      <a href="members.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        Members
+      </a>
+      <a href="ministries.html" class="nav-item active">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
+        Ministries
+      </a>
+      <a href="attendance.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+        </svg>
+        Attendance
+      </a>
+
+      <div class="nav-section-label">Administration</div>
+      <a href="finance.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Finance
+      </a>
+      <a href="events.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        Events
+      </a>
+      <a href="reports.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        Reports
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar">EA</div>
+        <div class="user-info">
+          <p>Elder Asante</p>
+          <span>Administrator</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main id="main">
+
+    <div id="page-ministries" class="page">
+      <div class="topbar">
+        <div style="display:flex;align-items:center;">
+          <button class="mobile-toggle" onclick="toggleSidebar()">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <div class="topbar-title">Ministries & Groups</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary btn-sm" onclick="openModal('addMinistryModal')">+ New Ministry</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="grid-3" style="margin-bottom:24px;">
+          <div class="ministry-card">
+            <div class="ministry-icon" style="background:var(--gold-pale);">🎵</div>
+            <div
+              style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--deep2);margin-bottom:4px;">
+              Music Ministry</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Worship & praise team</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="badge badge-purple">28 members</span>
+              <button class="btn btn-outline btn-sm" onclick="manageMinistry('music')">Manage</button>
+            </div>
+            <div style="margin-top:12px;height:5px;border-radius:10px;background:#EDE8DF;overflow:hidden;">
+              <div style="height:100%;width:78%;background:var(--gold);border-radius:10px;"></div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">78% attendance avg</div>
+          </div>
+
+          <div class="ministry-card">
+            <div class="ministry-icon" style="background:#EEF2FF;">🙏</div>
+            <div
+              style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--deep2);margin-bottom:4px;">
+              Intercessory</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Prayer warriors team</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="badge badge-blue">34 members</span>
+              <button class="btn btn-outline btn-sm" onclick="manageMinistry('intercessory')">Manage</button>
+            </div>
+            <div style="margin-top:12px;height:5px;border-radius:10px;background:#EDE8DF;overflow:hidden;">
+              <div style="height:100%;width:85%;background:var(--deep);border-radius:10px;"></div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">85% attendance avg</div>
+          </div>
+
+          <div class="ministry-card">
+            <div class="ministry-icon" style="background:#FEF9EC;">🌍</div>
+            <div
+              style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--deep2);margin-bottom:4px;">
+              Evangelism</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Outreach & missions</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="badge badge-yellow">22 members</span>
+              <button class="btn btn-outline btn-sm" onclick="manageMinistry('evangelism')">Manage</button>
+            </div>
+            <div style="margin-top:12px;height:5px;border-radius:10px;background:#EDE8DF;overflow:hidden;">
+              <div style="height:100%;width:65%;background:var(--gold);border-radius:10px;"></div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">65% attendance avg</div>
+          </div>
+
+          <div class="ministry-card">
+            <div class="ministry-icon" style="background:#ECFDF5;">⚡</div>
+            <div
+              style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--deep2);margin-bottom:4px;">
+              Youth Wing</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Young adults 13–35</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="badge badge-green">48 members</span>
+              <button class="btn btn-outline btn-sm" onclick="manageMinistry('youth')">Manage</button>
+            </div>
+            <div style="margin-top:12px;height:5px;border-radius:10px;background:#EDE8DF;overflow:hidden;">
+              <div style="height:100%;width:72%;background:var(--success);border-radius:10px;"></div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">72% attendance avg</div>
+          </div>
+
+          <div class="ministry-card">
+            <div class="ministry-icon" style="background:var(--gold-pale);">✝️</div>
+            <div
+              style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--deep2);margin-bottom:4px;">
+              Prayer Group</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">General prayer cell</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="badge badge-gray">30 members</span>
+              <button class="btn btn-outline btn-sm" onclick="manageMinistry('prayer')">Manage</button>
+            </div>
+            <div style="margin-top:12px;height:5px;border-radius:10px;background:#EDE8DF;overflow:hidden;">
+              <div style="height:100%;width:68%;background:var(--gold);border-radius:10px;"></div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">68% attendance avg</div>
+          </div>
+
+          <div class="ministry-card">
+            <div class="ministry-icon" style="background:#F5F3FF;">👑</div>
+            <div
+              style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--deep2);margin-bottom:4px;">
+              Executives</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Leadership & governance</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="badge badge-purple">20 members</span>
+              <button class="btn btn-outline btn-sm" onclick="manageMinistry('execs')">Manage</button>
+            </div>
+            <div style="margin-top:12px;height:5px;border-radius:10px;background:#EDE8DF;overflow:hidden;">
+              <div style="height:100%;width:92%;background:var(--deep3);border-radius:10px;"></div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">92% attendance avg</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODALS -->
+  <!-- Add Ministry Modal -->
+  <div class="modal-overlay" id="addMinistryModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Create New Ministry</h3>
+        <button class="close-btn" onclick="closeModal('addMinistryModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Ministry Name</label>
+          <input class="form-control" placeholder="e.g. Media Ministry">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Purpose/Description</label>
+          <textarea class="form-control" rows="3" placeholder="Describe the goal..."></textarea>
+        </div>
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Ministry Head</label>
+            <select class="form-control">
+              <option>— Select —</option>
+              <option>Elder Asante</option>
+              <option>Pastor Adu</option>
+              <option>Brother Kwame</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Meeting Day</label>
+            <select class="form-control">
+              <option>Saturdays</option>
+              <option>Fridays</option>
+              <option>Sundays</option>
+              <option>Wednesdays</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('addMinistryModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="closeModal('addMinistryModal')">Create Ministry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manage Ministry Modal -->
+  <div class="modal-overlay" id="manageMinistryModal">
+    <div class="modal" style="max-width:700px;">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="ministry-icon" id="mIcon" style="width:40px;height:40px;font-size:20px;margin-bottom:0;">🎵</div>
+          <div>
+            <h3 id="mTitle">Music Ministry</h3>
+            <div style="font-size:12px;color:var(--muted);" id="mSubtitle">Worship & praise team</div>
+          </div>
+        </div>
+        <button class="close-btn" onclick="closeModal('manageMinistryModal')">✕</button>
+      </div>
+      <div class="modal-body" style="padding-top:0;">
+        <div class="tabs" style="margin-bottom:20px;border-bottom:1px solid var(--border);">
+          <div class="tab active" onclick="switchMTab(this, 'mOverview')">Overview</div>
+          <div class="tab" onclick="switchMTab(this, 'mMembers')">Members</div>
+          <div class="tab" onclick="switchMTab(this, 'mHistory')">History</div>
+        </div>
+
+        <!-- Overview Tab -->
+        <div id="mOverview" class="tab-pane active">
+          <div class="grid-3" style="gap:16px;margin-bottom:24px;">
+            <div
+              style="background:var(--deep-pale);padding:16px;border-radius:12px;border:1px solid rgba(46,45,123,0.1);">
+              <div style="font-size:11px;color:var(--deep);text-transform:uppercase;margin-bottom:4px;">Total Members</div>
+              <div style="font-size:24px;font-weight:700;color:var(--deep);" id="mCount">28</div>
+            </div>
+            <div
+              style="background:var(--primary-pale);padding:16px;border-radius:12px;border:1px solid rgba(220,38,26,0.1);">
+              <div style="font-size:11px;color:var(--primary);text-transform:uppercase;margin-bottom:4px;">Avg. Attendance
+              </div>
+              <div style="font-size:24px;font-weight:700;color:var(--primary);" id="mAttendance">78%</div>
+            </div>
+            <div style="background:#F3F4F6;padding:16px;border-radius:12px;border:1px solid var(--border);">
+              <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">Sessions</div>
+              <div style="font-size:24px;font-weight:700;color:var(--deep3);" id="mSessions">12</div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:20px;">
+            <div style="font-size:13px;font-weight:600;margin-bottom:12px;">Attendance Trend</div>
+            <div style="height:100px;display:flex;align-items:flex-end;gap:8px;padding-bottom:20px;" id="mChart">
+              <div style="flex:1;background:var(--primary);height:60%;border-radius:4px 4px 0 0;"></div>
+              <div style="flex:1;background:var(--primary);height:80%;border-radius:4px 4px 0 0;"></div>
+              <div style="flex:1;background:var(--primary);height:40%;border-radius:4px 4px 0 0;"></div>
+              <div style="flex:1;background:var(--primary);height:90%;border-radius:4px 4px 0 0;"></div>
+              <div style="flex:1;background:var(--primary);height:75%;border-radius:4px 4px 0 0;"></div>
+              <div style="flex:1;background:var(--deep);height:85%;border-radius:4px 4px 0 0;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Members Tab -->
+        <div id="mMembers" class="tab-pane" style="display:none;">
+          <table style="width:100%;font-size:13px;">
+            <thead style="background:var(--bg-light);text-align:left;">
+              <tr>
+                <th style="padding:8px;">Member</th>
+                <th style="padding:8px;">Role</th>
+                <th style="padding:8px;">Joined</th>
+              </tr>
+            </thead>
+            <tbody id="mMembersList">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- History Tab -->
+        <div id="mHistory" class="tab-pane" style="display:none;">
+          <div style="display:flex;flex-direction:column;gap:12px;" id="mTimeline">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('manageMinistryModal')">Close</button>
+        <button class="btn btn-primary">Download Report</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/js/main.js"></script>
+  <script>
+    const mData = {
+      'music': { icon: '🎵', bg: 'var(--gold-pale)', title: 'Music Ministry', desc: 'Worship & praise team', count: 28, att: '78%', sessions: 12, members: [{ n: 'John Smith', r: 'Lead Singer', d: 'Jan 2023' }, { n: 'Sarah Mensah', r: 'Pianist', d: 'Mar 2023' }], history: [{ e: 'Annual Concert', d: '2 weeks ago' }, { e: 'New Member Induction', d: '1 month ago' }] },
+      'intercessory': { icon: '🙏', bg: '#EEF2FF', title: 'Intercessory', desc: 'Prayer warriors team', count: 34, att: '85%', sessions: 15, members: [{ n: 'Kwame Ofori', r: 'Group Lead', d: 'Feb 2023' }], history: [{ e: '24hr Prayer Vigil', d: '3 days ago' }] },
+      'evangelism': { icon: '🌍', bg: '#FEF9EC', title: 'Evangelism', desc: 'Outreach & missions', count: 22, att: '65%', sessions: 8, members: [{ n: 'Michael Boateng', r: 'Field Coordinator', d: 'May 2023' }], history: [{ e: 'Village Outreach', d: 'June 2023' }] },
+      'youth': { icon: '⚡', bg: '#ECFDF5', title: 'Youth Wing', desc: 'Young adults 13–35', count: 48, att: '72%', sessions: 20, members: [{ n: 'Abena Kusi', r: 'Youth President', d: 'Jan 2023' }], history: [{ e: 'Youth Summit', d: 'Oct 2023' }] },
+      'prayer': { icon: '✝️', bg: 'var(--gold-pale)', title: 'Prayer Group', desc: 'General prayer cell', count: 30, att: '68%', sessions: 10, members: [{ n: 'Efua Asare', r: 'Coordinator', d: 'Sep 2022' }], history: [{ e: 'Monthly Fasting', d: 'Every month' }] },
+      'execs': { icon: '👑', bg: '#F5F3FF', title: 'Executives', desc: 'Leadership & governance', count: 20, att: '92%', sessions: 24, members: [{ n: 'Elder Asante', r: 'Chairman', d: 'Jan 2015' }], history: [{ e: 'Q3 Review', d: '1 week ago' }] }
+    };
+
+    function manageMinistry(id) {
+      const m = mData[id];
+      if (!m) return;
+
+      document.getElementById('mIcon').textContent = m.icon;
+      document.getElementById('mIcon').style.background = m.bg;
+      document.getElementById('mTitle').textContent = m.title;
+      document.getElementById('mSubtitle').textContent = m.desc;
+      document.getElementById('mCount').textContent = m.count;
+      document.getElementById('mAttendance').textContent = m.att;
+      document.getElementById('mSessions').textContent = m.sessions;
+
+      const list = document.getElementById('mMembersList');
+      list.innerHTML = m.members.map(mem => `
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px;font-weight:500;">${mem.n}</td>
+          <td style="padding:8px;color:var(--muted);">${mem.r}</td>
+          <td style="padding:8px;color:var(--muted);">${mem.d}</td>
+        </tr>
+      `).join('');
+
+      const timeline = document.getElementById('mTimeline');
+      timeline.innerHTML = m.history.map(ev => `
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--primary);margin-top:6px;flex-shrink:0;"></div>
+          <div>
+            <div style="font-size:13px;font-weight:500;">${ev.e}</div>
+            <div style="font-size:11px;color:var(--muted);">${ev.d}</div>
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('#manageMinistryModal .tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('#manageMinistryModal .tab-pane').forEach(p => {
+        p.style.display = 'none';
+        p.classList.remove('active');
+      });
+      document.querySelector('#manageMinistryModal .tab').classList.add('active');
+      document.getElementById('mOverview').style.display = 'block';
+      document.getElementById('mOverview').classList.add('active');
+
+      openModal('manageMinistryModal');
+    }
+
+    function switchMTab(el, paneId) {
+      const modal = document.getElementById('manageMinistryModal');
+      modal.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      modal.querySelectorAll('.tab-pane').forEach(p => {
+        p.style.display = 'none';
+        p.classList.remove('active');
+      });
+
+      el.classList.add('active');
+      const pane = document.getElementById(paneId);
+      pane.style.display = 'block';
+      setTimeout(() => pane.classList.add('active'), 10);
+    }
+  </script>
+</body>
+
+</html>

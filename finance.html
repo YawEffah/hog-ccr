@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finance — CCR House of Grace</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+
+<body>
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo">
+        <img src="assets/images/logo.png" alt="Logo">
+      </div>
+      <span>
+        <h1>House of Grace</h1>
+        <p>CCR Management</p>
+      </span>
+    </div>
+
+
+    <nav style="flex:1; overflow-y:auto; padding: 8px 0;">
+      <div class="nav-section-label">Overview</div>
+      <a href="index.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+        Dashboard
+      </a>
+
+      <div class="nav-section-label">Congregation</div>
+      <a href="members.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        Members
+      </a>
+      <a href="ministries.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
+        Ministries
+      </a>
+      <a href="attendance.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+        </svg>
+        Attendance
+      </a>
+
+      <div class="nav-section-label">Administration</div>
+      <a href="finance.html" class="nav-item active">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Finance
+      </a>
+      <a href="events.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        Events
+      </a>
+      <a href="reports.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        Reports
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar">EA</div>
+        <div class="user-info">
+          <p>Elder Asante</p>
+          <span>Administrator</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main id="main">
+
+    <div id="page-finance" class="page">
+      <div class="topbar">
+        <div style="display:flex;align-items:center;">
+          <button class="mobile-toggle" onclick="toggleSidebar()">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <div class="topbar-title">Finance</div>
+        </div>
+        <div class="topbar-actions">
+          <select class="form-control" style="width:140px;padding:8px 12px;">
+            <option>April 2026</option>
+            <option>March 2026</option>
+            <option>February 2026</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="openModal('addFinanceModal')">+ Record Transaction</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="grid-4" style="margin-bottom:24px;">
+          <div class="stat-card">
+            <div class="accent-bar" style="background:var(--gold);"></div>
+            <div class="label">Tithes</div>
+            <div class="value" style="font-size:28px;">GH₵14,820</div>
+            <div class="change" style="color:var(--success);">↑ 5% vs March</div>
+          </div>
+          <div class="stat-card">
+            <div class="accent-bar" style="background:var(--deep);"></div>
+            <div class="label">Offerings</div>
+            <div class="value" style="font-size:28px;">GH₵5,450</div>
+            <div class="change" style="color:var(--deep);">4 Sundays</div>
+          </div>
+          <div class="stat-card">
+            <div class="accent-bar" style="background:#2E7D57;"></div>
+            <div class="label">Donations</div>
+            <div class="value" style="font-size:28px;">GH₵2,300</div>
+            <div class="change" style="color:var(--muted);">3 donors</div>
+          </div>
+          <div class="stat-card">
+            <div class="accent-bar" style="background:var(--deep3);"></div>
+            <div class="label">Total Income</div>
+            <div class="value" style="font-size:28px;">GH₵24,550</div>
+            <div class="change" style="color:var(--success);">82% of target</div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="gap:24px;">
+          <div class="card">
+            <div class="card-header">
+              <h3>Recent Transactions</h3>
+              <div>
+                <button class="btn btn-outline btn-sm">Export CSV</button>
+                <button class="btn btn-outline btn-sm">View All</button>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Member</th>
+                  <th>Type</th>
+                  <th>Amount</th>
+                  <th>Date</th>
+                  <th>Receipt</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="font-weight:500;">Abena Kusi</td>
+                  <td><span class="badge badge-yellow">Tithe</span></td>
+                  <td style="font-weight:600;color:var(--success);">GH₵ 350</td>
+                  <td style="font-size:12px;color:var(--muted);">Apr 6</td>
+                  <td><button class="btn btn-outline btn-sm">🧾</button></td>
+                </tr>
+                <tr>
+                  <td style="font-weight:500;">Kwame Ofori</td>
+                  <td><span class="badge badge-blue">Offering</span></td>
+                  <td style="font-weight:600;color:var(--success);">GH₵ 50</td>
+                  <td style="font-size:12px;color:var(--muted);">Apr 6</td>
+                  <td><button class="btn btn-outline btn-sm">🧾</button></td>
+                </tr>
+                <tr>
+                  <td style="font-weight:500;">Michael Boateng</td>
+                  <td><span class="badge badge-green">Donation</span></td>
+                  <td style="font-weight:600;color:var(--success);">GH₵ 500</td>
+                  <td style="font-size:12px;color:var(--muted);">Apr 5</td>
+                  <td><button class="btn btn-outline btn-sm">🧾</button></td>
+                </tr>
+                <tr>
+                  <td style="font-weight:500;">Pastor Adu</td>
+                  <td><span class="badge badge-purple">Pledge</span></td>
+                  <td style="font-weight:600;color:var(--success);">GH₵ 1,000</td>
+                  <td style="font-size:12px;color:var(--muted);">Apr 3</td>
+                  <td><button class="btn btn-outline btn-sm">🧾</button></td>
+                </tr>
+                <tr>
+                  <td style="font-weight:500;">Efua Asare</td>
+                  <td><span class="badge badge-yellow">Tithe</span></td>
+                  <td style="font-weight:600;color:var(--success);">GH₵ 280</td>
+                  <td style="font-size:12px;color:var(--muted);">Mar 30</td>
+                  <td><button class="btn btn-outline btn-sm">🧾</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3>Income Breakdown</h3>
+            </div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:16px;">
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span
+                      style="font-weight:500;">Tithes</span><span style="color:var(--mid);">GH₵ 14,820 <span
+                        style="color:var(--muted);font-size:11px;">(60%)</span></span></div>
+                  <div style="height:10px;border-radius:10px;background:#EDE8DF;overflow:hidden;">
+                    <div style="height:100%;width:60%;background:var(--gold);border-radius:10px;"></div>
+                  </div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span
+                      style="font-weight:500;">Offerings</span><span style="color:var(--mid);">GH₵ 5,450 <span
+                        style="color:var(--muted);font-size:11px;">(22%)</span></span></div>
+                  <div style="height:10px;border-radius:10px;background:#EDE8DF;overflow:hidden;">
+                    <div style="height:100%;width:22%;background:var(--deep);border-radius:10px;"></div>
+                  </div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span
+                      style="font-weight:500;">Donations</span><span style="color:var(--mid);">GH₵ 2,300 <span
+                        style="color:var(--muted);font-size:11px;">(9%)</span></span></div>
+                  <div style="height:10px;border-radius:10px;background:#EDE8DF;overflow:hidden;">
+                    <div style="height:100%;width:9%;background:#2E7D57;border-radius:10px;"></div>
+                  </div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span
+                      style="font-weight:500;">Pledges</span><span style="color:var(--mid);">GH₵ 1,980 <span
+                        style="color:var(--muted);font-size:11px;">(8%)</span></span></div>
+                  <div style="height:10px;border-radius:10px;background:#EDE8DF;overflow:hidden;">
+                    <div style="height:100%;width:8%;background:var(--deep3);border-radius:10px;"></div>
+                  </div>
+                </div>
+                <div style="border-top:1px solid #EDE8DF;padding-top:16px;margin-top:4px;">
+                  <div style="display:flex;justify-content:space-between;"><span
+                      style="font-size:14px;font-weight:700;">Total</span><span
+                      style="font-size:16px;font-weight:700;color:var(--success);">GH₵ 24,550</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODALS -->
+  <!-- Add Finance Modal -->
+  <div class="modal-overlay" id="addFinanceModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Record Transaction</h3>
+        <button class="close-btn" onclick="closeModal('addFinanceModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group"><label class="form-label">Member</label><input class="form-control"
+              placeholder="Search member…"></div>
+          <div class="form-group"><label class="form-label">Transaction Type</label><select class="form-control">
+              <option>Tithe</option>
+              <option>Offering</option>
+              <option>Donation</option>
+              <option>Pledge</option>
+              <option>Project Contribution</option>
+              <option>Welfare</option>
+            </select></div>
+        </div>
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group"><label class="form-label">Amount (GH₵)</label><input type="number"
+              class="form-control" placeholder="0.00"></div>
+          <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-control"
+              value="2026-04-06"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Payment Method</label><select class="form-control">
+            <option>Cash</option>
+            <option>MoMo</option>
+            <option>Bank Transfer</option>
+            <option>Cheque</option>
+          </select></div>
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group"><label class="form-label">Phone Number</label><input class="form-control"
+              placeholder="0244-000-000"></div>
+          <div class="form-group"><label class="form-label">Email Address</label><input class="form-control"
+              type="email" placeholder="receipt-to@email.com"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Notes</label><textarea class="form-control" rows="2"
+            placeholder="Optional notes…" style="resize:none;"></textarea></div>
+        <div style="background:#F1F5F9;border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;">
+          <input type="checkbox" id="genReceipt" checked style="width:16px;height:16px;cursor:pointer;">
+          <div>
+            <label for="genReceipt"
+              style="font-size:13px;font-weight:600;cursor:pointer;color:var(--deep2);display:block;">Send
+              Receipt Automatically</label>
+            <span style="font-size:11px;color:var(--muted);">Receipt will be sent via Email & SMS to the details
+              above</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('addFinanceModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="closeModal('addFinanceModal')">Save Transaction</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/js/main.js"></script>
+</body>
+
+</html>
