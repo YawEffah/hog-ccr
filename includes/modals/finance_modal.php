@@ -1,0 +1,65 @@
+<!-- Add Finance Modal -->
+<div class="modal-overlay" id="addFinanceModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Record Transaction</h3>
+      <button class="close-btn" onclick="closeModal('addFinanceModal')">✕</button>
+    </div>
+    <form action="" method="POST" id="addFinanceForm">
+      <div class="modal-body">
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group"><label class="form-label">Member</label><input class="form-control" name="member_search"
+              placeholder="Search member…"></div>
+          <div class="form-group">
+            <label class="form-label">Transaction Type</label>
+            <select class="form-control" name="transaction_type">
+              <option>Tithe</option>
+              <option>Offering</option>
+              <option>Donation</option>
+              <option>Pledge</option>
+              <option>Project Contribution</option>
+              <option>Welfare</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group"><label class="form-label">Amount (GH₵)</label><input type="number" step="0.01"
+              class="form-control" name="amount" placeholder="0.00"></div>
+          <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-control"
+              name="date" value="<?= date('Y-m-d') ?>"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Payment Method</label>
+          <select class="form-control" name="payment_method">
+            <option>Cash</option>
+            <option>MoMo</option>
+            <option>Bank Transfer</option>
+            <option>Cheque</option>
+          </select>
+        </div>
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group"><label class="form-label">Phone Number</label><input class="form-control" name="phone"
+              placeholder="0244-000-000"></div>
+          <div class="form-group"><label class="form-label">Email Address</label><input class="form-control"
+              type="email" name="email" placeholder="receipt-to@email.com"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Notes</label><textarea class="form-control" name="notes" rows="2"
+            placeholder="Optional notes…" style="resize:none;"></textarea></div>
+        <div style="background:#F1F5F9;border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;">
+          <input type="checkbox" id="genReceipt" name="generate_receipt" checked style="width:16px;height:16px;cursor:pointer;">
+          <div>
+            <label for="genReceipt"
+              style="font-size:13px;font-weight:600;cursor:pointer;color:var(--deep2);display:block;">Send
+              Receipt Automatically</label>
+            <span style="font-size:11px;color:var(--muted);">Receipt will be sent via Email & SMS to the details
+              above</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('addFinanceModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Transaction</button>
+      </div>
+    </form>
+  </div>
+</div>

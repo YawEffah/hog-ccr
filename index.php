@@ -1,99 +1,58 @@
+<?php
+/**
+ * Dashboard Page
+ * 
+ * BACKEND CONTRACT:
+ * Expected variables:
+ * @var array $stats { total_members, sunday_attendance, attendance_rate, monthly_tithe, active_ministries }
+ * @var array $upcoming_events [{ day, month, title, time, venue, badge_color, badge_label }]
+ * @var array $recent_members [{ initials, name, ministry, status, status_badge, joined, avatar_color, text_color }]
+ * @var array $finance_summary { tithes, offerings, donations, pledges, total, target_percent }
+ */
+
+$pageTitle = 'Dashboard';
+$activePage = 'dashboard';
+require_once 'includes/head.php';
+
+// Mock data for initial refactor (Backend team will replace these)
+$stats = $stats ?? [
+    'total_members' => 487,
+    'sunday_attendance' => 312,
+    'attendance_rate' => 64,
+    'monthly_tithe' => '24.6k',
+    'active_ministries' => 6
+];
+
+$upcoming_events = $upcoming_events ?? [
+    ['day' => 6, 'month' => 'Apr', 'title' => 'Sunday Service', 'time' => '8:00am', 'venue' => 'Main Auditorium', 'badge_color' => 'badge-green', 'badge_label' => 'All Members'],
+    ['day' => 9, 'month' => 'Apr', 'title' => 'Midweek Prayer', 'time' => '6:30pm', 'venue' => 'Fellowship Hall', 'badge_color' => 'badge-blue', 'badge_label' => 'Prayer Group'],
+    ['day' => 19, 'month' => 'Apr', 'title' => 'Easter Convention', 'time' => 'All day', 'venue' => 'Church Grounds', 'badge_color' => 'badge-yellow', 'badge_label' => 'Special Program']
+];
+
+$recent_members = $recent_members ?? [
+    ['initials' => 'AK', 'name' => 'Abena Kusi', 'ministry' => 'Music Ministry', 'status' => 'Active', 'status_badge' => 'badge-green', 'joined' => 'Mar 28', 'avatar_color' => 'var(--gold-pale)', 'text_color' => 'var(--gold)'],
+    ['initials' => 'KO', 'name' => 'Kwame Ofori', 'ministry' => 'Youth Wing', 'status' => 'Active', 'status_badge' => 'badge-green', 'joined' => 'Mar 22', 'avatar_color' => '#EEF2FF', 'text_color' => 'var(--deep)'],
+    ['initials' => 'SA', 'name' => 'Serwa Acheampong', 'ministry' => 'Intercessory', 'status' => 'Visitor', 'status_badge' => 'badge-yellow', 'joined' => 'Apr 1', 'avatar_color' => '#F5F3FF', 'text_color' => '#7C3AED'],
+    ['initials' => 'MB', 'name' => 'Michael Boateng', 'ministry' => 'Evangelism', 'status' => 'Active', 'status_badge' => 'badge-green', 'joined' => 'Apr 3', 'avatar_color' => '#ECFDF5', 'text_color' => '#2E7D57']
+];
+
+$finance_summary = $finance_summary ?? [
+    'tithes' => '14,820',
+    'offerings' => '5,450',
+    'donations' => '2,300',
+    'pledges' => '1,980',
+    'total' => '24,550',
+    'target_percent' => 82
+];
+?>
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard | CCR House of Grace</title>
-  <link rel="icon" type="image/png" href="assets/images/logo.png">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap"
-    rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/styles.css">
-</head>
+<?php require_once 'includes/head.php'; ?>
 
 <body>
 
-  <!-- SIDEBAR -->
-  <aside id="sidebar">
-    <div class="sidebar-logo">
-      <div class="logo">
-        <img src="assets/images/logo.png" alt="Logo">
-      </div>
-      <span>
-        <h1>House of Grace</h1>
-        <p>CCR Management</p>
-      </span>
-    </div>
-
-    <nav style="flex:1; overflow-y:auto; padding: 8px 0;">
-      <div class="nav-section-label">Overview</div>
-      <a href="index.html" class="nav-item active">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-        Dashboard
-      </a>
-
-      <div class="nav-section-label">Congregation</div>
-      <a href="members.html" class="nav-item">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        Members
-      </a>
-      <a href="ministries.html" class="nav-item">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-        </svg>
-        Ministries
-      </a>
-      <a href="attendance.html" class="nav-item">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-        </svg>
-        Attendance
-      </a>
-
-      <div class="nav-section-label">Administration</div>
-      <a href="finance.html" class="nav-item">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        Finance
-      </a>
-      <a href="events.html" class="nav-item">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-        Events
-      </a>
-      <a href="reports.html" class="nav-item">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-        Reports
-      </a>
-    </nav>
-
-    <div class="sidebar-footer">
-      <div class="user-chip">
-        <div class="user-avatar">EA</div>
-        <div class="user-info">
-          <p>Elder Asante</p>
-          <span>Administrator</span>
-        </div>
-      </div>
-    </div>
-  </aside>
+  <?php require_once 'includes/sidebar.php'; ?>
 
   <!-- MAIN CONTENT -->
   <main id="main">
@@ -107,8 +66,8 @@
             </svg>
           </button>
           <div>
-            <div class="topbar-title">Good morning, Elder Asante 👋</div>
-            <div style="font-size:12px; color:var(--muted); margin-top:2px;">Sunday, 4 April 2026 — Week 14</div>
+            <div class="topbar-title">Good morning, <?= htmlspecialchars($currentUser['name']) ?> 👋</div>
+            <div style="font-size:12px; color:var(--muted); margin-top:2px;"><?= date('l, j F Y') ?> — Week <?= date('W') ?></div>
           </div>
         </div>
         <div class="topbar-actions">
@@ -128,7 +87,7 @@
           <div class="stat-card">
             <div class="accent-bar" style="background: var(--gold);"></div>
             <div class="label">Total Members</div>
-            <div class="value">487</div>
+            <div class="value"><?= $stats['total_members'] ?></div>
             <div class="change" style="color:var(--success);">↑ 12 this month</div>
             <div class="icon-bg" style="background:var(--gold-pale);">
               <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--gold)" stroke-width="1.8">
@@ -140,8 +99,8 @@
           <div class="stat-card">
             <div class="accent-bar" style="background:var(--deep);"></div>
             <div class="label">Sunday Attendance</div>
-            <div class="value">312</div>
-            <div class="change" style="color:var(--deep);">64% attendance rate</div>
+            <div class="value"><?= $stats['sunday_attendance'] ?></div>
+            <div class="change" style="color:var(--deep);"><?= $stats['attendance_rate'] ?>% attendance rate</div>
             <div class="icon-bg" style="background:#EEF2FF;">
               <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--deep)" stroke-width="1.8">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -152,7 +111,7 @@
           <div class="stat-card">
             <div class="accent-bar" style="background:#2E7D57;"></div>
             <div class="label">Monthly Tithe</div>
-            <div class="value">GH₵24.6k</div>
+            <div class="value">GH₵<?= $stats['monthly_tithe'] ?></div>
             <div class="change" style="color:var(--success);">↑ 8% vs last month</div>
             <div class="icon-bg" style="background:#ECFDF5;">
               <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#2E7D57" stroke-width="1.8">
@@ -164,7 +123,7 @@
           <div class="stat-card">
             <div class="accent-bar" style="background:var(--deep3);"></div>
             <div class="label">Active Ministries</div>
-            <div class="value">6</div>
+            <div class="value"><?= $stats['active_ministries'] ?></div>
             <div class="change" style="color:var(--deep3);">182 members enrolled</div>
             <div class="icon-bg" style="background:#F5F3FF;">
               <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--deep3)" stroke-width="1.8">
@@ -199,6 +158,7 @@
                 </div>
               </div>
               <div class="bar-chart">
+                <!-- Static bars kept for now, backend will loop these -->
                 <div class="bar-wrap">
                   <div class="bar" style="height:72px;"></div>
                   <div class="bar-label">Oct</div>
@@ -255,42 +215,22 @@
           <div class="card">
             <div class="card-header">
               <h3>Upcoming Events</h3>
-              <a href="events.html" class="btn btn-outline btn-sm">View All</a>
+              <a href="events.php" class="btn btn-outline btn-sm">View All</a>
             </div>
             <div class="card-body" style="display:flex; flex-direction:column; gap:14px; padding-top:18px;">
+              <?php foreach ($upcoming_events as $event): ?>
               <div class="event-card" style="padding:14px;">
                 <div class="event-date">
-                  <div class="day">6</div>
-                  <div class="month">Apr</div>
+                  <div class="day"><?= $event['day'] ?></div>
+                  <div class="month"><?= $event['month'] ?></div>
                 </div>
                 <div>
-                  <div style="font-size:14px;font-weight:600;color:var(--deep2);">Sunday Service</div>
-                  <div style="font-size:12px;color:var(--muted);margin-top:2px;">8:00am — Main Auditorium</div>
-                  <span class="badge badge-green" style="margin-top:6px;">All Members</span>
+                  <div style="font-size:14px;font-weight:600;color:var(--deep2);"><?= htmlspecialchars($event['title']) ?></div>
+                  <div style="font-size:12px;color:var(--muted);margin-top:2px;"><?= $event['time'] ?> — <?= htmlspecialchars($event['venue']) ?></div>
+                  <span class="badge <?= $event['badge_color'] ?>" style="margin-top:6px;"><?= htmlspecialchars($event['badge_label']) ?></span>
                 </div>
               </div>
-              <div class="event-card" style="padding:14px;">
-                <div class="event-date">
-                  <div class="day">9</div>
-                  <div class="month">Apr</div>
-                </div>
-                <div>
-                  <div style="font-size:14px;font-weight:600;color:var(--deep2);">Midweek Prayer</div>
-                  <div style="font-size:12px;color:var(--muted);margin-top:2px;">6:30pm — Fellowship Hall</div>
-                  <span class="badge badge-blue" style="margin-top:6px;">Prayer Group</span>
-                </div>
-              </div>
-              <div class="event-card" style="padding:14px;">
-                <div class="event-date">
-                  <div class="day">19</div>
-                  <div class="month">Apr</div>
-                </div>
-                <div>
-                  <div style="font-size:14px;font-weight:600;color:var(--deep2);">Easter Convention</div>
-                  <div style="font-size:12px;color:var(--muted);margin-top:2px;">All day — Church Grounds</div>
-                  <span class="badge badge-yellow" style="margin-top:6px;">Special Program</span>
-                </div>
-              </div>
+              <?php endforeach; ?>
             </div>
           </div>
         </div>
@@ -300,7 +240,7 @@
           <div class="card">
             <div class="card-header">
               <h3>Recent Members</h3>
-              <a href="members.html" class="btn btn-outline btn-sm">View All</a>
+              <a href="members.php" class="btn btn-outline btn-sm">View All</a>
             </div>
             <div class="table-responsive">
               <table>
@@ -312,58 +252,21 @@
                   </tr>
                 </thead>
                 <tbody>
+                  <?php foreach ($recent_members as $member): ?>
                   <tr>
                     <td>
                       <div style="display:flex;align-items:center;gap:10px;">
-                        <div class="avatar" style="background:var(--gold-pale);color:var(--gold);">AK</div>
+                        <div class="avatar" style="background:<?= $member['avatar_color'] ?>;color:<?= $member['text_color'] ?>;"><?= $member['initials'] ?></div>
                         <div>
-                          <div style="font-weight:500;">Abena Kusi</div>
-                          <div style="font-size:11px;color:var(--muted);">Music Ministry</div>
+                          <div style="font-weight:500;"><?= htmlspecialchars($member['name']) ?></div>
+                          <div style="font-size:11px;color:var(--muted);"><?= htmlspecialchars($member['ministry']) ?></div>
                         </div>
                       </div>
                     </td>
-                    <td><span class="badge badge-green">Active</span></td>
-                    <td style="color:var(--muted);font-size:12px;">Mar 28</td>
+                    <td><span class="badge <?= $member['status_badge'] ?>"><?= $member['status'] ?></span></td>
+                    <td style="color:var(--muted);font-size:12px;"><?= $member['joined'] ?></td>
                   </tr>
-                  <tr>
-                    <td>
-                      <div style="display:flex;align-items:center;gap:10px;">
-                        <div class="avatar" style="background:#EEF2FF;color:var(--deep);">KO</div>
-                        <div>
-                          <div style="font-weight:500;">Kwame Ofori</div>
-                          <div style="font-size:11px;color:var(--muted);">Youth Wing</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td><span class="badge badge-green">Active</span></td>
-                    <td style="color:var(--muted);font-size:12px;">Mar 22</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div style="display:flex;align-items:center;gap:10px;">
-                        <div class="avatar" style="background:#F5F3FF;color:#7C3AED;">SA</div>
-                        <div>
-                          <div style="font-weight:500;">Serwa Acheampong</div>
-                          <div style="font-size:11px;color:var(--muted);">Intercessory</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td><span class="badge badge-yellow">Visitor</span></td>
-                    <td style="color:var(--muted);font-size:12px;">Apr 1</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div style="display:flex;align-items:center;gap:10px;">
-                        <div class="avatar" style="background:#ECFDF5;color:#2E7D57;">MB</div>
-                        <div>
-                          <div style="font-weight:500;">Michael Boateng</div>
-                          <div style="font-size:11px;color:var(--muted);">Evangelism</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td><span class="badge badge-green">Active</span></td>
-                    <td style="color:var(--muted);font-size:12px;">Apr 3</td>
-                  </tr>
+                  <?php endforeach; ?>
                 </tbody>
               </table>
             </div>
@@ -372,38 +275,38 @@
           <!-- Finance summary -->
           <div class="card">
             <div class="card-header">
-              <h3>Finance Summary — April</h3>
-              <a href="finance.html" class="btn btn-outline btn-sm">Details</a>
+              <h3>Finance Summary — <?= date('F') ?></h3>
+              <a href="finance.php" class="btn btn-outline btn-sm">Details</a>
             </div>
             <div class="card-body">
               <div class="summary-row">
                 <span style="font-size:13px;color:var(--mid);">Tithes</span>
-                <span style="font-size:14px;font-weight:600;color:var(--deep2);">GH₵ 14,820</span>
+                <span style="font-size:14px;font-weight:600;color:var(--deep2);">GH₵ <?= $finance_summary['tithes'] ?></span>
               </div>
               <div class="summary-row">
                 <span style="font-size:13px;color:var(--mid);">Offerings</span>
-                <span style="font-size:14px;font-weight:600;color:var(--deep2);">GH₵ 5,450</span>
+                <span style="font-size:14px;font-weight:600;color:var(--deep2);">GH₵ <?= $finance_summary['offerings'] ?></span>
               </div>
               <div class="summary-row">
                 <span style="font-size:13px;color:var(--mid);">Donations</span>
-                <span style="font-size:14px;font-weight:600;color:var(--deep2);">GH₵ 2,300</span>
+                <span style="font-size:14px;font-weight:600;color:var(--deep2);">GH₵ <?= $finance_summary['donations'] ?></span>
               </div>
               <div class="summary-row">
                 <span style="font-size:13px;color:var(--mid);">Pledges</span>
-                <span style="font-size:14px;font-weight:600;color:var(--deep2);">GH₵ 1,980</span>
+                <span style="font-size:14px;font-weight:600;color:var(--deep2);">GH₵ <?= $finance_summary['pledges'] ?></span>
               </div>
               <div class="summary-row" style="border-top:2px solid #EDE8DF; padding-top:14px; margin-top:4px;">
                 <span style="font-size:14px;font-weight:700;color:var(--deep2);">Total</span>
-                <span style="font-size:17px;font-weight:700;color:var(--success);">GH₵ 24,550</span>
+                <span style="font-size:17px;font-weight:700;color:var(--success);">GH₵ <?= $finance_summary['total'] ?></span>
               </div>
               <div style="margin-top:18px;">
                 <div
                   style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
                   <span>Monthly target: GH₵ 30,000</span>
-                  <span>82%</span>
+                  <span><?= $finance_summary['target_percent'] ?>%</span>
                 </div>
                 <div style="height:8px;border-radius:10px;background:#EDE8DF;overflow:hidden;">
-                  <div style="height:100%;width:82%;border-radius:10px;background:var(--gold);"></div>
+                  <div style="height:100%;width:<?= $finance_summary['target_percent'] ?>%;border-radius:10px;background:var(--gold);"></div>
                 </div>
               </div>
             </div>
