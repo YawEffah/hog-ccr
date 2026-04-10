@@ -277,22 +277,40 @@
         <div class="form-group"><label class="form-label">Time</label><input type="time" class="form-control"
             value="08:00"></div>
         <div class="form-group"><label class="form-label">Mark Attendance</label>
-          <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;max-height:200px;overflow-y:auto;">
-            <label
+          <div class="search-wrap" style="margin-bottom:8px;">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input class="search-input" placeholder="Search members…" id="attSearch" oninput="filterAttendance()"
+              style="width:100%;">
+          </div>
+          <label
+            style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--gold-pale);border-radius:8px;cursor:pointer;margin-bottom:10px;border:1px dashed var(--gold);">
+            <span style="font-size:13px;font-weight:600;color:var(--gold);">Select All</span>
+            <input type="checkbox" id="markAllChk" onchange="toggleMarkAll(this)">
+          </label>
+          <div id="attList"
+            style="display:flex;flex-direction:column;gap:10px;max-height:200px;overflow-y:auto;padding-right:4px;">
+            <label class="att-row"
               style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#F1F5F9;border-radius:8px;cursor:pointer;"><span
-                style="font-size:13px;font-weight:500;">Abena Kusi</span><input type="checkbox" checked></label>
-            <label
+                style="font-size:13px;font-weight:500;">Abena Kusi</span><input type="checkbox" class="att-member"
+                checked></label>
+            <label class="att-row"
               style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#F1F5F9;border-radius:8px;cursor:pointer;"><span
-                style="font-size:13px;font-weight:500;">Kwame Ofori</span><input type="checkbox" checked></label>
-            <label
+                style="font-size:13px;font-weight:500;">Kwame Ofori</span><input type="checkbox" class="att-member"
+                checked></label>
+            <label class="att-row"
               style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#F1F5F9;border-radius:8px;cursor:pointer;"><span
-                style="font-size:13px;font-weight:500;">Serwa Acheampong</span><input type="checkbox"></label>
-            <label
+                style="font-size:13px;font-weight:500;">Serwa Acheampong</span><input type="checkbox"
+                class="att-member"></label>
+            <label class="att-row"
               style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#F1F5F9;border-radius:8px;cursor:pointer;"><span
-                style="font-size:13px;font-weight:500;">Michael Boateng</span><input type="checkbox" checked></label>
-            <label
+                style="font-size:13px;font-weight:500;">Michael Boateng</span><input type="checkbox" class="att-member"
+                checked></label>
+            <label class="att-row"
               style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#F1F5F9;border-radius:8px;cursor:pointer;"><span
-                style="font-size:13px;font-weight:500;">Efua Asare</span><input type="checkbox"></label>
+                style="font-size:13px;font-weight:500;">Efua Asare</span><input type="checkbox"
+                class="att-member"></label>
           </div>
         </div>
         <div class="form-group"><label class="form-label">Notes</label><textarea class="form-control" rows="2"
@@ -306,6 +324,26 @@
   </div>
 
   <script src="assets/js/main.js"></script>
+  <script>
+    function filterAttendance() {
+      const q = document.getElementById('attSearch').value.toLowerCase();
+      document.querySelectorAll('#attList .att-row').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? 'flex' : 'none';
+      });
+      // Optionally reset Select All state when filtering changes
+      document.getElementById('markAllChk').checked = false;
+    }
+
+    function toggleMarkAll(chk) {
+      const isChecked = chk.checked;
+      document.querySelectorAll('#attList .att-row').forEach(row => {
+        if (row.style.display !== 'none') {
+          const checkbox = row.querySelector('.att-member');
+          if (checkbox) checkbox.checked = isChecked;
+        }
+      });
+    }
+  </script>
 </body>
 
 </html>
