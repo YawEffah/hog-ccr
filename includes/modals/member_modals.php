@@ -4,7 +4,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3>Register New Member</h3>
-      <button class="close-btn" onclick="closeModal('addMemberModal')">✕</button>
+      <button class="close-btn" onclick="closeModal('addMemberModal')"><i class="ph ph-x"></i></button>
     </div>
     <form action="" method="POST" id="addMemberForm">
       <div class="modal-body">
@@ -12,11 +12,7 @@
           <div class="photo-upload-circle" onclick="document.getElementById('addMemberPhoto').click()">
             <img id="addPhotoPreview" src="" style="display:none;">
             <div class="photo-upload-overlay" id="addPhotoPlaceholder">
-              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+              <i class="ph ph-camera"></i>
             </div>
           </div>
           <label class="photo-upload-label" onclick="document.getElementById('addMemberPhoto').click()">Upload Photo</label>
@@ -90,7 +86,7 @@
           <div style="font-size:12px;color:var(--muted);" id="viewId">CCR-001</div>
         </div>
       </div>
-      <button class="close-btn" onclick="closeModal('viewMemberModal')">✕</button>
+      <button class="close-btn" onclick="closeModal('viewMemberModal')"><i class="ph ph-x"></i></button>
     </div>
     <div class="modal-body">
       <div class="grid-2" style="gap:24px;margin-bottom:24px;">
@@ -147,7 +143,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3>Edit Member Details</h3>
-      <button class="close-btn" onclick="closeModal('editMemberModal')">✕</button>
+      <button class="close-btn" onclick="closeModal('editMemberModal')"><i class="ph ph-x"></i></button>
     </div>
     <form action="" method="POST" id="editMemberForm">
       <input type="hidden" name="member_id" id="editMemberId">
@@ -156,10 +152,7 @@
           <div class="photo-upload-circle" onclick="document.getElementById('editMemberPhoto').click()">
             <img id="editPhotoPreview" src="" style="display:none;">
             <div class="photo-upload-overlay">
-              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-              </svg>
+              <i class="ph ph-pencil"></i>
             </div>
           </div>
           <label class="photo-upload-label" onclick="document.getElementById('editMemberPhoto').click()">Change Photo</label>

@@ -3,7 +3,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3>Create New Ministry</h3>
-      <button class="close-btn" onclick="closeModal('addMinistryModal')">✕</button>
+      <button class="close-btn" onclick="closeModal('addMinistryModal')"><i class="ph ph-x"></i></button>
     </div>
     <form action="" method="POST" id="addMinistryForm">
       <div class="modal-body">
@@ -55,7 +55,7 @@
           <div style="font-size:12px;color:var(--muted);" id="mSubtitle">Worship & praise team</div>
         </div>
       </div>
-      <button class="close-btn" onclick="closeModal('manageMinistryModal')">✕</button>
+      <button class="close-btn" onclick="closeModal('manageMinistryModal')"><i class="ph ph-x"></i></button>
     </div>
     <div class="modal-body" style="padding-top:0;">
       <div class="tabs" style="margin-bottom:20px;border-bottom:1px solid var(--border);">

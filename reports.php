@@ -68,9 +68,7 @@ $recent_activity = $recent_activity ?? [
       <div class="topbar">
         <div style="display:flex;align-items:center;">
           <button class="mobile-toggle" onclick="toggleSidebar()">
-            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <i class="ph ph-list"></i>
           </button>
           <div class="topbar-title">Reports & Analytics</div>
         </div>
@@ -79,8 +77,8 @@ $recent_activity = $recent_activity ?? [
             <option><?= date('Y') ?></option>
             <option><?= date('Y', strtotime('-1 year')) ?></option>
           </select>
-          <button class="btn btn-outline btn-sm">Export PDF</button>
-          <button class="btn btn-primary btn-sm">Export Excel</button>
+          <button class="btn btn-outline btn-sm"><i class="ph ph-file-pdf"></i> Export PDF</button>
+          <button class="btn btn-primary btn-sm"><i class="ph ph-file-xls"></i> Export Excel</button>
         </div>
       </div>
       <div class="content">

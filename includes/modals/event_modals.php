@@ -3,7 +3,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3>Create New Event</h3>
-      <button class="close-btn" onclick="closeModal('addEventModal')">✕</button>
+      <button class="close-btn" onclick="closeModal('addEventModal')"><i class="ph ph-x"></i></button>
     </div>
     <form action="" method="POST" id="addEventForm">
       <div class="modal-body">

@@ -38,9 +38,7 @@ $announcements = $announcements ?? [
       <div class="topbar">
         <div style="display:flex;align-items:center;">
           <button class="mobile-toggle" onclick="toggleSidebar()">
-            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <i class="ph ph-list"></i>
           </button>
           <div class="topbar-title">Events & Announcements</div>
         </div>

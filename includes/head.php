@@ -14,4 +14,5 @@
     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>

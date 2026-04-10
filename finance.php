@@ -52,9 +52,7 @@ $income_breakdown = $income_breakdown ?? [
       <div class="topbar">
         <div style="display:flex;align-items:center;">
           <button class="mobile-toggle" onclick="toggleSidebar()">
-            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <i class="ph ph-list"></i>
           </button>
           <div class="topbar-title">Finance</div>
         </div>
@@ -122,7 +120,7 @@ $income_breakdown = $income_breakdown ?? [
                     <td><span class="badge <?= $tx['type_badge'] ?>"><?= $tx['type'] ?></span></td>
                     <td style="font-weight:600;color:var(--success);">GH₵ <?= $tx['amount'] ?></td>
                     <td style="font-size:12px;color:var(--muted);"><?= $tx['date'] ?></td>
-                    <td><button class="btn btn-outline btn-sm">🧾</button></td>
+                    <td><button class="btn btn-outline btn-sm" title="View Receipt"><i class="ph ph-receipt"></i></button></td>
                   </tr>
                   <?php endforeach; ?>
                 </tbody>

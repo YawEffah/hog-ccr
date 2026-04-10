@@ -3,7 +3,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3>Record Transaction</h3>
-      <button class="close-btn" onclick="closeModal('addFinanceModal')">✕</button>
+      <button class="close-btn" onclick="closeModal('addFinanceModal')"><i class="ph ph-x"></i></button>
     </div>
     <form action="" method="POST" id="addFinanceForm">
       <div class="modal-body">

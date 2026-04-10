@@ -3,7 +3,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3>Record Attendance</h3>
-      <button class="close-btn" onclick="closeModal('recordAttModal')">✕</button>
+      <button class="close-btn" onclick="closeModal('recordAttModal')"><i class="ph ph-x"></i></button>
     </div>
     <form action="" method="POST" id="recordAttForm">
       <div class="modal-body">
@@ -29,9 +29,7 @@
         <div class="form-group">
           <label class="form-label">Mark Attendance</label>
           <div class="search-wrap" style="margin-bottom:8px;">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            <i class="ph ph-magnifying-glass"></i>
             <input class="search-input" placeholder="Search members…" id="attSearch" oninput="filterAttendance()"
               style="width:100%;">
           </div>

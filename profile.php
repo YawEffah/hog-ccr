@@ -43,9 +43,7 @@ $currentUser['name'] = $user_data['first_name'] . ' ' . $user_data['last_name'];
       <div class="topbar">
         <div style="display:flex;align-items:center;">
           <button class="mobile-toggle" onclick="toggleSidebar()">
-            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <i class="ph ph-list"></i>
           </button>
           <div class="topbar-title">My Profile</div>
         </div>
@@ -66,11 +64,7 @@ $currentUser['name'] = $user_data['first_name'] . ' ' . $user_data['last_name'];
                     style="<?= $user_data['photo_url'] ? '' : 'display:none;' ?>">
                   <div class="photo-upload-overlay" id="profilePhotoPlaceholder"
                     style="<?= $user_data['photo_url'] ? 'display:none;' : '' ?>">
-                    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
+                    <i class="ph ph-camera"></i>
                   </div>
                 </div>
                 <label class="photo-upload-label" onclick="document.getElementById('profilePhoto').click()">Upload
@@ -129,19 +123,34 @@ $currentUser['name'] = $user_data['first_name'] . ' ' . $user_data['last_name'];
               <form action="" method="POST" id="passwordUpdateForm">
                 <div class="form-group">
                   <label class="form-label">Current Password</label>
-                  <input class="form-control" type="password" name="current_password" placeholder="••••••••">
+                  <div class="password-wrap">
+                    <input class="form-control" type="password" name="current_password" placeholder="••••••••">
+                    <button type="button" class="password-toggle" onclick="togglePassword(this)">
+                      <i class="ph ph-eye"></i>
+                    </button>
+                  </div>
                 </div>
 
                 <div style="height:1px; background:#EDE8DF; margin:24px 0;"></div>
 
                 <div class="form-group">
                   <label class="form-label">New Password</label>
-                  <input class="form-control" type="password" name="new_password" placeholder="••••••••">
+                  <div class="password-wrap">
+                    <input class="form-control" type="password" name="new_password" placeholder="••••••••">
+                    <button type="button" class="password-toggle" onclick="togglePassword(this)">
+                      <i class="ph ph-eye"></i>
+                    </button>
+                  </div>
                 </div>
 
                 <div class="form-group">
                   <label class="form-label">Confirm New Password</label>
-                  <input class="form-control" type="password" name="confirm_password" placeholder="••••••••">
+                  <div class="password-wrap">
+                    <input class="form-control" type="password" name="confirm_password" placeholder="••••••••">
+                    <button type="button" class="password-toggle" onclick="togglePassword(this)">
+                      <i class="ph ph-eye"></i>
+                    </button>
+                  </div>
                   <span class="form-help">Must be at least 8 characters long.</span>
                 </div>
 
@@ -155,10 +164,7 @@ $currentUser['name'] = $user_data['first_name'] . ' ' . $user_data['last_name'];
                 style="margin-top:40px; padding:20px; background:#FEF3C7; border-radius:12px; border:1px dashed #F59E0B;">
                 <h4
                   style="font-size:13px; font-weight:700; color:#92400E; margin-bottom:6px; display:flex; align-items:center; gap:8px;">
-                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
+                  <i class="ph ph-warning" style="font-size: 18px; color: #92400E;"></i>
                   Two-Factor Authentication
                 </h4>
                 <p style="font-size:12px; color:#B45309; margin-bottom:12px;">Add an extra layer of security to your
@@ -205,6 +211,18 @@ $currentUser['name'] = $user_data['first_name'] . ' ' . $user_data['last_name'];
 
     fnInput.addEventListener('input', updateDisplayName);
     lnInput.addEventListener('input', updateDisplayName);
+
+    // Toggle password visibility
+    function togglePassword(btn) {
+      const wrap = btn.parentElement;
+      const input = wrap.querySelector('input');
+      const icon = btn.querySelector('i');
+      
+      const type = input.type === 'password' ? 'text' : 'password';
+      input.type = type;
+      
+      icon.className = type === 'password' ? 'ph ph-eye' : 'ph ph-eye-slash';
+    }
 
     // Simple validation feedback for password
     document.getElementById('passwordUpdateForm').addEventListener('submit', function (e) {

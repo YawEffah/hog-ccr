@@ -61,9 +61,7 @@ $finance_summary = $finance_summary ?? [
       <div class="topbar">
         <div style="display:flex;align-items:center;">
           <button class="mobile-toggle" onclick="toggleSidebar()">
-            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <i class="ph ph-list"></i>
           </button>
           <div>
             <div class="topbar-title">Good morning, <?= htmlspecialchars($currentUser['name']) ?> 👋</div>
@@ -72,10 +70,7 @@ $finance_summary = $finance_summary ?? [
         </div>
         <div class="topbar-actions">
           <button class="btn btn-outline btn-sm">
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
+            <i class="ph ph-bell"></i>
             <span class="notif-dot"></span>
           </button>
         </div>
@@ -90,10 +85,7 @@ $finance_summary = $finance_summary ?? [
             <div class="value"><?= $stats['total_members'] ?></div>
             <div class="change" style="color:var(--success);">↑ 12 this month</div>
             <div class="icon-bg" style="background:var(--gold-pale);">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--gold)" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+              <i class="ph ph-users" style="color:var(--gold); font-size: 20px;"></i>
             </div>
           </div>
           <div class="stat-card">
@@ -102,10 +94,7 @@ $finance_summary = $finance_summary ?? [
             <div class="value"><?= $stats['sunday_attendance'] ?></div>
             <div class="change" style="color:var(--deep);"><?= $stats['attendance_rate'] ?>% attendance rate</div>
             <div class="icon-bg" style="background:#EEF2FF;">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--deep)" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-              </svg>
+              <i class="ph ph-clipboard-text" style="color:var(--deep); font-size: 20px;"></i>
             </div>
           </div>
           <div class="stat-card">
@@ -114,10 +103,7 @@ $finance_summary = $finance_summary ?? [
             <div class="value">GH₵<?= $stats['monthly_tithe'] ?></div>
             <div class="change" style="color:var(--success);">↑ 8% vs last month</div>
             <div class="icon-bg" style="background:#ECFDF5;">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#2E7D57" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <i class="ph ph-wallet" style="color:#2E7D57; font-size: 20px;"></i>
             </div>
           </div>
           <div class="stat-card">
@@ -126,10 +112,7 @@ $finance_summary = $finance_summary ?? [
             <div class="value"><?= $stats['active_ministries'] ?></div>
             <div class="change" style="color:var(--deep3);">182 members enrolled</div>
             <div class="icon-bg" style="background:#F5F3FF;">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--deep3)" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
+              <i class="ph ph-heart" style="color:var(--deep3); font-size: 20px;"></i>
             </div>
           </div>
         </div>

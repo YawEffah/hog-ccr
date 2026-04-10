@@ -42,17 +42,13 @@ $members_shown = count($members);
       <div class="topbar">
         <div style="display:flex;align-items:center;">
           <button class="mobile-toggle" onclick="toggleSidebar()">
-            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <i class="ph ph-list"></i>
           </button>
           <div class="topbar-title">Members</div>
         </div>
         <div class="topbar-actions">
           <div class="search-wrap">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            <i class="ph ph-magnifying-glass"></i>
             <input class="search-input" placeholder="Search members…" id="memberSearch" oninput="filterMembers()"
               style="width:220px;">
           </div>
@@ -100,8 +96,12 @@ $members_shown = count($members);
                 <td style="font-size:12px;color:var(--muted);"><?= $m['joined'] ?></td>
                 <td>
                   <div style="display:flex;gap:6px;">
-                    <button class="btn btn-outline btn-sm" onclick="viewMember('<?= $m['id'] ?>')">View</button>
-                    <button class="btn btn-outline btn-sm" onclick="editMember('<?= $m['id'] ?>')">Edit</button>
+                    <button class="btn-icon" onclick="viewMember('<?= $m['id'] ?>')" title="View details">
+                      <i class="ph ph-eye"></i>
+                    </button>
+                    <button class="btn-icon" onclick="editMember('<?= $m['id'] ?>')" title="Edit member">
+                      <i class="ph ph-pencil"></i>
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -114,11 +114,11 @@ $members_shown = count($members);
           style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;font-size:13px;color:var(--muted);">
           <span>Showing <?= $members_shown ?> of <?= $total_members ?> members</span>
           <div style="display:flex;gap:6px;">
-            <button class="btn btn-outline btn-sm">← Prev</button>
+            <button class="btn btn-outline btn-sm"><i class="ph ph-caret-left"></i></button>
             <button class="btn btn-primary btn-sm">1</button>
             <button class="btn btn-outline btn-sm">2</button>
             <button class="btn btn-outline btn-sm">3</button>
-            <button class="btn btn-outline btn-sm">Next →</button>
+            <button class="btn btn-outline btn-sm"><i class="ph ph-caret-right"></i></button>
           </div>
         </div>
       </div>

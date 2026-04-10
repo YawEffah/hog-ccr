@@ -122,14 +122,17 @@ h3,
   font-weight: 500;
 }
 
-.nav-item svg {
+.nav-item svg,
+.nav-item i {
   width: 17px;
   height: 17px;
+  font-size: 17px;
   flex-shrink: 0;
   opacity: 0.8;
 }
 
-.nav-item.active svg {
+.nav-item.active svg,
+.nav-item.active i {
   opacity: 1;
 }
 
@@ -204,9 +207,11 @@ h3,
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.action-btn svg {
+.action-btn svg,
+.action-btn i {
   width: 15px;
   height: 15px;
+  font-size: 15px;
 }
 
 .action-btn:hover {
@@ -579,13 +584,15 @@ select.form-control {
   position: relative;
 }
 
-.search-wrap svg {
+.search-wrap svg,
+.search-wrap i {
   position: absolute;
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
   width: 15px;
   height: 15px;
+  font-size: 15px;
   color: var(--muted);
 }
 
@@ -971,6 +978,7 @@ select.form-control {
   justify-content: center;
   z-index: 1;
   transition: color 0.2s;
+  font-size: 24px;
 }
 
 .photo-upload-circle:hover .photo-upload-overlay {
@@ -1145,4 +1153,39 @@ select.form-control {
   font-size: 11px;
   color: var(--muted);
   margin-top: 4px;
+}
+
+/* Password Toggle */
+.password-wrap {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  opacity: 0.6;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.password-toggle:hover {
+  color: var(--gold);
+  opacity: 1;
+}
+
+
+.password-toggle svg,
+.password-toggle i {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
 }
