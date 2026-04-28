@@ -59,7 +59,7 @@
           <div>
             <label for="genReceipt"
               style="font-size:13px;font-weight:600;cursor:pointer;color:var(--deep2);display:block;">Send
-              Receipt Automatically via email or SMS</label>
+              receipt automatically via email or SMS</label>
           </div>
         </div>
       </div>
@@ -82,7 +82,8 @@
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label">Target Amount (GH₵)</label>
-          <input type="number" step="0.01" class="form-control" name="monthly_target" placeholder="e.g. 30000" value="30000">
+          <input type="number" step="0.01" class="form-control" name="monthly_target" placeholder="e.g. 30000"
+            value="30000">
         </div>
         <div class="form-group">
           <label class="form-label">Month</label>
@@ -90,7 +91,8 @@
         </div>
         <div class="form-group">
           <label class="form-label">Notes (Optional)</label>
-          <textarea class="form-control" name="notes" rows="2" placeholder="e.g. Special project funding target" style="resize:none;"></textarea>
+          <textarea class="form-control" name="notes" rows="2" placeholder="e.g. Special project funding target"
+            style="resize:none;"></textarea>
         </div>
       </div>
       <div class="modal-footer">
