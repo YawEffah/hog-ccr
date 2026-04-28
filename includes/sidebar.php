@@ -56,6 +56,12 @@ $currentUser = $currentUser ?? [
       <i class="ph ph-chart-bar"></i>
       Reports
     </a>
+
+    <div class="nav-section-label">System</div>
+    <a href="logout.php" class="nav-item">
+      <i class="ph ph-sign-out"></i>
+      Logout
+    </a>
   </nav>
 
   <div class="sidebar-footer">

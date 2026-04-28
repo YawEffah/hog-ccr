@@ -47,22 +47,28 @@ $members_shown = count($members);
           <div class="topbar-title">Members</div>
         </div>
         <div class="topbar-actions">
-          <div class="search-wrap">
-            <i class="ph ph-magnifying-glass"></i>
-            <input class="search-input" placeholder="Search members…" id="memberSearch" oninput="filterMembers()"
-              style="width:220px;">
-          </div>
-          <select class="form-control" style="width:140px;padding:9px 14px;" onchange="filterMembers()">
-            <option>All Status</option>
-            <option>Active</option>
-            <option>Inactive</option>
-            <option>Visitor</option>
-          </select>
           <button class="btn btn-primary btn-sm" onclick="openModal('addMemberModal')">+ Add Member</button>
         </div>
       </div>
       <div class="content">
         <div class="table-wrap">
+          <div style="padding: 16px 20px; border-bottom: 1px solid #EDE8DF; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 300px;">
+              <div class="search-wrap" style="flex: 1; max-width: 320px;">
+                <i class="ph ph-magnifying-glass"></i>
+                <input class="search-input" placeholder="Search by name, ID, or ministry…" id="memberSearch" oninput="filterMembers()" style="width: 100%;">
+              </div>
+              <select class="form-control" id="statusFilter" style="width:140px;padding:9px 14px;" onchange="filterMembers()">
+                <option value="All Status">All Status</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Visitor">Visitor</option>
+              </select>
+            </div>
+            <div style="font-size: 13px; color: var(--muted);">
+              Total Members: <strong id="membersCount"><?= $members_shown ?></strong>
+            </div>
+          </div>
           <div class="table-responsive">
             <table id="membersTable">
               <thead>
@@ -171,9 +177,25 @@ $members_shown = count($members);
 
     function filterMembers() {
       const q = document.getElementById('memberSearch').value.toLowerCase();
+      const status = document.getElementById('statusFilter').value;
+      let visibleCount = 0;
+
       document.querySelectorAll('#membersTbody tr').forEach(row => {
-        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+        const text = row.textContent.toLowerCase();
+        const rowStatus = row.querySelector('td:nth-child(4) .badge').textContent.trim();
+        
+        const matchesQuery = text.includes(q);
+        const matchesStatus = status === 'All Status' || rowStatus === status;
+
+        if (matchesQuery && matchesStatus) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
       });
+      
+      document.getElementById('membersCount').textContent = visibleCount;
     }
 
     function viewMember(id) {

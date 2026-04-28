@@ -273,8 +273,8 @@ h3,
 }
 
 .btn-primary {
-  background: var(--gold);
-  color: var(--deep);
+  background: var(--gold) !important;
+  color: #FFFFFF !important;
 }
 
 .btn-primary:hover {

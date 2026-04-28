@@ -8,8 +8,10 @@
     <form action="" method="POST" id="addFinanceForm">
       <div class="modal-body">
         <div class="grid-2" style="gap:16px;">
-          <div class="form-group"><label class="form-label">Member</label><input class="form-control" name="member_search"
-              placeholder="Search member…"></div>
+          <div class="form-group">
+            <label class="form-label">Member (Search by Name or ID)</label>
+            <input class="form-control" name="member_search" placeholder="Enter name or member ID…">
+          </div>
           <div class="form-group">
             <label class="form-label">Transaction Type</label>
             <select class="form-control" name="transaction_type">
@@ -25,17 +27,23 @@
         <div class="grid-2" style="gap:16px;">
           <div class="form-group"><label class="form-label">Amount (GH₵)</label><input type="number" step="0.01"
               class="form-control" name="amount" placeholder="0.00"></div>
+          <div class="form-group">
+            <label class="form-label">Payment Method</label>
+            <select class="form-control" name="payment_method" id="paymentMethodSelect">
+              <option>Cash</option>
+              <option>MoMo</option>
+              <option>Bank Transfer</option>
+              <option>Cheque</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2" style="gap:16px;">
           <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-control"
               name="date" value="<?= date('Y-m-d') ?>"></div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Payment Method</label>
-          <select class="form-control" name="payment_method">
-            <option>Cash</option>
-            <option>MoMo</option>
-            <option>Bank Transfer</option>
-            <option>Cheque</option>
-          </select>
+          <div class="form-group">
+            <label class="form-label" id="refLabel">Reference / Trans ID</label>
+            <input class="form-control" name="reference_no" placeholder="e.g. TXN123 or CHQ456">
+          </div>
         </div>
         <div class="grid-2" style="gap:16px;">
           <div class="form-group"><label class="form-label">Phone Number</label><input class="form-control" name="phone"
@@ -43,16 +51,15 @@
           <div class="form-group"><label class="form-label">Email Address</label><input class="form-control"
               type="email" name="email" placeholder="receipt-to@email.com"></div>
         </div>
-        <div class="form-group"><label class="form-label">Notes</label><textarea class="form-control" name="notes" rows="2"
-            placeholder="Optional notes…" style="resize:none;"></textarea></div>
+        <div class="form-group"><label class="form-label">Notes</label><textarea class="form-control" name="notes"
+            rows="2" placeholder="Optional notes…" style="resize:none;"></textarea></div>
         <div style="background:#F1F5F9;border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;">
-          <input type="checkbox" id="genReceipt" name="generate_receipt" checked style="width:16px;height:16px;cursor:pointer;">
+          <input type="checkbox" id="genReceipt" name="generate_receipt" checked
+            style="width:16px;height:16px;cursor:pointer;">
           <div>
             <label for="genReceipt"
               style="font-size:13px;font-weight:600;cursor:pointer;color:var(--deep2);display:block;">Send
-              Receipt Automatically</label>
-            <span style="font-size:11px;color:var(--muted);">Receipt will be sent via Email & SMS to the details
-              above</span>
+              Receipt Automatically via email or SMS</label>
           </div>
         </div>
       </div>
@@ -63,3 +70,20 @@
     </form>
   </div>
 </div>
+
+<script>
+  document.getElementById('paymentMethodSelect')?.addEventListener('change', function () {
+    const label = document.getElementById('refLabel');
+    const method = this.value;
+
+    if (method === 'MoMo') {
+      label.textContent = 'Transaction ID';
+    } else if (method === 'Bank Transfer') {
+      label.textContent = 'Bank Reference';
+    } else if (method === 'Cheque') {
+      label.textContent = 'Cheque Number';
+    } else {
+      label.textContent = 'Reference / Trans ID';
+    }
+  });
+</script>

@@ -18,12 +18,15 @@
         <div class="grid-2" style="gap:16px;">
           <div class="form-group">
             <label class="form-label">Ministry Head</label>
-            <select class="form-control" name="head_id">
-              <option value="">— Select —</option>
-              <option value="EA">Elder Asante</option>
-              <option value="PA">Pastor Adu</option>
-              <option value="BK">Brother Kwame</option>
-            </select>
+            <input class="form-control" name="head_name" list="heads_list" placeholder="Enter name or select...">
+            <datalist id="heads_list">
+              <option value="Elder Asante">
+              <option value="Pastor Adu">
+              <option value="Brother Kwame">
+            </datalist>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">
+              You can type a new name or select from the list.
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">Meeting Day</label>
@@ -62,6 +65,7 @@
         <div class="tab active" onclick="switchMTab(this, 'mOverview')">Overview</div>
         <div class="tab" onclick="switchMTab(this, 'mMembers')">Members</div>
         <div class="tab" onclick="switchMTab(this, 'mHistory')">History</div>
+        <div class="tab" onclick="switchMTab(this, 'mEdit')">Edit Info</div>
       </div>
 
       <!-- Overview Tab -->
@@ -120,6 +124,36 @@
         <div style="display:flex;flex-direction:column;gap:12px;" id="mTimeline">
           <!-- Populated via JS -->
         </div>
+      </div>
+
+      <!-- Edit Tab -->
+      <div id="mEdit" class="tab-pane" style="display:none;">
+        <form id="editMinistryForm">
+          <div class="form-group">
+            <label class="form-label">Ministry Name</label>
+            <input class="form-control" id="edit_mName" value="Music Ministry">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Purpose/Description</label>
+            <textarea class="form-control" id="edit_mDesc" rows="3">Worship & praise team</textarea>
+          </div>
+          <div class="grid-2" style="gap:16px;">
+            <div class="form-group">
+              <label class="form-label">Ministry Head</label>
+              <input class="form-control" id="edit_mHead" list="heads_list" value="Elder Asante">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Meeting Day</label>
+              <select class="form-control" id="edit_mDay">
+                <option selected>Saturdays</option>
+                <option>Fridays</option>
+                <option>Sundays</option>
+                <option>Wednesdays</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;margin-top:10px;">Save Changes</button>
+        </form>
       </div>
     </div>
     <div class="modal-footer">
