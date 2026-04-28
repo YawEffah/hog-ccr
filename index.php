@@ -24,9 +24,10 @@ $stats = $stats ?? [
 ];
 
 $upcoming_events = $upcoming_events ?? [
-    ['day' => 6, 'month' => 'Apr', 'title' => 'Sunday Service', 'time' => '8:00am', 'venue' => 'Main Auditorium', 'badge_color' => 'badge-green', 'badge_label' => 'All Members'],
-    ['day' => 9, 'month' => 'Apr', 'title' => 'Midweek Prayer', 'time' => '6:30pm', 'venue' => 'Fellowship Hall', 'badge_color' => 'badge-blue', 'badge_label' => 'Prayer Group'],
-    ['day' => 19, 'month' => 'Apr', 'title' => 'Easter Convention', 'time' => 'All day', 'venue' => 'Church Grounds', 'badge_color' => 'badge-yellow', 'badge_label' => 'Special Program']
+    ['day' => 29, 'month' => 'Apr', 'title' => 'Midweek Mass', 'time' => '9:00am', 'venue' => 'Main Auditorium', 'badge_color' => 'badge-blue', 'badge_label' => 'Weekly'],
+    ['day' => 29, 'month' => 'Apr', 'title' => 'Prayer Meeting', 'time' => '6:30pm', 'venue' => 'Fellowship Hall', 'badge_color' => 'badge-blue', 'badge_label' => 'Weekly'],
+    ['day' => 1, 'month' => 'May', 'title' => 'Night of Cry', 'time' => '9:00pm', 'venue' => 'Main Auditorium', 'badge_color' => 'badge-red', 'badge_label' => 'Monthly'],
+    ['day' => 3, 'month' => 'May', 'title' => 'Sunday Mass', 'time' => '8:30am', 'venue' => 'Main Auditorium', 'badge_color' => 'badge-green', 'badge_label' => 'Weekly']
 ];
 
 $recent_members = $recent_members ?? [

@@ -15,15 +15,16 @@
               <i class="ph ph-camera"></i>
             </div>
           </div>
-          <label class="photo-upload-label" onclick="document.getElementById('addMemberPhoto').click()">Upload Photo</label>
+          <label class="photo-upload-label" onclick="document.getElementById('addMemberPhoto').click()">Upload
+            Photo</label>
           <input type="file" id="addMemberPhoto" name="photo" hidden accept="image/*"
             onchange="handlePreview(this, 'addPhotoPreview', 'addPhotoPlaceholder')">
         </div>
         <div class="grid-2" style="gap:16px;">
-          <div class="form-group"><label class="form-label">First Name</label><input class="form-control" name="first_name"
-              placeholder="e.g. Abena"></div>
-          <div class="form-group"><label class="form-label">Last Name</label><input class="form-control" name="last_name"
-              placeholder="e.g. Kusi"></div>
+          <div class="form-group"><label class="form-label">First Name</label><input class="form-control"
+              name="first_name" placeholder="e.g. Abena"></div>
+          <div class="form-group"><label class="form-label">Last Name</label><input class="form-control"
+              name="last_name" placeholder="e.g. Kusi"></div>
         </div>
         <div class="grid-2" style="gap:16px;">
           <div class="form-group"><label class="form-label">Phone</label><input class="form-control" name="phone"
@@ -31,10 +32,11 @@
           <div class="form-group"><label class="form-label">Date of Birth</label><input type="date" name="dob"
               class="form-control"></div>
         </div>
-        <div class="form-group"><label class="form-label">Email Address</label><input class="form-control" type="email" name="email"
-            placeholder="member@email.com"></div>
+        <div class="form-group"><label class="form-label">Email Address</label><input class="form-control" type="email"
+            name="email" placeholder="member@email.com"></div>
         <div class="grid-2" style="gap:16px;">
-          <div class="form-group"><label class="form-label">Ministry</label><select class="form-control" name="ministry">
+          <div class="form-group"><label class="form-label">Ministry</label><select class="form-control"
+              name="ministry">
               <option value="">— Select —</option>
               <option>Music Ministry</option>
               <option>Intercessory</option>
@@ -53,12 +55,16 @@
             placeholder="Residential address"></div>
         <div class="form-group"><label class="form-label">Sacraments</label>
           <div style="display:flex;gap:16px;margin-top:6px;">
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input name="sacraments[]" value="baptised"
-                type="checkbox"> Baptised</label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input name="sacraments[]" value="confirmed"
-                type="checkbox"> Confirmed</label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input name="sacraments[]" value="communion"
-                type="checkbox"> First Communion</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input
+                name="sacraments[]" value="baptised" type="checkbox"> Baptised</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input
+                name="sacraments[]" value="confirmed" type="checkbox"> Confirmed</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input
+                name="sacraments[]" value="communion" type="checkbox"> First Communion</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input
+                name="sacraments[]" value="matrimony" type="checkbox"> Matrimony</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input
+                name="sacraments[]" value="orders" type="checkbox"> Orders</label>
           </div>
         </div>
       </div>
@@ -155,24 +161,25 @@
               <i class="ph ph-pencil"></i>
             </div>
           </div>
-          <label class="photo-upload-label" onclick="document.getElementById('editMemberPhoto').click()">Change Photo</label>
+          <label class="photo-upload-label" onclick="document.getElementById('editMemberPhoto').click()">Change
+            Photo</label>
           <input type="file" id="editMemberPhoto" name="photo" hidden accept="image/*"
             onchange="handlePreview(this, 'editPhotoPreview')">
         </div>
         <div class="grid-2" style="gap:16px;">
-          <div class="form-group"><label class="form-label">First Name</label><input class="form-control" name="first_name" id="editFn"
-              value="John"></div>
-          <div class="form-group"><label class="form-label">Last Name</label><input class="form-control" name="last_name" id="editLn"
-              value="Smith"></div>
+          <div class="form-group"><label class="form-label">First Name</label><input class="form-control"
+              name="first_name" id="editFn" value="John"></div>
+          <div class="form-group"><label class="form-label">Last Name</label><input class="form-control"
+              name="last_name" id="editLn" value="Smith"></div>
         </div>
         <div class="grid-2" style="gap:16px;">
-          <div class="form-group"><label class="form-label">Phone</label><input class="form-control" name="phone" id="editPhone"
-              value="0244-123-456"></div>
-          <div class="form-group"><label class="form-label">Date of Birth</label><input type="date" class="form-control" name="dob"
-              id="editDob" value="1990-10-12"></div>
+          <div class="form-group"><label class="form-label">Phone</label><input class="form-control" name="phone"
+              id="editPhone" value="0244-123-456"></div>
+          <div class="form-group"><label class="form-label">Date of Birth</label><input type="date" class="form-control"
+              name="dob" id="editDob" value="1990-10-12"></div>
         </div>
-        <div class="form-group"><label class="form-label">Email Address</label><input class="form-control" type="email" name="email"
-            id="editEmail" value="john@email.com"></div>
+        <div class="form-group"><label class="form-label">Email Address</label><input class="form-control" type="email"
+            name="email" id="editEmail" value="john@email.com"></div>
         <div class="grid-2" style="gap:16px;">
           <div class="form-group"><label class="form-label">Ministry</label><select class="form-control" name="ministry"
               id="editMinistry">
@@ -183,7 +190,8 @@
               <option>Prayer Group</option>
               <option>Executives</option>
             </select></div>
-          <div class="form-group"><label class="form-label">Status</label><select class="form-control" name="status" id="editStatus">
+          <div class="form-group"><label class="form-label">Status</label><select class="form-control" name="status"
+              id="editStatus">
               <option>Active</option>
               <option>Inactive</option>
               <option>Visitor</option>
@@ -193,12 +201,16 @@
             id="editAddress" value="123 Garden Street, Kumasi"></div>
         <div class="form-group"><label class="form-label">Sacraments</label>
           <div style="display:flex;gap:16px;margin-top:6px;">
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" name="sacraments[]" value="baptised"
-                id="editBaptised" checked> Baptised</label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" name="sacraments[]" value="confirmed"
-                id="editConfirmed" checked> Confirmed</label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" name="sacraments[]" value="communion"
-                id="editCommunion"> First Communion</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox"
+                name="sacraments[]" value="baptised" id="editBaptised" checked> Baptised</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox"
+                name="sacraments[]" value="confirmed" id="editConfirmed" checked> Confirmed</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox"
+                name="sacraments[]" value="communion" id="editCommunion"> First Communion</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox"
+                name="sacraments[]" value="matrimony" id="editMatrimony"> Matrimony</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox"
+                name="sacraments[]" value="orders" id="editOrders"> Orders</label>
           </div>
         </div>
       </div>

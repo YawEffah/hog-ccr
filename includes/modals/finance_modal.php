@@ -71,6 +71,36 @@
   </div>
 </div>
 
+<!-- Set Monthly Target Modal -->
+<div class="modal-overlay" id="setTargetModal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <h3>Set Monthly Target</h3>
+      <button class="close-btn" onclick="closeModal('setTargetModal')"><i class="ph ph-x"></i></button>
+    </div>
+    <form action="" method="POST">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Target Amount (GH₵)</label>
+          <input type="number" step="0.01" class="form-control" name="monthly_target" placeholder="e.g. 30000" value="30000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Month</label>
+          <input type="month" class="form-control" name="target_month" value="<?= date('Y-m') ?>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes (Optional)</label>
+          <textarea class="form-control" name="notes" rows="2" placeholder="e.g. Special project funding target" style="resize:none;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('setTargetModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Target</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
   document.getElementById('paymentMethodSelect')?.addEventListener('change', function () {
     const label = document.getElementById('refLabel');

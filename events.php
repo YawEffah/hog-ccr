@@ -13,9 +13,10 @@ $activePage = 'events';
 
 // Mock data for initial refactor (Backend team will replace these)
 $upcoming_events = $upcoming_events ?? [
-    ['day' => 6, 'month' => 'Apr', 'title' => 'Sunday Service', 'time' => '8:00am', 'venue' => 'Main Auditorium', 'description' => 'Regular weekly service with Holy Communion', 'badge_class' => 'badge-green', 'badge_label' => 'All Members'],
-    ['day' => 9, 'month' => 'Apr', 'title' => 'Midweek Prayer', 'time' => '6:30pm', 'venue' => 'Fellowship Hall', 'description' => 'Intercessory prayer and Bible study', 'badge_class' => 'badge-blue', 'badge_label' => 'Prayer Group'],
-    ['day' => 19, 'month' => 'Apr', 'title' => 'Easter Convention', 'time' => 'All Day', 'venue' => 'Church Grounds', 'description' => 'Annual Easter celebration with guest speakers', 'badge_class' => 'badge-yellow', 'badge_label' => 'Special']
+    ['day' => 29, 'month' => 'Apr', 'title' => 'Midweek Mass', 'time' => '9:00am', 'venue' => 'Main Auditorium', 'description' => 'Weekly morning mass', 'badge_class' => 'badge-blue', 'badge_label' => 'Weekly'],
+    ['day' => 29, 'month' => 'Apr', 'title' => 'Prayer Meeting', 'time' => '6:30pm', 'venue' => 'Fellowship Hall', 'description' => 'Midweek intercessory prayer', 'badge_class' => 'badge-purple', 'badge_label' => 'Weekly'],
+    ['day' => 1, 'month' => 'May', 'title' => 'Night of Cry', 'time' => '9:00pm', 'venue' => 'Main Auditorium', 'description' => 'Monthly vigil and prayer session', 'badge_class' => 'badge-red', 'badge_label' => 'Monthly'],
+    ['day' => 3, 'month' => 'May', 'title' => 'Sunday Mass', 'time' => '8:30am', 'venue' => 'Main Auditorium', 'description' => 'Full congregational service', 'badge_class' => 'badge-green', 'badge_label' => 'Weekly']
 ];
 
 $announcements = $announcements ?? [

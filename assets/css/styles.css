@@ -259,26 +259,35 @@ h3,
 }
 
 .btn {
-  padding: 9px 18px;
+  padding: 10px 20px;
   border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: all 0.16s;
+  transition: all 0.2s ease;
   font-family: 'DM Sans', sans-serif;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: 0.2px;
 }
 
 .btn-primary {
   background: var(--gold) !important;
   color: #FFFFFF !important;
+  box-shadow: 0 2px 4px rgba(220, 38, 26, 0.1);
 }
 
 .btn-primary:hover {
-  background: var(--gold-light);
+  background: var(--gold-light) !important;
+  box-shadow: 0 4px 12px rgba(220, 38, 26, 0.2);
+  transform: translateY(-1px);
+}
+
+.btn-primary i, .btn-primary svg {
+  color: #FFFFFF !important;
 }
 
 .btn-outline {
@@ -289,25 +298,41 @@ h3,
 
 .btn-outline:hover {
   border-color: var(--gold);
-  color: var(--deep);
+  color: var(--gold);
+  background: var(--gold-pale);
 }
 
 .btn-danger {
-  background: #FEE2E2;
-  color: var(--danger);
-  border: 1px solid #FCCACA;
+  background: var(--danger) !important;
+  color: #FFFFFF !important;
 }
 
 .btn-success {
-  background: #D1FAE5;
-  color: var(--success);
-  border: 1px solid #A7F3D0;
+  background: #15803D !important;
+  color: #FFFFFF !important;
 }
 
 .btn-sm {
-  padding: 6px 12px;
+  padding: 6px 14px;
   font-size: 12px;
   border-radius: 6px;
+}
+
+/* Global contrast insurance for red background buttons */
+.btn[style*="background-color: var(--gold)"],
+.btn[style*="background: var(--gold)"],
+.btn[style*="background-color: #DC261A"],
+.btn[style*="background: #DC261A"],
+.btn[style*="background:red"],
+.btn-primary,
+.btn-danger {
+  color: #FFFFFF !important;
+}
+
+.btn-primary i, .btn-primary svg,
+.btn-danger i, .btn-danger svg,
+.btn[style*="background"] i, .btn[style*="background"] svg {
+  color: #FFFFFF !important;
 }
 
 .btn-icon {

@@ -18,6 +18,7 @@ $finance_stats = $finance_stats ?? [
     'offerings' => '5,450',
     'donations' => '2,300',
     'total' => '24,550',
+    'monthly_target' => '30,000',
     'target_percent' => 82
 ];
 
@@ -62,6 +63,9 @@ $income_breakdown = $income_breakdown ?? [
             <option><?= date('F Y', strtotime('-1 month')) ?></option>
             <option><?= date('F Y', strtotime('-2 months')) ?></option>
           </select>
+          <button class="btn btn-outline btn-sm" onclick="openModal('setTargetModal')">
+            <i class="ph ph-target"></i> Set Target
+          </button>
           <button class="btn btn-primary btn-sm" onclick="openModal('addFinanceModal')">+ Record Transaction</button>
         </div>
       </div>
@@ -87,9 +91,11 @@ $income_breakdown = $income_breakdown ?? [
           </div>
           <div class="stat-card">
             <div class="accent-bar" style="background:var(--deep3);"></div>
-            <div class="label">Total Income</div>
+            <div class="label">Total Income vs Target</div>
             <div class="value" style="font-size:28px;">GH₵<?= $finance_stats['total'] ?></div>
-            <div class="change" style="color:var(--success);"><?= $finance_stats['target_percent'] ?>% of target</div>
+            <div class="change" style="color:var(--success);">
+              <strong><?= $finance_stats['target_percent'] ?>%</strong> of GH₵<?= $finance_stats['monthly_target'] ?> target
+            </div>
           </div>
         </div>
 
