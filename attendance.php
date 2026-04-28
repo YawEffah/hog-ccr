@@ -56,6 +56,10 @@ $sessions_week = $sessions_week ?? [
         </div>
         <div class="topbar-actions">
           <input type="date" class="form-control" value="<?= date('Y-m-d') ?>" style="width:160px;padding:8px 12px;">
+          <button class="btn btn-outline btn-sm" id="notifBtn" onclick="toggleNotifications()">
+            <i class="ph ph-bell"></i>
+          </button>
+          <?php include 'includes/notifications.php'; ?>
           <button class="btn btn-primary btn-sm" onclick="openModal('recordAttModal')">+ Record Attendance</button>
         </div>
       </div>

@@ -894,13 +894,136 @@ select.form-control {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Notification dot */
+/* Notification Styles */
 .notif-dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: var(--danger);
-  display: inline-block;
+  background: #EF4444;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  border: 2px solid white;
+}
+
+.topbar-actions {
+  position: relative;
+}
+
+.notif-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 320px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid #EDE8DF;
+  margin-top: 10px;
+  z-index: 1000;
+  display: none;
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+}
+
+.notif-panel.active {
+  display: block;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.notif-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid #F1F5F9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notif-header h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--deep2);
+}
+
+.notif-header a {
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.notif-list {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.notif-item {
+  padding: 12px 16px;
+  display: flex;
+  gap: 12px;
+  border-bottom: 1px solid #F8FAFC;
+  transition: background 0.2s;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.notif-item:hover {
+  background: #F8FAFC;
+}
+
+.notif-item.unread {
+  background: #F0F9FF;
+}
+
+.notif-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notif-content {
+  flex: 1;
+}
+
+.notif-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--deep2);
+  margin-bottom: 2px;
+}
+
+.notif-desc {
+  font-size: 12px;
+  color: var(--mid);
+  line-height: 1.4;
+}
+
+.notif-time {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.notif-footer {
+  padding: 12px;
+  text-align: center;
+  background: #F8FAFC;
+  border-top: 1px solid #F1F5F9;
+}
+
+.notif-footer a {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--deep2);
+  text-decoration: none;
 }
 
 /* Summary row */

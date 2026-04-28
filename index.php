@@ -70,10 +70,11 @@ $finance_summary = $finance_summary ?? [
           </div>
         </div>
         <div class="topbar-actions">
-          <button class="btn btn-outline btn-sm">
+          <button class="btn btn-outline btn-sm" id="notifBtn" onclick="toggleNotifications()">
             <i class="ph ph-bell"></i>
             <span class="notif-dot"></span>
           </button>
+          <?php include 'includes/notifications.php'; ?>
         </div>
       </div>
       <div class="content">

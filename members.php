@@ -47,6 +47,10 @@ $members_shown = count($members);
           <div class="topbar-title">Members</div>
         </div>
         <div class="topbar-actions">
+          <button class="btn btn-outline btn-sm" id="notifBtn" onclick="toggleNotifications()">
+            <i class="ph ph-bell"></i>
+          </button>
+          <?php include 'includes/notifications.php'; ?>
           <button class="btn btn-primary btn-sm" onclick="openModal('addMemberModal')">+ Add Member</button>
         </div>
       </div>
