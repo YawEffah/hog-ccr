@@ -373,6 +373,12 @@ h3,
   gap: 24px;
 }
 
+.grid-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 24px;
+}
+
 /* Stat cards */
 .stat-card {
   background: white;
@@ -521,6 +527,11 @@ tbody tr:hover {
 .badge-purple {
   background: #EDE9FE;
   color: #5B21B6;
+}
+
+.badge-welfare {
+  background: #CCFBF1;
+  color: #0D9488;
 }
 
 .badge-gray {

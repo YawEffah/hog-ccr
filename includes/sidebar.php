@@ -38,6 +38,10 @@ $currentUser = $currentUser ?? [
       <i class="ph ph-heart"></i>
       Ministries
     </a>
+    <a href="welfare.php" class="nav-item <?= $activePage === 'welfare' ? 'active' : '' ?>">
+      <i class="ph ph-hand-heart"></i>
+      Welfare
+    </a>
     <a href="attendance.php" class="nav-item <?= $activePage === 'attendance' ? 'active' : '' ?>">
       <i class="ph ph-clipboard-text"></i>
       Attendance

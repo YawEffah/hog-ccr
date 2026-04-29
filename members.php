@@ -22,6 +22,12 @@ $members = $members ?? [
 $total_members = $total_members ?? 487;
 $members_shown = count($members);
 
+$member_stats = $member_stats ?? [
+    'total' => 487,
+    'active' => 412,
+    'male' => 210,
+    'female' => 277
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -52,6 +58,46 @@ $members_shown = count($members);
         </div>
       </div>
       <div class="content">
+        <!-- Member Stats -->
+        <div class="grid-4" style="margin-bottom:24px;">
+          <div class="stat-card">
+            <div class="accent-bar" style="background: var(--gold);"></div>
+            <div class="label">Total Members</div>
+            <div class="value"><?= $member_stats['total'] ?></div>
+            <div class="change" style="color:var(--success);">↑ 12 this month</div>
+            <div class="icon-bg" style="background:var(--gold-pale);">
+              <i class="ph ph-users" style="color:var(--gold); font-size: 20px;"></i>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="accent-bar" style="background:var(--success);"></div>
+            <div class="label">Active Members</div>
+            <div class="value"><?= $member_stats['active'] ?></div>
+            <div class="change" style="color:var(--success);">85% of total</div>
+            <div class="icon-bg" style="background:#ECFDF5;">
+              <i class="ph ph-user-check" style="color:var(--success); font-size: 20px;"></i>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="accent-bar" style="background:var(--deep);"></div>
+            <div class="label">Male Members</div>
+            <div class="value"><?= $member_stats['male'] ?></div>
+            <div class="change" style="color:var(--deep);"><?= round(($member_stats['male']/$member_stats['total'])*100) ?>% of total</div>
+            <div class="icon-bg" style="background:#EEF2FF;">
+              <i class="ph ph-gender-male" style="color:var(--deep); font-size: 20px;"></i>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="accent-bar" style="background:var(--deep3);"></div>
+            <div class="label">Female Members</div>
+            <div class="value"><?= $member_stats['female'] ?></div>
+            <div class="change" style="color:var(--deep3);"><?= round(($member_stats['female']/$member_stats['total'])*100) ?>% of total</div>
+            <div class="icon-bg" style="background:#F5F3FF;">
+              <i class="ph ph-gender-female" style="color:var(--deep3); font-size: 20px;"></i>
+            </div>
+          </div>
+        </div>
+
         <div class="table-wrap">
           <div style="padding: 16px 20px; border-bottom: 1px solid #EDE8DF; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
             <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 300px;">

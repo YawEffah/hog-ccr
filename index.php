@@ -11,34 +11,34 @@ $activePage = 'dashboard';
 
 // Mock data for initial refactor (Backend team will replace these)
 $stats = $stats ?? [
-    'total_members' => 487,
-    'sunday_attendance' => 312,
-    'attendance_rate' => 64,
-    'monthly_tithe' => '24.6k',
-    'active_ministries' => 6
+  'total_members' => 487,
+  'monthly_tithe' => '24.6k',
+  'active_ministries' => 6,
+  'welfare_fund' => '8.2k'
 ];
 
 $upcoming_events = $upcoming_events ?? [
-    ['day' => 29, 'month' => 'Apr', 'title' => 'Midweek Mass', 'time' => '9:00am', 'venue' => 'Main Auditorium', 'badge_color' => 'badge-blue', 'badge_label' => 'Weekly'],
-    ['day' => 29, 'month' => 'Apr', 'title' => 'Prayer Meeting', 'time' => '6:30pm', 'venue' => 'Fellowship Hall', 'badge_color' => 'badge-blue', 'badge_label' => 'Weekly'],
-    ['day' => 1, 'month' => 'May', 'title' => 'Night of Cry', 'time' => '9:00pm', 'venue' => 'Main Auditorium', 'badge_color' => 'badge-red', 'badge_label' => 'Monthly'],
-    ['day' => 3, 'month' => 'May', 'title' => 'Sunday Mass', 'time' => '8:30am', 'venue' => 'Main Auditorium', 'badge_color' => 'badge-green', 'badge_label' => 'Weekly']
+  ['day' => 29, 'month' => 'Apr', 'title' => 'Midweek Mass', 'time' => '9:00am', 'venue' => 'Main Auditorium', 'badge_color' => 'badge-blue', 'badge_label' => 'Weekly'],
+  ['day' => 29, 'month' => 'Apr', 'title' => 'Prayer Meeting', 'time' => '6:30pm', 'venue' => 'Fellowship Hall', 'badge_color' => 'badge-blue', 'badge_label' => 'Weekly'],
+  ['day' => 1, 'month' => 'May', 'title' => 'Night of Cry', 'time' => '9:00pm', 'venue' => 'Main Auditorium', 'badge_color' => 'badge-red', 'badge_label' => 'Monthly'],
+  ['day' => 3, 'month' => 'May', 'title' => 'Sunday Mass', 'time' => '8:30am', 'venue' => 'Main Auditorium', 'badge_color' => 'badge-green', 'badge_label' => 'Weekly']
 ];
 
 $recent_members = $recent_members ?? [
-    ['initials' => 'AK', 'name' => 'Abena Kusi', 'ministry' => 'Music Ministry', 'status' => 'Active', 'status_badge' => 'badge-green', 'joined' => 'Mar 28', 'avatar_color' => 'var(--gold-pale)', 'text_color' => 'var(--gold)'],
-    ['initials' => 'KO', 'name' => 'Kwame Ofori', 'ministry' => 'Youth Wing', 'status' => 'Active', 'status_badge' => 'badge-green', 'joined' => 'Mar 22', 'avatar_color' => '#EEF2FF', 'text_color' => 'var(--deep)'],
-    ['initials' => 'SA', 'name' => 'Serwa Acheampong', 'ministry' => 'Intercessory', 'status' => 'Visitor', 'status_badge' => 'badge-yellow', 'joined' => 'Apr 1', 'avatar_color' => '#F5F3FF', 'text_color' => '#7C3AED'],
-    ['initials' => 'MB', 'name' => 'Michael Boateng', 'ministry' => 'Evangelism', 'status' => 'Active', 'status_badge' => 'badge-green', 'joined' => 'Apr 3', 'avatar_color' => '#ECFDF5', 'text_color' => '#2E7D57']
+  ['initials' => 'AK', 'name' => 'Abena Kusi', 'ministry' => 'Music Ministry', 'status' => 'Active', 'status_badge' => 'badge-green', 'joined' => 'Mar 28', 'avatar_color' => 'var(--gold-pale)', 'text_color' => 'var(--gold)'],
+  ['initials' => 'KO', 'name' => 'Kwame Ofori', 'ministry' => 'Youth Wing', 'status' => 'Active', 'status_badge' => 'badge-green', 'joined' => 'Mar 22', 'avatar_color' => '#EEF2FF', 'text_color' => 'var(--deep)'],
+  ['initials' => 'SA', 'name' => 'Serwa Acheampong', 'ministry' => 'Intercessory', 'status' => 'Visitor', 'status_badge' => 'badge-yellow', 'joined' => 'Apr 1', 'avatar_color' => '#F5F3FF', 'text_color' => '#7C3AED'],
+  ['initials' => 'MB', 'name' => 'Michael Boateng', 'ministry' => 'Evangelism', 'status' => 'Active', 'status_badge' => 'badge-green', 'joined' => 'Apr 3', 'avatar_color' => '#ECFDF5', 'text_color' => '#2E7D57']
 ];
 
 $finance_summary = $finance_summary ?? [
-    'tithes' => '14,820',
-    'offerings' => '5,450',
-    'donations' => '2,300',
-    'pledges' => '1,980',
-    'total' => '24,550',
-    'target_percent' => 82
+  'tithes' => '14,820',
+  'offerings' => '5,450',
+  'donations' => '2,300',
+  'pledges' => '1,980',
+  'welfare' => '2,450',
+  'total' => '27,000',
+  'target_percent' => 90
 ];
 ?>
 <!DOCTYPE html>
@@ -61,7 +61,8 @@ $finance_summary = $finance_summary ?? [
           </button>
           <div>
             <div class="topbar-title">Good morning, <?= htmlspecialchars($currentUser['name']) ?> 👋</div>
-            <div style="font-size:12px; color:var(--muted); margin-top:2px;"><?= date('l, j F Y') ?> — Week <?= date('W') ?></div>
+            <div style="font-size:12px; color:var(--muted); margin-top:2px;"><?= date('l, j F Y') ?> — Week
+              <?= date('W') ?></div>
           </div>
         </div>
         <div class="topbar-actions">
@@ -86,15 +87,6 @@ $finance_summary = $finance_summary ?? [
             </div>
           </div>
           <div class="stat-card">
-            <div class="accent-bar" style="background:var(--deep);"></div>
-            <div class="label">Sunday Attendance</div>
-            <div class="value"><?= $stats['sunday_attendance'] ?></div>
-            <div class="change" style="color:var(--deep);"><?= $stats['attendance_rate'] ?>% attendance rate</div>
-            <div class="icon-bg" style="background:#EEF2FF;">
-              <i class="ph ph-clipboard-text" style="color:var(--deep); font-size: 20px;"></i>
-            </div>
-          </div>
-          <div class="stat-card">
             <div class="accent-bar" style="background:#2E7D57;"></div>
             <div class="label">Monthly Tithe</div>
             <div class="value">GH₵<?= $stats['monthly_tithe'] ?></div>
@@ -110,6 +102,15 @@ $finance_summary = $finance_summary ?? [
             <div class="change" style="color:var(--deep3);">182 members enrolled</div>
             <div class="icon-bg" style="background:#F5F3FF;">
               <i class="ph ph-heart" style="color:var(--deep3); font-size: 20px;"></i>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="accent-bar" style="background:#0D9488;"></div>
+            <div class="label">Welfare Fund</div>
+            <div class="value">GH₵<?= $stats['welfare_fund'] ?></div>
+            <div class="change" style="color:#0D9488;">24 members active</div>
+            <div class="icon-bg" style="background:#CCFBF1;">
+              <i class="ph ph-hand-heart" style="color:#0D9488; font-size: 20px;"></i>
             </div>
           </div>
         </div>
@@ -199,17 +200,20 @@ $finance_summary = $finance_summary ?? [
             </div>
             <div class="card-body" style="display:flex; flex-direction:column; gap:14px; padding-top:18px;">
               <?php foreach ($upcoming_events as $event): ?>
-              <div class="event-card" style="padding:14px;">
-                <div class="event-date">
-                  <div class="day"><?= $event['day'] ?></div>
-                  <div class="month"><?= $event['month'] ?></div>
+                <div class="event-card" style="padding:14px;">
+                  <div class="event-date">
+                    <div class="day"><?= $event['day'] ?></div>
+                    <div class="month"><?= $event['month'] ?></div>
+                  </div>
+                  <div>
+                    <div style="font-size:14px;font-weight:600;color:var(--deep2);">
+                      <?= htmlspecialchars($event['title']) ?></div>
+                    <div style="font-size:12px;color:var(--muted);margin-top:2px;"><?= $event['time'] ?> —
+                      <?= htmlspecialchars($event['venue']) ?></div>
+                    <span class="badge <?= $event['badge_color'] ?>"
+                      style="margin-top:6px;"><?= htmlspecialchars($event['badge_label']) ?></span>
+                  </div>
                 </div>
-                <div>
-                  <div style="font-size:14px;font-weight:600;color:var(--deep2);"><?= htmlspecialchars($event['title']) ?></div>
-                  <div style="font-size:12px;color:var(--muted);margin-top:2px;"><?= $event['time'] ?> — <?= htmlspecialchars($event['venue']) ?></div>
-                  <span class="badge <?= $event['badge_color'] ?>" style="margin-top:6px;"><?= htmlspecialchars($event['badge_label']) ?></span>
-                </div>
-              </div>
               <?php endforeach; ?>
             </div>
           </div>
@@ -233,19 +237,22 @@ $finance_summary = $finance_summary ?? [
                 </thead>
                 <tbody>
                   <?php foreach ($recent_members as $member): ?>
-                  <tr>
-                    <td>
-                      <div style="display:flex;align-items:center;gap:10px;">
-                        <div class="avatar" style="background:<?= $member['avatar_color'] ?>;color:<?= $member['text_color'] ?>;"><?= $member['initials'] ?></div>
-                        <div>
-                          <div style="font-weight:500;"><?= htmlspecialchars($member['name']) ?></div>
-                          <div style="font-size:11px;color:var(--muted);"><?= htmlspecialchars($member['ministry']) ?></div>
+                    <tr>
+                      <td>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                          <div class="avatar"
+                            style="background:<?= $member['avatar_color'] ?>;color:<?= $member['text_color'] ?>;">
+                            <?= $member['initials'] ?></div>
+                          <div>
+                            <div style="font-weight:500;"><?= htmlspecialchars($member['name']) ?></div>
+                            <div style="font-size:11px;color:var(--muted);"><?= htmlspecialchars($member['ministry']) ?>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td><span class="badge <?= $member['status_badge'] ?>"><?= $member['status'] ?></span></td>
-                    <td style="color:var(--muted);font-size:12px;"><?= $member['joined'] ?></td>
-                  </tr>
+                      </td>
+                      <td><span class="badge <?= $member['status_badge'] ?>"><?= $member['status'] ?></span></td>
+                      <td style="color:var(--muted);font-size:12px;"><?= $member['joined'] ?></td>
+                    </tr>
                   <?php endforeach; ?>
                 </tbody>
               </table>
@@ -261,23 +268,33 @@ $finance_summary = $finance_summary ?? [
             <div class="card-body">
               <div class="summary-row">
                 <span style="font-size:13px;color:var(--mid);">Tithes</span>
-                <span style="font-size:14px;font-weight:600;color:var(--deep2);">GH₵ <?= $finance_summary['tithes'] ?></span>
+                <span style="font-size:14px;font-weight:600;color:var(--deep2);">GH₵
+                  <?= $finance_summary['tithes'] ?></span>
               </div>
               <div class="summary-row">
                 <span style="font-size:13px;color:var(--mid);">Offerings</span>
-                <span style="font-size:14px;font-weight:600;color:var(--deep2);">GH₵ <?= $finance_summary['offerings'] ?></span>
+                <span style="font-size:14px;font-weight:600;color:var(--deep2);">GH₵
+                  <?= $finance_summary['offerings'] ?></span>
               </div>
               <div class="summary-row">
                 <span style="font-size:13px;color:var(--mid);">Donations</span>
-                <span style="font-size:14px;font-weight:600;color:var(--deep2);">GH₵ <?= $finance_summary['donations'] ?></span>
+                <span style="font-size:14px;font-weight:600;color:var(--deep2);">GH₵
+                  <?= $finance_summary['donations'] ?></span>
               </div>
               <div class="summary-row">
                 <span style="font-size:13px;color:var(--mid);">Pledges</span>
-                <span style="font-size:14px;font-weight:600;color:var(--deep2);">GH₵ <?= $finance_summary['pledges'] ?></span>
+                <span style="font-size:14px;font-weight:600;color:var(--deep2);">GH₵
+                  <?= $finance_summary['pledges'] ?></span>
+              </div>
+              <div class="summary-row">
+                <span style="font-size:13px;color:var(--mid);">Welfare</span>
+                <span style="font-size:14px;font-weight:600;color:var(--deep2);">GH₵
+                  <?= $finance_summary['welfare'] ?></span>
               </div>
               <div class="summary-row" style="border-top:2px solid #EDE8DF; padding-top:14px; margin-top:4px;">
                 <span style="font-size:14px;font-weight:700;color:var(--deep2);">Total</span>
-                <span style="font-size:17px;font-weight:700;color:var(--success);">GH₵ <?= $finance_summary['total'] ?></span>
+                <span style="font-size:17px;font-weight:700;color:var(--success);">GH₵
+                  <?= $finance_summary['total'] ?></span>
               </div>
               <div style="margin-top:18px;">
                 <div
@@ -286,7 +303,9 @@ $finance_summary = $finance_summary ?? [
                   <span><?= $finance_summary['target_percent'] ?>%</span>
                 </div>
                 <div style="height:8px;border-radius:10px;background:#EDE8DF;overflow:hidden;">
-                  <div style="height:100%;width:<?= $finance_summary['target_percent'] ?>%;border-radius:10px;background:var(--gold);"></div>
+                  <div
+                    style="height:100%;width:<?= $finance_summary['target_percent'] ?>%;border-radius:10px;background:var(--gold);">
+                  </div>
                 </div>
               </div>
             </div>
