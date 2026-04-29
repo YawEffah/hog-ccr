@@ -6,10 +6,17 @@ function closeModal(id) {
   document.getElementById(id).classList.remove('open');
 }
 
-// Close modal when clicking on overlay
+// Close modal or dropdown when clicking on overlay or outside
 document.addEventListener('click', e => {
   if (e.target.classList.contains('modal-overlay')) {
     e.target.classList.remove('open');
+  }
+  
+  // Close notification panel when clicking outside
+  const notifPanel = document.getElementById('notifPanel');
+  const notifBtn = document.getElementById('notifBtn');
+  if (notifPanel && notifPanel.classList.contains('active') && !notifPanel.contains(e.target) && !notifBtn.contains(e.target)) {
+    notifPanel.classList.remove('active');
   }
 });
 
@@ -36,4 +43,13 @@ function toggleSidebar() {
     document.body.appendChild(overlay);
   }
   overlay.classList.toggle('active');
+}
+function toggleNotifications() {
+  const panel = document.getElementById('notifPanel');
+  if (panel) {
+    panel.classList.toggle('active');
+    // Hide dot if panel is opened
+    const dot = document.querySelector('.notif-dot');
+    if (dot) dot.style.display = 'none';
+  }
 }
