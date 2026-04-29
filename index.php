@@ -1,18 +1,13 @@
 <?php
 /**
  * Dashboard Page
- * 
- * BACKEND CONTRACT:
- * Expected variables:
- * @var array $stats { total_members, sunday_attendance, attendance_rate, monthly_tithe, active_ministries }
- * @var array $upcoming_events [{ day, month, title, time, venue, badge_color, badge_label }]
- * @var array $recent_members [{ initials, name, ministry, status, status_badge, joined, avatar_color, text_color }]
- * @var array $finance_summary { tithes, offerings, donations, pledges, total, target_percent }
  */
+require_once 'includes/auth.php';
+requireAuth();
 
 $pageTitle = 'Dashboard';
 $activePage = 'dashboard';
-require_once 'includes/head.php';
+
 
 // Mock data for initial refactor (Backend team will replace these)
 $stats = $stats ?? [

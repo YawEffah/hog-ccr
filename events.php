@@ -1,15 +1,13 @@
 <?php
 /**
  * Events & Announcements Page
- * 
- * BACKEND CONTRACT:
- * Expected variables:
- * @var array $upcoming_events [{ day, month, title, time, venue, description, badge_class, badge_label }]
- * @var array $announcements [{ title, description, badge_label, posted_by, date }]
  */
+require_once 'includes/auth.php';
+requireAuth();
 
 $pageTitle = 'Events';
 $activePage = 'events';
+
 
 // Mock data for initial refactor (Backend team will replace these)
 $upcoming_events = $upcoming_events ?? [

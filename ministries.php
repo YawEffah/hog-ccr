@@ -1,15 +1,13 @@
 <?php
 /**
  * Ministries & Groups Page
- * 
- * BACKEND CONTRACT:
- * Expected variables:
- * @var array $ministries [{ id, icon, bg_color, title, desc, members_count, badge_class, attendance_avg, bar_color }]
- * @var array $ministry_data { id => { icon, bg, title, desc, count, att, sessions, members: [{n, r, d}], history: [{e, d}] } }
  */
+require_once 'includes/auth.php';
+requireAuth();
 
 $pageTitle = 'Ministries';
 $activePage = 'ministries';
+
 
 // Mock data for initial refactor (Backend team will replace these)
 $ministries = $ministries ?? [

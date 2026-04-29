@@ -1,18 +1,13 @@
 <?php
 /**
  * Reports & Analytics Page
- * 
- * BACKEND CONTRACT:
- * Expected variables:
- * @var array $growth_stats { total, active, visitors, q1_height, q2_height, q3_height, q4_height, percent_yoy }
- * @var array $annual_finance [{ month, amount, target_percent, bar_width_percent, is_success }]
- * @var array $ytd_total string
- * @var array $ministry_performance [{ label, percent, bar_class }]
- * @var array $recent_activity [{ title, details, dot_color, is_last }]
  */
+require_once 'includes/auth.php';
+requireAuth();
 
 $pageTitle = 'Reports';
 $activePage = 'reports';
+
 
 // Mock data for initial refactor (Backend team will replace these)
 $growth_stats = $growth_stats ?? [

@@ -1,16 +1,13 @@
 <?php
 /**
  * Finance Management Page
- * 
- * BACKEND CONTRACT:
- * Expected variables:
- * @var array $finance_stats { tithes, offerings, donations, total, target_percent }
- * @var array $transactions [{ member, type, type_badge, amount, date }]
- * @var array $income_breakdown [{ label, amount, percent, bar_class }]
  */
+require_once 'includes/auth.php';
+requireAuth();
 
 $pageTitle = 'Finance';
 $activePage = 'finance';
+
 
 // Mock data for initial refactor (Backend team will replace these)
 $finance_stats = $finance_stats ?? [

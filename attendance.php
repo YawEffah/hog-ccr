@@ -1,16 +1,13 @@
 <?php
 /**
  * Attendance Tracking Page
- * 
- * BACKEND CONTRACT:
- * Expected variables:
- * @var array $attendance_stats { present, absent, visitors, avg_month }
- * @var array $today_register [{ name, ministry, ministry_badge, status, status_badge, time }]
- * @var array $sessions_week [{ type, date, time, status, status_badge, count_present, count_total, percent }]
  */
+require_once 'includes/auth.php';
+requireAuth();
 
 $pageTitle = 'Attendance';
 $activePage = 'attendance';
+
 
 // Mock data for initial refactor (Backend team will replace these)
 $attendance_stats = $attendance_stats ?? [

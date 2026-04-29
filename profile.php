@@ -1,15 +1,13 @@
 <?php
 /**
  * User Profile & Settings Page
- * 
- * BACKEND CONTRACT:
- * Expected variables:
- * @var array $currentUser { id, first_name, last_name, email, phone, role, photo_url, initials }
  */
+require_once 'includes/auth.php';
+requireAuth();
 
 $pageTitle = 'My Profile';
-$activePage = 'profile'; // slug to avoid sidebar highlights if not matched, or specifically highlight settings
-require_once 'includes/head.php';
+$activePage = 'profile';
+
 
 // Mock data (Backend team will replace this with logged-in user session data)
 $user_data = $currentUser ?? [

@@ -1,16 +1,13 @@
 <?php
 /**
  * Members Management Page
- * 
- * BACKEND CONTRACT:
- * Expected variables:
- * @var array $members [{ id, first_name, last_name, initials, phone, email, ministry, status, status_class, ministry_class, joined }]
- * @var int $total_members
- * @var int $members_shown
  */
+require_once 'includes/auth.php';
+requireAuth();
 
 $pageTitle = 'Members';
 $activePage = 'members';
+
 
 // Mock data for initial refactor (Backend team will replace these)
 $members = $members ?? [
