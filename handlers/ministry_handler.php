@@ -19,14 +19,15 @@ if ($action === 'add_ministry') {
     $description = trim($_POST['description'] ?? '');
     $icon        = trim($_POST['icon']        ?? '✝️');
     $bgColor     = trim($_POST['bg_color']    ?? 'var(--gold-pale)');
+    $headId      = (int)($_POST['head_id']    ?? 0);
     $slug        = strtolower(preg_replace('/[^a-z0-9]+/i', '_', $name));
 
     if (!$name) redirect($redirect . '?error=missing_fields');
 
     try {
         $db->prepare(
-            "INSERT INTO ministries (slug, name, description, icon, bg_color) VALUES (?, ?, ?, ?, ?)"
-        )->execute([$slug, $name, $description ?: null, $icon, $bgColor]);
+            "INSERT INTO ministries (slug, name, description, head_id, icon, bg_color) VALUES (?, ?, ?, ?, ?, ?)"
+        )->execute([$slug, $name, $description ?: null, $headId ?: null, $icon, $bgColor]);
 
         logActivity("Created ministry: {$name}", 'ministries');
         redirect($redirect . '?success=ministry_added');
@@ -41,14 +42,15 @@ if ($action === 'edit_ministry') {
     $name        = trim($_POST['name']         ?? '');
     $description = trim($_POST['description']  ?? '');
     $icon        = trim($_POST['icon']         ?? '✝️');
+    $headId      = (int)($_POST['head_id']     ?? 0);
     $newSlug     = strtolower(preg_replace('/[^a-z0-9]+/i', '_', $name)); // regenerate slug
 
     if (!$id || !$name) redirect($redirect . '?error=missing_fields');
 
     try {
         $db->prepare(
-            "UPDATE ministries SET name=?, description=?, icon=?, slug=? WHERE id=?"
-        )->execute([$name, $description ?: null, $icon, $newSlug, $id]);
+            "UPDATE ministries SET name=?, description=?, head_id=?, icon=?, slug=? WHERE id=?"
+        )->execute([$name, $description ?: null, $headId ?: null, $icon, $newSlug, $id]);
 
         logActivity("Updated ministry: {$name}", 'ministries');
         redirect($redirect . '?success=ministry_updated');

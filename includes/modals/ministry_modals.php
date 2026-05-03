@@ -20,15 +20,10 @@
         <div class="grid-2" style="gap:16px;">
           <div class="form-group">
             <label class="form-label">Ministry Head</label>
-            <input class="form-control" name="head_name" list="heads_list" placeholder="Enter name or select...">
-            <datalist id="heads_list">
-              <option value="Elder Asante">
-              <option value="Pastor Adu">
-              <option value="Brother Kwame">
-            </datalist>
-            <div style="font-size:11px;color:var(--muted);margin-top:4px;">
-              You can type a new name or select from the list.
-            </div>
+            <input class="form-control" id="add_mHeadDisplay" name="head_display"
+              placeholder="Search member by name or ID..." oninput="filterMHeads(this.value, 'add')" autocomplete="off">
+            <input type="hidden" name="head_id" id="add_mHeadId">
+            <div id="add_mHeadSuggestions" class="search-suggestions" style="display:none;"></div>
           </div>
           <div class="form-group">
             <label class="form-label">Meeting Day</label>
@@ -75,7 +70,8 @@
         <div class="grid-3" style="gap:16px;margin-bottom:24px;">
           <div
             style="background:var(--deep-pale);padding:16px;border-radius:12px;border:1px solid rgba(46,45,123,0.1);">
-            <div style="font-size:11px;color:var(--deep);text-transform:uppercase;margin-bottom:4px;">Total Members</div>
+            <div style="font-size:11px;color:var(--deep);text-transform:uppercase;margin-bottom:4px;">Total Members
+            </div>
             <div style="font-size:24px;font-weight:700;color:var(--deep);" id="mCount">28</div>
           </div>
           <div
@@ -145,7 +141,11 @@
           <div class="grid-2" style="gap:16px;">
             <div class="form-group">
               <label class="form-label">Ministry Head</label>
-              <input class="form-control" name="head_name" id="edit_mHead" list="heads_list">
+              <input class="form-control" id="edit_mHeadDisplay" name="head_display"
+                placeholder="Search member by name or ID..." oninput="filterMHeads(this.value, 'edit')"
+                autocomplete="off">
+              <input type="hidden" name="head_id" id="edit_mHeadId">
+              <div id="edit_mHeadSuggestions" class="search-suggestions" style="display:none;"></div>
             </div>
             <div class="form-group">
               <label class="form-label">Meeting Day</label>
@@ -167,3 +167,70 @@
     </div>
   </div>
 </div>
+<style>
+  .search-suggestions {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    position: absolute;
+    width: 100%;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-top: 4px;
+  }
+
+  .suggestion-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    border-bottom: 1px solid #F4F0EA;
+  }
+
+  .suggestion-item:hover {
+    background: var(--gold-pale);
+  }
+
+  .suggestion-item .sub {
+    color: var(--muted);
+    font-size: 11px;
+    margin-left: 6px;
+  }
+</style>
+
+<script>
+  function filterMHeads(q, type) {
+    const box = document.getElementById(type + '_mHeadSuggestions');
+    const allMembers = allMembersData;
+
+    if (!q) { box.style.display = 'none'; return; }
+
+    const filtered = allMembers.filter(m =>
+      m.name.toLowerCase().includes(q.toLowerCase()) ||
+      m.member_code.toLowerCase().includes(q.toLowerCase())
+    );
+
+    if (!filtered.length) { box.style.display = 'none'; return; }
+
+    box.innerHTML = filtered.map(m => `
+    <div class="suggestion-item" onclick="selectMHead('${m.id}', '${m.name} (${m.member_code})', '${type}')">
+      ${m.name} <span class="sub">${m.member_code}</span>
+    </div>
+  `).join('');
+    box.style.display = 'block';
+  }
+
+  function selectMHead(id, display, type) {
+    document.getElementById(type + '_mHeadId').value = id;
+    document.getElementById(type + '_mHeadDisplay').value = display;
+    document.getElementById(type + '_mHeadSuggestions').style.display = 'none';
+  }
+
+  // Close suggestions on outside click
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.form-group')) {
+      document.querySelectorAll('.search-suggestions').forEach(s => s.style.display = 'none');
+    }
+  });
+</script>

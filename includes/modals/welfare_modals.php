@@ -45,7 +45,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('enrolWelfareModal')">Cancel</button>
-        <button type="submit" class="btn btn-primary" style="background:#0D9488!important;">
+        <button type="submit" class="btn btn-primary">
           <i class="ph ph-hand-heart"></i> Enrol Member
         </button>
       </div>
@@ -183,7 +183,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('viewWelfareMemberModal')">Close</button>
-      <button class="btn btn-primary" id="welfareViewRecordBtn" style="background:#0D9488!important;">
+      <button class="btn btn-primary" id="welfareViewRecordBtn">
         <i class="ph ph-plus"></i> Record Payment
       </button>
     </div>
@@ -236,7 +236,7 @@
     <div class="modal-footer">
       <div id="msgResultBadge" style="flex:1;font-size:13px;display:none;"></div>
       <button class="btn btn-outline" onclick="closeModal('sendWelfareMessageModal')">Cancel</button>
-      <button class="btn btn-primary" id="sendMsgBtn" onclick="dispatchWelfareMessages()" style="background:#0D9488!important;">
+      <button class="btn btn-primary" id="sendMsgBtn" onclick="dispatchWelfareMessages()">
         <i class="ph ph-paper-plane-tilt"></i> Send Messages
       </button>
     </div>

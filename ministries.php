@@ -18,12 +18,19 @@ $db = getDB();
 // ── Ministries List with Member Counts ───────────────────────────────────────
 $minStmt = $db->query(
     "SELECT min.*, 
+            h.id as head_member_id,
+            CONCAT(h.first_name, ' ', h.last_name) as head_name,
+            h.member_code as head_code,
             (SELECT COUNT(*) FROM members WHERE ministry_id = min.id) as total_count,
             (SELECT COUNT(*) FROM members WHERE ministry_id = min.id AND status='Active') as active_count
      FROM ministries min
+     LEFT JOIN members h ON min.head_id = h.id
      ORDER BY min.name ASC"
 );
 $rawMinistries = $minStmt->fetchAll();
+
+// ── All Members for Search suggestions ───────────────────────────────────────
+$allMembers = $db->query("SELECT id, first_name, last_name, member_code FROM members ORDER BY last_name ASC")->fetchAll();
 
 $ministries = array_map(function($m) use ($db) {
     // Get average attendance for this ministry
@@ -78,10 +85,13 @@ foreach ($rawMinistries as $m) {
     $sessionCount = (int)$sessStmt->fetchColumn();
 
     $ministry_details[$m['id']] = [
+        'id'       => $m['id'],
         'icon'     => $m['icon'],
         'bg'       => $m['bg_color'],
         'title'    => $m['name'],
         'desc'     => $m['description'],
+        'head_id'  => $m['head_member_id'],
+        'head_name'=> $m['head_name'] ? $m['head_name'] . " (" . $m['head_code'] . ")" : '',
         'count'    => $m['total_count'],
         'att'      => '0%', // Simplified for now
         'sessions' => $sessionCount,
@@ -165,7 +175,15 @@ foreach ($rawMinistries as $m) {
   <script src="assets/js/main.js"></script>
   <script>
     const mData = <?php echo json_encode($ministry_details); ?>;
-    const defaultData = { icon: '✝️', bg: 'var(--gold-pale)', title: 'Ministry', desc: 'Description', count: 0, att: '0%', sessions: 0, members: [], history: [] };
+    const allMembersData = <?php echo json_encode(array_map(function($m) {
+        return [
+            'id' => $m['id'],
+            'member_code' => $m['member_code'],
+            'name' => htmlspecialchars($m['first_name'] . ' ' . $m['last_name'])
+        ];
+    }, $allMembers)); ?>;
+
+    const defaultData = { id: 0, icon: '✝️', bg: 'var(--gold-pale)', title: 'Ministry', desc: 'Description', head_id: '', head_name: '', count: 0, att: '0%', sessions: 0, members: [], history: [] };
 
     function manageMinistry(id) {
       const m = mData[id] || { ...defaultData, title: 'Ministry' };
@@ -177,6 +195,13 @@ foreach ($rawMinistries as $m) {
       document.getElementById('mCount').textContent = m.count;
       document.getElementById('mAttendance').textContent = m.att;
       document.getElementById('mSessions').textContent = m.sessions;
+
+      // Populate Edit Form
+      document.getElementById('edit_mId').value = id;
+      document.getElementById('edit_mName').value = m.title;
+      document.getElementById('edit_mDesc').value = m.desc;
+      document.getElementById('edit_mHeadId').value = m.head_id || '';
+      document.getElementById('edit_mHeadDisplay').value = m.head_name || '';
 
       // Populate Members List
       const list = document.getElementById('mMembersList');

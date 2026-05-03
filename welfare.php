@@ -272,7 +272,7 @@ $nonWelfareMembers = $db->query(
                         <button class="btn-icon" onclick="viewWelfareMember('<?= $wm['id'] ?>')" title="View details">
                           <i class="ph ph-eye"></i>
                         </button>
-                        <button class="btn-icon" onclick="openRecordPaymentFor('<?= $wm['id'] ?>','<?= htmlspecialchars($wm['name']) ?>')" title="Record payment" style="background:#F0FDFA;color:#0D9488;">
+                        <button class="btn-icon" onclick="openRecordPaymentFor('<?= $wm['id'] ?>','<?= htmlspecialchars($wm['name']) ?>')" title="Record payment" style="background:var(--gold-pale);color:var(--gold);">
                           <i class="ph ph-plus"></i>
                         </button>
                         <button class="btn-icon" onclick="confirmRemoveWelfareMember('<?= $wm['id'] ?>', '<?= htmlspecialchars(addslashes($wm['name'])) ?>')" title="Remove member" style="background:#FEF2F2;color:#DC2626;">
