@@ -187,5 +187,22 @@ if ($action === 'remove_welfare_member') {
         redirect($redirect . '?error=db_error');
     }
 }
+// ── DELETE WELFARE CONTRIBUTION ────────────────────────────────────────────────
+if ($action === 'delete_contribution') {
+    $contribId = (int)($_POST['contribution_id'] ?? 0);
+
+    if (!$contribId) {
+        redirect($redirect . '?error=invalid_data');
+    }
+
+    try {
+        $db->prepare("DELETE FROM welfare_contributions WHERE id = ?")->execute([$contribId]);
+        logActivity("Deleted welfare contribution ID: {$contribId}", 'welfare');
+        redirect($redirect . '?success=contribution_deleted');
+    } catch (PDOException $e) {
+        error_log('delete_contribution error: ' . $e->getMessage());
+        redirect($redirect . '?error=db_error');
+    }
+}
 
 redirect($redirect . '?error=unknown_action');

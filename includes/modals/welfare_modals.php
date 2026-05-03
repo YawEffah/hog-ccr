@@ -19,13 +19,10 @@
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label">Select Member</label>
-          <select class="form-control" name="member_id" required>
-            <option value="">— Select Member —</option>
-            <?php foreach ($nonWelfareMembers as $m): ?>
-            <option value="<?= $m['id'] ?>"><?= htmlspecialchars($m['first_name'] . ' ' . $m['last_name']) ?> (<?= $m['member_code'] ?>)</option>
-            <?php endforeach; ?>
-          </select>
+          <input class="form-control" id="enrolMemberSearch" name="member_display" placeholder="Search by name or ID…" oninput="filterWelfareEnrolList(this.value)" autocomplete="off" required>
+          <input type="hidden" name="member_id" id="enrolMemberId" required>
         </div>
+        <div id="enrolSuggestions" style="background:#F8FAFC;border:1px solid #EDE8DF;border-radius:8px;max-height:140px;overflow-y:auto;display:none;margin-top:-10px;margin-bottom:14px;"></div>
 
         <div class="grid-2" style="gap:16px;">
           <div class="form-group">
@@ -272,25 +269,26 @@ const welfareMembersData = [
 const todayStr = new Date().toISOString().split('T')[0];
 
 /* ---- Enrol modal member search ---- */
+const enrolMembersData = <?php echo json_encode(array_map(function($m) {
+    return [
+        'id' => $m['id'],
+        'member_code' => $m['member_code'],
+        'name' => htmlspecialchars($m['first_name'] . ' ' . $m['last_name'])
+    ];
+}, $nonWelfareMembers)); ?>;
+
 function filterWelfareEnrolList(q) {
   const box = document.getElementById('enrolSuggestions');
-  const allMembers = [
-    { id: 'CCR-001', name: 'Abena Kusi' },
-    { id: 'CCR-002', name: 'Kwame Ofori' },
-    { id: 'CCR-003', name: 'Serwa Acheampong' },
-    { id: 'CCR-004', name: 'Michael Boateng' },
-    { id: 'CCR-005', name: 'Efua Asare' },
-    { id: 'CCR-006', name: 'Pastor Adu' },
-  ];
+  const allMembers = enrolMembersData;
   if (!q) { box.style.display = 'none'; return; }
   const filtered = allMembers.filter(m =>
-    m.name.toLowerCase().includes(q.toLowerCase()) || m.id.toLowerCase().includes(q.toLowerCase())
+    m.name.toLowerCase().includes(q.toLowerCase()) || m.member_code.toLowerCase().includes(q.toLowerCase())
   );
   if (!filtered.length) { box.style.display = 'none'; return; }
   box.innerHTML = filtered.map(m =>
     `<div onclick="selectEnrolMember('${m.id}','${m.name}')"
       style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid #F4F0EA;"
-      onmouseover="this.style.background='#F0FDFA'" onmouseout="this.style.background=''">${m.name} <span style="color:var(--muted);font-size:11px;">${m.id}</span></div>`
+      onmouseover="this.style.background='#F0FDFA'" onmouseout="this.style.background=''">${m.name} <span style="color:var(--muted);font-size:11px;">${m.member_code}</span></div>`
   ).join('');
   box.style.display = 'block';
 }

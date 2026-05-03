@@ -15,28 +15,47 @@ $errorMsg   = flash('error');
 
 $db = getDB();
 
+// ── Filter Month Logic ───────────────────────────────────────────────────────
+$filterMonth = $_GET['month'] ?? date('Y-m');
+// Ensure format is valid (YYYY-MM), else fallback
+if (!preg_match('/^\d{4}-\d{2}$/', $filterMonth)) {
+    $filterMonth = date('Y-m');
+}
+
 // ── Welfare Statistics ───────────────────────────────────────────────────────
 $welfare_stats = [
     'total_members'    => (int)$db->query("SELECT COUNT(*) FROM welfare_members")->fetchColumn(),
-    'collected_month'  => number_format((float)$db->query("SELECT SUM(amount) FROM welfare_contributions WHERE MONTH(payment_date) = MONTH(CURRENT_DATE) AND YEAR(payment_date) = YEAR(CURRENT_DATE)")->fetchColumn(), 2),
-    'active_payers'    => (int)$db->query("SELECT COUNT(DISTINCT welfare_id) FROM welfare_contributions WHERE MONTH(payment_date) = MONTH(CURRENT_DATE) AND YEAR(payment_date) = YEAR(CURRENT_DATE)")->fetchColumn(),
-    'pending'          => 0 // Logic: total_members - active_payers
+    'collected_month'  => 0,
+    'active_payers'    => 0,
+    'pending'          => 0
 ];
+
+$stmtCollected = $db->prepare("SELECT SUM(amount) FROM welfare_contributions WHERE DATE_FORMAT(payment_date, '%Y-%m') = ?");
+$stmtCollected->execute([$filterMonth]);
+$welfare_stats['collected_month'] = number_format((float)$stmtCollected->fetchColumn(), 2);
+
+$stmtActive = $db->prepare("SELECT COUNT(DISTINCT welfare_id) FROM welfare_contributions WHERE DATE_FORMAT(payment_date, '%Y-%m') = ?");
+$stmtActive->execute([$filterMonth]);
+$welfare_stats['active_payers'] = (int)$stmtActive->fetchColumn();
+
 $welfare_stats['pending'] = max(0, $welfare_stats['total_members'] - $welfare_stats['active_payers']);
 
 // ── Welfare Members Roster ───────────────────────────────────────────────────
-$membersStmt = $db->query(
+$membersStmt = $db->prepare(
     "SELECT wm.*, m.first_name, m.last_name, m.member_code, m.phone, m.email,
             (SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id) as total_paid,
-            (SELECT payment_date FROM welfare_contributions WHERE welfare_id = wm.id ORDER BY payment_date DESC LIMIT 1) as last_payment_date
+            (SELECT payment_date FROM welfare_contributions WHERE welfare_id = wm.id ORDER BY payment_date DESC LIMIT 1) as last_payment_date,
+            (SELECT COUNT(*) FROM welfare_contributions WHERE welfare_id = wm.id AND DATE_FORMAT(payment_date, '%Y-%m') = ?) as paid_in_filter_month
      FROM welfare_members wm
      JOIN members m ON wm.member_id = m.id
      ORDER BY m.last_name ASC"
 );
+$membersStmt->execute([$filterMonth]);
 $rawWelfareMembers = $membersStmt->fetchAll();
 
 // Map for display
 $welfare_members = array_map(function($wm) {
+    $status = ((int)$wm['paid_in_filter_month'] > 0) ? 'Active' : 'Arrears';
     return [
         'id'            => $wm['id'],
         'member_id'     => $wm['member_code'],
@@ -46,25 +65,27 @@ $welfare_members = array_map(function($wm) {
         'enrolled'      => date('M Y', strtotime($wm['enrol_date'])),
         'last_pay'      => $wm['last_payment_date'] ? date('M j, Y', strtotime($wm['last_payment_date'])) : 'Never',
         'total'         => number_format((float)$wm['total_paid'], 2),
-        'status'        => 'Active', // Simple logic for now
+        'status'        => $status,
         'avatar_bg'     => 'var(--gold-pale)',
         'avatar_color'  => 'var(--gold)'
     ];
 }, $rawWelfareMembers);
 
 // ── Contribution Log ─────────────────────────────────────────────────────────
-$contribStmt = $db->query(
+$contribStmt = $db->prepare(
     "SELECT wc.*, m.first_name, m.last_name, m.member_code
      FROM welfare_contributions wc
      JOIN welfare_members wm ON wc.welfare_id = wm.id
      JOIN members m ON wm.member_id = m.id
-     ORDER BY wc.payment_date DESC, wc.created_at DESC
-     LIMIT 50"
+     WHERE DATE_FORMAT(wc.payment_date, '%Y-%m') = ?
+     ORDER BY wc.payment_date DESC, wc.created_at DESC"
 );
+$contribStmt->execute([$filterMonth]);
 $rawContribs = $contribStmt->fetchAll();
 
 $welfare_contributions = array_map(function($c) {
     return [
+        'id'        => $c['id'],
         'member'    => $c['first_name'] . ' ' . $c['last_name'],
         'member_id' => $c['member_code'],
         'amount'    => number_format($c['amount'], 2),
@@ -105,14 +126,29 @@ $nonWelfareMembers = $db->query(
           <div class="topbar-title">Welfare</div>
         </div>
         <div class="topbar-actions">
-          <select class="form-control" style="width:140px;padding:8px 12px;" id="welfareMonthFilter">
-            <option><?= date('F Y') ?></option>
-            <option><?= date('F Y', strtotime('-1 month')) ?></option>
-            <option><?= date('F Y', strtotime('-2 months')) ?></option>
-          </select>
-          <button class="btn btn-outline btn-sm" onclick="openSendWelfareMessage()">
-            <i class="ph ph-paper-plane-tilt"></i> Send Message
-          </button>
+          <?php
+            $currentY = explode('-', $filterMonth)[0];
+            $currentM = explode('-', $filterMonth)[1];
+            $monthsList = [
+                '01' => 'January', '02' => 'February', '03' => 'March', '04' => 'April',
+                '05' => 'May', '06' => 'June', '07' => 'July', '08' => 'August',
+                '09' => 'September', '10' => 'October', '11' => 'November', '12' => 'December'
+            ];
+            $thisYear = date('Y');
+          ?>
+          <div style="display:flex;gap:8px;">
+            <select class="form-control" style="width:120px;padding:8px 12px;" id="welfareMonthSelect" onchange="updateWelfareFilter()">
+              <?php foreach($monthsList as $num => $name): ?>
+                <option value="<?= $num ?>" <?= $currentM === $num ? 'selected' : '' ?>><?= $name ?></option>
+              <?php endforeach; ?>
+            </select>
+            <select class="form-control" style="width:90px;padding:8px 12px;" id="welfareYearSelect" onchange="updateWelfareFilter()">
+              <?php for($y = $thisYear; $y >= $thisYear - 5; $y--): ?>
+                <option value="<?= $y ?>" <?= (string)$currentY === (string)$y ? 'selected' : '' ?>><?= $y ?></option>
+              <?php endfor; ?>
+            </select>
+          </div>
+
           <button class="btn btn-outline btn-sm" id="notifBtn" onclick="toggleNotifications()">
             <i class="ph ph-bell"></i>
             <span class="notif-dot"></span>
@@ -239,6 +275,9 @@ $nonWelfareMembers = $db->query(
                         <button class="btn-icon" onclick="openRecordPaymentFor('<?= $wm['id'] ?>','<?= htmlspecialchars($wm['name']) ?>')" title="Record payment" style="background:#F0FDFA;color:#0D9488;">
                           <i class="ph ph-plus"></i>
                         </button>
+                        <button class="btn-icon" onclick="confirmRemoveWelfareMember('<?= $wm['id'] ?>', '<?= htmlspecialchars(addslashes($wm['name'])) ?>')" title="Remove member" style="background:#FEF2F2;color:#DC2626;">
+                          <i class="ph ph-trash"></i>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -303,7 +342,12 @@ $nonWelfareMembers = $db->query(
                       <?php endif; ?>
                     </td>
                     <td>
-                      <button class="btn btn-outline btn-sm" title="View Receipt"><i class="ph ph-receipt"></i></button>
+                      <div style="display:flex;gap:6px;">
+                        <button class="btn btn-outline btn-sm" title="View Receipt"><i class="ph ph-receipt"></i></button>
+                        <button class="btn btn-outline btn-sm" onclick="confirmDeleteContrib('<?= $c['id'] ?>')" style="color:#DC2626;border-color:#FECACA;background:#FEF2F2;" title="Delete Contribution">
+                          <i class="ph ph-trash"></i>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   <?php endforeach; ?>
@@ -351,10 +395,30 @@ $nonWelfareMembers = $db->query(
 
   </main>
 
+  <!-- Hidden delete forms -->
+  <form method="POST" action="handlers/welfare_handler.php" id="removeWelfareMemberForm" style="display:none;">
+    <?= csrfField() ?>
+    <input type="hidden" name="action" value="remove_welfare_member">
+    <input type="hidden" name="welfare_member_id" id="removeWelfareMemberId">
+  </form>
+
+  <form method="POST" action="handlers/welfare_handler.php" id="deleteContribForm" style="display:none;">
+    <?= csrfField() ?>
+    <input type="hidden" name="action" value="delete_contribution">
+    <input type="hidden" name="contribution_id" id="deleteContribId">
+  </form>
+
   <?php require_once 'includes/modals/welfare_modals.php'; ?>
 
   <script src="assets/js/main.js"></script>
   <script>
+  /* ---- Filter update ---- */
+  function updateWelfareFilter() {
+    const y = document.getElementById('welfareYearSelect').value;
+    const m = document.getElementById('welfareMonthSelect').value;
+    window.location.href = '?month=' + y + '-' + m;
+  }
+
   /* ---- Tab switcher ---- */
   function switchWelfareTab(tab) {
     const membersTab = document.getElementById('welfareMembersTab');
@@ -397,6 +461,32 @@ $nonWelfareMembers = $db->query(
     document.querySelectorAll('#contribTbody tr').forEach(row => {
       row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
     });
+  }
+
+  function confirmRemoveWelfareMember(id, name) {
+    showConfirmModal(
+      'Remove Welfare Member',
+      'Are you sure you want to remove ' + name + ' from the Welfare system? This will also permanently delete all of their contribution records.',
+      'Remove',
+      function() {
+        document.getElementById('removeWelfareMemberId').value = id;
+        document.getElementById('removeWelfareMemberForm').submit();
+      },
+      'danger'
+    );
+  }
+
+  function confirmDeleteContrib(id) {
+    showConfirmModal(
+      'Delete Contribution',
+      'Are you sure you want to delete this contribution record? This action cannot be undone.',
+      'Delete',
+      function() {
+        document.getElementById('deleteContribId').value = id;
+        document.getElementById('deleteContribForm').submit();
+      },
+      'danger'
+    );
   }
   </script>
 </body>
