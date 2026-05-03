@@ -4,32 +4,102 @@
  */
 require_once 'includes/auth.php';
 requireAuth();
+require_once 'includes/db.php';
+require_once 'includes/helpers.php';
 
-$pageTitle = 'Attendance';
+$pageTitle  = 'Attendance';
 $activePage = 'attendance';
 
+$successMsg = flash('success');
+$errorMsg   = flash('error');
+if (!$successMsg && !$errorMsg) {
+    $successLabels = ['attendance_recorded' => 'Attendance recorded successfully.'];
+    $errorLabels   = [
+        'missing_fields' => 'Please select session type and date.',
+        'db_error'       => 'A database error occurred. Please try again.'
+    ];
+    $successMsg = $successLabels[$_GET['success'] ?? ''] ?? '';
+    $errorMsg   = $errorLabels[$_GET['error']   ?? ''] ?? '';
+}
 
-// Mock data for initial refactor (Backend team will replace these)
-$attendance_stats = $attendance_stats ?? [
-    'present' => 312,
-    'absent' => 175,
-    'visitors' => 8,
-    'avg_month' => 298
+$db    = getDB();
+$today = date('Y-m-d');
+
+// ── Attendance Statistics ────────────────────────────────────────────────────
+$statsStmt = $db->prepare(
+    "SELECT 
+        SUM(CASE WHEN ar.status='Present' THEN 1 ELSE 0 END) AS present,
+        SUM(CASE WHEN ar.status='Absent' THEN 1 ELSE 0 END) AS absent,
+        SUM(CASE WHEN ar.status='Visitor' THEN 1 ELSE 0 END) AS visitors
+     FROM attendance_records ar
+     JOIN attendance_sessions s ON ar.session_id = s.id
+     WHERE s.session_date = ?"
+);
+$statsStmt->execute([$today]);
+$attendance_stats = $statsStmt->fetch();
+$attendance_stats = [
+    'present'   => (int)($attendance_stats['present']  ?? 0),
+    'absent'    => (int)($attendance_stats['absent']   ?? 0),
+    'visitors'  => (int)($attendance_stats['visitors'] ?? 0),
+    'avg_month' => (int)$db->query("SELECT AVG(present_count) FROM (SELECT session_id, COUNT(*) as present_count FROM attendance_records WHERE status='Present' GROUP BY session_id) as daily_counts")->fetchColumn()
 ];
 
-$today_register = $today_register ?? [
-    ['name' => 'Abena Kusi', 'ministry' => 'Music', 'ministry_badge' => 'badge-purple', 'status' => '✓ Present', 'status_badge' => 'badge-green', 'time' => '8:12am'],
-    ['name' => 'Kwame Ofori', 'ministry' => 'Youth', 'ministry_badge' => 'badge-blue', 'status' => '✓ Present', 'status_badge' => 'badge-green', 'time' => '7:58am'],
-    ['name' => 'Efua Asare', 'ministry' => 'Intercessory', 'ministry_badge' => 'badge-yellow', 'status' => '✗ Absent', 'status_badge' => 'badge-red', 'time' => '—'],
-    ['name' => 'Michael Boateng', 'ministry' => 'Evangelism', 'ministry_badge' => 'badge-green', 'status' => '✓ Present', 'status_badge' => 'badge-green', 'time' => '8:05am'],
-    ['name' => 'Serwa Acheampong', 'ministry' => '—', 'ministry_badge' => 'badge-gray', 'status' => 'Visitor', 'status_badge' => 'badge-yellow', 'time' => '8:30am']
-];
+// ── Today's Register ─────────────────────────────────────────────────────────
+$regStmt = $db->prepare(
+    "SELECT m.first_name, m.last_name, min.name AS ministry, ar.status, ar.check_in_time
+     FROM attendance_records ar
+     JOIN members m ON ar.member_id = m.id
+     JOIN attendance_sessions s ON ar.session_id = s.id
+     LEFT JOIN ministries min ON m.ministry_id = min.id
+     WHERE s.session_date = ?
+     ORDER BY ar.check_in_time DESC"
+);
+$regStmt->execute([$today]);
+$rawRegister = $regStmt->fetchAll();
 
-$sessions_week = $sessions_week ?? [
-    ['type' => 'Sunday Service', 'date' => 'Apr 6', 'time' => '8:00am', 'status' => 'Done', 'status_badge' => 'badge-green', 'count_present' => 312, 'count_total' => 487, 'percent' => 64],
-    ['type' => 'Midweek Prayer', 'date' => 'Apr 9', 'time' => '6:30pm', 'status' => 'Upcoming', 'status_badge' => 'badge-blue', 'count_present' => 0, 'count_total' => 0, 'percent' => 0],
-    ['type' => 'Youth Meeting', 'date' => 'Apr 10', 'time' => '5:00pm', 'status' => 'Upcoming', 'status_badge' => 'badge-blue', 'count_present' => 0, 'count_total' => 0, 'percent' => 0]
-];
+$today_register = array_map(function($r) {
+    return [
+        'name'           => $r['first_name'] . ' ' . $r['last_name'],
+        'ministry'       => $r['ministry'] ?? 'None',
+        'ministry_badge' => 'badge-gray', 
+        'status'         => ($r['status'] === 'Present' ? '✓ Present' : ($r['status'] === 'Absent' ? '✗ Absent' : 'Visitor')),
+        'status_badge'   => ($r['status'] === 'Present' ? 'badge-green' : ($r['status'] === 'Absent' ? 'badge-red' : 'badge-yellow')),
+        'time'           => $r['check_in_time'] ? date('g:ia', strtotime($r['check_in_time'])) : '—'
+    ];
+}, $rawRegister);
+
+// ── Recent Sessions ────────────────────────────────────────────────────────────
+$sessionsStmt = $db->query(
+    "SELECT s.*, 
+            (SELECT COUNT(*) FROM attendance_records WHERE session_id = s.id AND status='Present') as present_count,
+            (SELECT COUNT(*) FROM attendance_records WHERE session_id = s.id) as total_count
+     FROM attendance_sessions s
+     ORDER BY s.session_date DESC, s.session_time DESC
+     LIMIT 10"
+);
+$rawSessions = $sessionsStmt->fetchAll();
+
+$sessions_week = array_map(function($s) {
+    $percent = $s['total_count'] > 0 ? round(($s['present_count'] / $s['total_count']) * 100) : 0;
+    return [
+        'type'          => $s['session_type'],
+        'date'          => date('M j', strtotime($s['session_date'])),
+        'time'          => $s['session_time'] ? date('g:ia', strtotime($s['session_time'])) : '—',
+        'status'        => 'Done',
+        'status_badge'  => 'badge-green',
+        'count_present' => $s['present_count'],
+        'count_total'   => $s['total_count'],
+        'percent'       => $percent
+    ];
+}, $rawSessions);
+
+// ── All Members (for Attendance Modal) ───────────────────────────────────────
+$allMembers = $db->query(
+    "SELECT id, first_name, last_name, member_code 
+     FROM members 
+     WHERE status = 'Active' 
+     ORDER BY last_name ASC"
+)->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -61,6 +131,17 @@ $sessions_week = $sessions_week ?? [
         </div>
       </div>
       <div class="content">
+        <?php if ($successMsg): ?>
+        <div class="alert alert-success" style="margin-bottom:24px;">
+          <i class="ph ph-check-circle"></i> <?= htmlspecialchars($successMsg) ?>
+        </div>
+        <?php endif; ?>
+        <?php if ($errorMsg): ?>
+        <div class="alert alert-error" style="margin-bottom:24px;">
+          <i class="ph ph-warning-circle"></i> <?= htmlspecialchars($errorMsg) ?>
+        </div>
+        <?php endif; ?>
+
         <div class="grid-4" style="margin-bottom:24px;">
           <div class="stat-card">
             <div class="accent-bar" style="background:var(--gold);"></div>
@@ -126,7 +207,7 @@ $sessions_week = $sessions_week ?? [
 
           <div class="card">
             <div class="card-header">
-              <h3>Sessions This Week</h3>
+              <h3>Recent Sessions</h3>
             </div>
             <div class="card-body">
               <div style="display:flex;flex-direction:column;gap:14px;">

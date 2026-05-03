@@ -4,48 +4,102 @@
  */
 require_once 'includes/auth.php';
 requireAuth();
+require_once 'includes/db.php';
+require_once 'includes/helpers.php';
 
-$pageTitle = 'Reports';
+$pageTitle  = 'Reports';
 $activePage = 'reports';
 
+$db = getDB();
 
-// Mock data for initial refactor (Backend team will replace these)
-$growth_stats = $growth_stats ?? [
-    'total' => 487,
-    'active' => 442,
-    'visitors' => 45,
-    'q1_height' => 62,
-    'q2_height' => 74,
-    'q3_height' => 88,
-    'q4_height' => 100,
-    'percent_yoy' => '+12%'
+// ── Membership Growth Stats ──────────────────────────────────────────────────
+$total_members = (int)$db->query("SELECT COUNT(*) FROM members")->fetchColumn();
+$active_members = (int)$db->query("SELECT COUNT(*) FROM members WHERE status='Active'")->fetchColumn();
+
+// Heights for Q1-Q4 (Based on join dates this year)
+$currentYear = date('Y');
+$growth_stats = [
+    'total'       => $total_members,
+    'active'      => $active_members,
+    'visitors'    => (int)$db->query("SELECT COUNT(*) FROM members WHERE status='Visitor'")->fetchColumn(),
+    'percent_yoy' => '+0%', // Placeholder for complex logic
 ];
 
-$annual_finance = $annual_finance ?? [
-    ['month' => 'Jan', 'amount' => '21,000', 'target_percent' => 70, 'bar_width_percent' => 70, 'is_success' => false],
-    ['month' => 'Feb', 'amount' => '22,500', 'target_percent' => 75, 'bar_width_percent' => 75, 'is_success' => false],
-    ['month' => 'Mar', 'amount' => '22,780', 'target_percent' => 76, 'bar_width_percent' => 76, 'is_success' => false],
-    ['month' => 'Apr', 'amount' => '24,550', 'target_percent' => 82, 'bar_width_percent' => 82, 'is_success' => true]
-];
+for($q=1; $q<=4; $q++) {
+    $mStart = ($q-1)*3 + 1;
+    $mEnd   = $q*3;
+    $count = (int)$db->query("SELECT COUNT(*) FROM members WHERE YEAR(created_at) = $currentYear AND MONTH(created_at) BETWEEN $mStart AND $mEnd")->fetchColumn();
+    $growth_stats["q{$q}_height"] = min(100, $count * 5 + 20); // Scaled for display
+}
 
-$ytd_total = $ytd_total ?? '90,830';
+// ── Annual Finance Summary ───────────────────────────────────────────────────
+$annual_finance = [];
+$ytd_total_val = 0;
+for ($m = 1; $m <= 12; $m++) {
+    if ($m > date('n')) break;
+    $mDate = date("Y-$m-01");
+    $mName = date('M', strtotime($mDate));
+    
+    $stmt = $db->prepare("SELECT SUM(amount) FROM finance_transactions WHERE MONTH(transaction_date) = ? AND YEAR(transaction_date) = ?");
+    $stmt->execute([$m, $currentYear]);
+    $amt = (float)$stmt->fetchColumn();
+    
+    $targetStmt = $db->prepare("SELECT target_amount FROM finance_targets WHERE target_month = ?");
+    $targetStmt->execute([date('Y-m-01', strtotime($mDate))]);
+    $target = (float)$targetStmt->fetchColumn() ?: 10000;
+    
+    $percent = round(($amt / $target) * 100);
+    $annual_finance[] = [
+        'month'             => $mName,
+        'amount'            => number_format($amt, 0),
+        'target_percent'    => $percent,
+        'bar_width_percent' => min(100, $percent),
+        'is_success'        => $amt >= $target
+    ];
+    $ytd_total_val += $amt;
+}
+$ytd_total = number_format($ytd_total_val);
 
-$ministry_performance = $ministry_performance ?? [
-    ['label' => 'Executives', 'percent' => 92, 'bar_class' => 'var(--deep3)'],
-    ['label' => 'Intercessory', 'percent' => 85, 'bar_class' => 'var(--deep)'],
-    ['label' => 'Music Ministry', 'percent' => 78, 'bar_class' => 'var(--gold)'],
-    ['label' => 'Youth Wing', 'percent' => 72, 'bar_class' => '#2E7D57'],
-    ['label' => 'Prayer Group', 'percent' => 68, 'bar_class' => 'var(--gold)'],
-    ['label' => 'Evangelism', 'percent' => 65, 'bar_class' => 'var(--gold)']
-];
+// ── Ministry Performance ─────────────────────────────────────────────────────
+$minStmt = $db->query(
+    "SELECT name, 
+            (SELECT COUNT(*) FROM attendance_records ar 
+             JOIN members m ON ar.member_id = m.id 
+             WHERE m.ministry_id = min.id AND ar.status='Present') as present_count,
+            (SELECT COUNT(*) FROM attendance_records ar 
+             JOIN members m ON ar.member_id = m.id 
+             WHERE m.ministry_id = min.id) as total_count,
+            bg_color
+     FROM ministries min
+     LIMIT 6"
+);
+$ministry_performance = array_map(function($m) {
+    $percent = $m['total_count'] > 0 ? round(($m['present_count'] / $m['total_count']) * 100) : 0;
+    return [
+        'label'     => $m['name'],
+        'percent'   => $percent,
+        'bar_class' => $m['bg_color']
+    ];
+}, $minStmt->fetchAll());
 
-$recent_activity = $recent_activity ?? [
-    ['title' => 'Attendance recorded — Sunday Service', 'details' => '312 present · Apr 6 at 10:34am · by Secretary', 'dot_color' => 'var(--gold)', 'is_last' => false],
-    ['title' => 'New member registered', 'details' => 'Michael Boateng · Apr 3 · by Secretary', 'dot_color' => 'var(--deep)', 'is_last' => false],
-    ['title' => 'Tithe received — GH₵ 350', 'details' => 'Abena Kusi · Apr 6 · by Finance Sec.', 'dot_color' => '#2E7D57', 'is_last' => false],
-    ['title' => 'Event created — Easter Convention', 'details' => 'Apr 19 · by Pastor Adu', 'dot_color' => 'var(--deep3)', 'is_last' => false],
-    ['title' => 'Announcement published', 'details' => 'Building Fund Drive · Apr 1 · by Admin', 'dot_color' => 'var(--gold)', 'is_last' => true]
-];
+// ── Recent Activity ──────────────────────────────────────────────────────────
+$activityStmt = $db->query(
+    "SELECT l.*, a.name as admin_name 
+     FROM activity_log l
+     LEFT JOIN admins a ON l.admin_id = a.id
+     ORDER BY l.created_at DESC 
+     LIMIT 5"
+);
+$rawActs = $activityStmt->fetchAll();
+$recent_activity = array_map(function($a, $index) use ($rawActs) {
+    return [
+        'title'     => $a['action'],
+        'details'   => date('M j \a\t g:ia', strtotime($a['created_at'])) . ' · by ' . ($a['admin_name'] ?? 'System'),
+        'dot_color' => 'var(--gold)',
+        'is_last'   => $index === count($rawActs) - 1
+    ];
+}, $rawActs, array_keys($rawActs));
+
 ?>
 <!DOCTYPE html>
 <html lang="en">

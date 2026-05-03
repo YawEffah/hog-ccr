@@ -4,35 +4,116 @@
  */
 require_once 'includes/auth.php';
 requireAuth();
+require_once 'includes/db.php';
+require_once 'includes/helpers.php';
 
-$pageTitle = 'Finance';
+$pageTitle  = 'Finance';
 $activePage = 'finance';
 
+// Flash messages
+$successMsg = flash('success');
+$errorMsg   = flash('error');
+if (!$successMsg && !$errorMsg) {
+    $successLabels = [
+        'transaction_added' => 'Transaction recorded successfully.',
+        'transaction_deleted'=> 'Transaction deleted.',
+        'target_set'        => 'Monthly target updated.',
+    ];
+    $errorLabels = [
+        'invalid_data'   => 'Invalid data. Please check the form and try again.',
+        'db_error'       => 'A database error occurred.',
+    ];
+    $successMsg = $successLabels[$_GET['success'] ?? ''] ?? '';
+    $errorMsg   = $errorLabels[$_GET['error']   ?? ''] ?? '';
+}
 
-// Mock data for initial refactor (Backend team will replace these)
-$finance_stats = $finance_stats ?? [
-    'tithes' => '14,820',
-    'offerings' => '5,450',
-    'donations' => '2,300',
-    'total' => '24,550',
-    'monthly_target' => '30,000',
-    'target_percent' => 82
+$db = getDB();
+$currentMonth = date('Y-m');
+
+// ── Finance Statistics ───────────────────────────────────────────────────────
+$statsStmt = $db->prepare(
+    "SELECT 
+        SUM(CASE WHEN type='Tithe' THEN amount ELSE 0 END) as tithes,
+        SUM(CASE WHEN type='Offering' THEN amount ELSE 0 END) as offerings,
+        SUM(CASE WHEN type='Donation' THEN amount ELSE 0 END) as donations,
+        SUM(amount) as total
+     FROM finance_transactions 
+     WHERE DATE_FORMAT(transaction_date, '%Y-%m') = ?"
+);
+$statsStmt->execute([$currentMonth]);
+$rawStats = $statsStmt->fetch();
+
+$targetStmt = $db->prepare("SELECT target_amount FROM finance_targets WHERE DATE_FORMAT(target_month, '%Y-%m') = ?");
+$targetStmt->execute([$currentMonth]);
+$monthlyTarget = (float)$targetStmt->fetchColumn() ?: 10000;
+
+$totalIncome = (float)($rawStats['total'] ?? 0);
+$finance_stats = [
+    'tithes'         => number_format((float)($rawStats['tithes'] ?? 0), 2),
+    'offerings'      => number_format((float)($rawStats['offerings'] ?? 0), 2),
+    'donations'      => number_format((float)($rawStats['donations'] ?? 0), 2),
+    'total'          => number_format($totalIncome, 2),
+    'monthly_target' => number_format($monthlyTarget, 0),
+    'target_percent' => $monthlyTarget > 0 ? round(($totalIncome / $monthlyTarget) * 100) : 0
 ];
 
-$transactions = $transactions ?? [
-    ['member' => 'Abena Kusi', 'type' => 'Tithe', 'type_badge' => 'badge-yellow', 'amount' => '350', 'date' => 'Apr 6'],
-    ['member' => 'Kwame Ofori', 'type' => 'Offering', 'type_badge' => 'badge-blue', 'amount' => '50', 'date' => 'Apr 6'],
-    ['member' => 'Michael Boateng', 'type' => 'Donation', 'type_badge' => 'badge-green', 'amount' => '500', 'date' => 'Apr 5'],
-    ['member' => 'Pastor Adu', 'type' => 'Pledge', 'type_badge' => 'badge-purple', 'amount' => '1,000', 'date' => 'Apr 3'],
-    ['member' => 'Efua Asare', 'type' => 'Tithe', 'type_badge' => 'badge-yellow', 'amount' => '280', 'date' => 'Mar 30']
+// ── Recent Transactions ──────────────────────────────────────────────────────
+$txnStmt = $db->prepare(
+    "SELECT t.*, m.first_name, m.last_name 
+     FROM finance_transactions t
+     LEFT JOIN members m ON t.member_id = m.id
+     ORDER BY t.transaction_date DESC, t.created_at DESC
+     LIMIT 10"
+);
+$txnStmt->execute();
+$rawTxns = $txnStmt->fetchAll();
+
+$typeBadges = [
+    'Tithe'     => 'badge-yellow',
+    'Offering'  => 'badge-green',
+    'Donation'  => 'badge-blue',
+    'Welfare'   => 'badge-purple',
+    'Pledge'    => 'badge-gray'
 ];
 
-$income_breakdown = $income_breakdown ?? [
-    ['label' => 'Tithes', 'amount' => '14,820', 'percent' => 60, 'bar_class' => 'var(--gold)'],
-    ['label' => 'Offerings', 'amount' => '5,450', 'percent' => 22, 'bar_class' => 'var(--deep)'],
-    ['label' => 'Donations', 'amount' => '2,300', 'percent' => 9, 'bar_class' => '#2E7D57'],
-    ['label' => 'Pledges', 'amount' => '1,980', 'percent' => 8, 'bar_class' => 'var(--deep3)']
+$transactions = array_map(function($t) use ($typeBadges) {
+    $memberName = $t['first_name'] ? ($t['first_name'] . ' ' . $t['last_name']) : ($t['member_name'] ?: 'Guest');
+    return [
+        'id'         => $t['id'],
+        'member'     => $memberName,
+        'type'       => $t['type'],
+        'type_badge' => $typeBadges[$t['type']] ?? 'badge-gray',
+        'amount'     => number_format($t['amount'], 2),
+        'date'       => date('M j', strtotime($t['transaction_date']))
+    ];
+}, $rawTxns);
+
+// ── Income Breakdown ─────────────────────────────────────────────────────────
+$breakdownStmt = $db->prepare(
+    "SELECT type, SUM(amount) as total 
+     FROM finance_transactions 
+     WHERE DATE_FORMAT(transaction_date, '%Y-%m') = ?
+     GROUP BY type"
+);
+$breakdownStmt->execute([$currentMonth]);
+$rawBreakdown = $breakdownStmt->fetchAll();
+
+$breakdownColors = [
+    'Tithe'    => 'var(--gold)',
+    'Offering' => 'var(--deep)',
+    'Donation' => '#2E7D57',
+    'Welfare'  => 'var(--deep3)',
+    'Pledge'   => '#7C3AED'
 ];
+
+$income_breakdown = array_map(function($b) use ($totalIncome, $breakdownColors) {
+    return [
+        'label'     => $b['type'],
+        'amount'    => number_format($b['total'], 0),
+        'percent'   => $totalIncome > 0 ? round(($b['total'] / $totalIncome) * 100) : 0,
+        'bar_class' => $breakdownColors[$b['type']] ?? 'var(--gold)'
+    ];
+}, $rawBreakdown);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -55,11 +136,6 @@ $income_breakdown = $income_breakdown ?? [
           <div class="topbar-title">Finance</div>
         </div>
         <div class="topbar-actions">
-          <select class="form-control" style="width:140px;padding:8px 12px;">
-            <option><?= date('F Y') ?></option>
-            <option><?= date('F Y', strtotime('-1 month')) ?></option>
-            <option><?= date('F Y', strtotime('-2 months')) ?></option>
-          </select>
           <button class="btn btn-outline btn-sm" id="notifBtn" onclick="toggleNotifications()">
             <i class="ph ph-bell"></i>
           </button>
@@ -70,6 +146,17 @@ $income_breakdown = $income_breakdown ?? [
           <button class="btn btn-primary btn-sm" onclick="openModal('addFinanceModal')">+ Record Transaction</button>
         </div>
       </div>
+
+      <?php if ($successMsg): ?>
+      <div class="alert alert-success" style="margin:20px 20px 0;">
+        <i class="ph ph-check-circle"></i> <?= htmlspecialchars($successMsg) ?>
+      </div>
+      <?php endif; ?>
+      <?php if ($errorMsg): ?>
+      <div class="alert alert-error" style="margin:20px 20px 0;">
+        <i class="ph ph-warning-circle"></i> <?= htmlspecialchars($errorMsg) ?>
+      </div>
+      <?php endif; ?>
       <div class="content">
         <div class="grid-4" style="margin-bottom:24px;">
           <div class="stat-card">
@@ -127,7 +214,16 @@ $income_breakdown = $income_breakdown ?? [
                     <td><span class="badge <?= $tx['type_badge'] ?>"><?= $tx['type'] ?></span></td>
                     <td style="font-weight:600;color:var(--success);">GH₵ <?= $tx['amount'] ?></td>
                     <td style="font-size:12px;color:var(--muted);"><?= $tx['date'] ?></td>
-                    <td><button class="btn btn-outline btn-sm" title="View Receipt"><i class="ph ph-receipt"></i></button></td>
+                    <td>
+                      <div style="display:flex;gap:4px;">
+                        <button class="btn btn-outline btn-sm" title="View Receipt"><i class="ph ph-receipt"></i></button>
+                        <button class="btn btn-sm" title="Delete"
+                          style="background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;"
+                          onclick="confirmDeleteTxn(<?= $tx['id'] ?>)">
+                          <i class="ph ph-trash"></i>
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                   <?php endforeach; ?>
                 </tbody>
@@ -169,7 +265,28 @@ $income_breakdown = $income_breakdown ?? [
 
   <?php require_once 'includes/modals/finance_modal.php'; ?>
 
+  <!-- Hidden delete-transaction form -->
+  <form method="POST" action="handlers/finance_handler.php" id="deleteTxnForm" style="display:none;">
+    <?= csrfField() ?>
+    <input type="hidden" name="action" value="delete_transaction">
+    <input type="hidden" name="txn_id" id="deleteTxnId">
+  </form>
+
   <script src="assets/js/main.js"></script>
+  <script>
+    function confirmDeleteTxn(id) {
+      showConfirmModal(
+        'Delete Transaction',
+        'Are you sure you want to delete this transaction? This action cannot be undone.',
+        'Delete',
+        function() {
+          document.getElementById('deleteTxnId').value = id;
+          document.getElementById('deleteTxnForm').submit();
+        },
+        'danger'
+      );
+    }
+  </script>
 </body>
 
 </html>

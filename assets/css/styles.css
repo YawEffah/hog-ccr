@@ -330,8 +330,7 @@ h3,
 }
 
 .btn-primary i, .btn-primary svg,
-.btn-danger i, .btn-danger svg,
-.btn[style*="background"] i, .btn[style*="background"] svg {
+.btn-danger i, .btn-danger svg {
   color: #FFFFFF !important;
 }
 

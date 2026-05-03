@@ -5,11 +5,13 @@
       <h3>Create New Ministry</h3>
       <button class="close-btn" onclick="closeModal('addMinistryModal')"><i class="ph ph-x"></i></button>
     </div>
-    <form action="" method="POST" id="addMinistryForm">
+    <form action="handlers/ministry_handler.php" method="POST" id="addMinistryForm">
+      <?= csrfField() ?>
+      <input type="hidden" name="action" value="add_ministry">
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label">Ministry Name</label>
-          <input class="form-control" name="ministry_name" placeholder="e.g. Media Ministry">
+          <input class="form-control" name="name" placeholder="e.g. Media Ministry" required>
         </div>
         <div class="form-group">
           <label class="form-label">Purpose/Description</label>
@@ -31,10 +33,10 @@
           <div class="form-group">
             <label class="form-label">Meeting Day</label>
             <select class="form-control" name="meeting_day">
-              <option>Saturdays</option>
-              <option>Fridays</option>
-              <option>Sundays</option>
-              <option>Wednesdays</option>
+              <option value="Saturdays">Saturdays</option>
+              <option value="Fridays">Fridays</option>
+              <option value="Sundays">Sundays</option>
+              <option value="Wednesdays">Wednesdays</option>
             </select>
           </div>
         </div>
@@ -128,27 +130,30 @@
 
       <!-- Edit Tab -->
       <div id="mEdit" class="tab-pane" style="display:none;">
-        <form id="editMinistryForm">
+        <form action="handlers/ministry_handler.php" method="POST" id="editMinistryForm">
+          <?= csrfField() ?>
+          <input type="hidden" name="action" value="edit_ministry">
+          <input type="hidden" name="ministry_id" id="edit_mId">
           <div class="form-group">
             <label class="form-label">Ministry Name</label>
-            <input class="form-control" id="edit_mName" value="Music Ministry">
+            <input class="form-control" name="name" id="edit_mName" required>
           </div>
           <div class="form-group">
             <label class="form-label">Purpose/Description</label>
-            <textarea class="form-control" id="edit_mDesc" rows="3">Worship & praise team</textarea>
+            <textarea class="form-control" name="description" id="edit_mDesc" rows="3"></textarea>
           </div>
           <div class="grid-2" style="gap:16px;">
             <div class="form-group">
               <label class="form-label">Ministry Head</label>
-              <input class="form-control" id="edit_mHead" list="heads_list" value="Elder Asante">
+              <input class="form-control" name="head_name" id="edit_mHead" list="heads_list">
             </div>
             <div class="form-group">
               <label class="form-label">Meeting Day</label>
-              <select class="form-control" id="edit_mDay">
-                <option selected>Saturdays</option>
-                <option>Fridays</option>
-                <option>Sundays</option>
-                <option>Wednesdays</option>
+              <select class="form-control" name="meeting_day" id="edit_mDay">
+                <option value="Saturdays">Saturdays</option>
+                <option value="Fridays">Fridays</option>
+                <option value="Sundays">Sundays</option>
+                <option value="Wednesdays">Wednesdays</option>
               </select>
             </div>
           </div>

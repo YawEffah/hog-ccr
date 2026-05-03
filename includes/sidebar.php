@@ -86,3 +86,5 @@ $currentUser = $currentUser ?? [
     </div>
   </div>
 </aside>
+
+<?php require_once __DIR__ . '/modals/confirm_modal.php'; ?>

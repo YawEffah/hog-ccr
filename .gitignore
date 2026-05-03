@@ -1,0 +1,16 @@
+# Dependencies
+/vendor/
+
+# Sensitive config - NEVER commit credentials
+/includes/config.php
+
+# Logs
+/assets/docs/*.log
+/assets/docs/error.log
+
+# OS & editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

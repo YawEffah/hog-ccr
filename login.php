@@ -1,10 +1,11 @@
 <?php
 /**
  * Login Page
- * Stunning, premium login interface for HOG-CCR
+ * Secure, database-backed authentication for HOG-CCR
  */
 
 require_once 'includes/auth.php';
+require_once 'includes/db.php';
 
 // If already logged in, redirect to dashboard
 if (isAuthenticated()) {
@@ -15,24 +16,40 @@ if (isAuthenticated()) {
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'] ?? '';
+    $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
 
-    // Hardcoded credentials for initial implementation
-    // Backend team can replace this with database verification
-    if ($username === 'admin' && $password === 'password123') {
-        $_SESSION['user_id'] = 1;
-        $_SESSION['user_data'] = [
-            'id' => 1,
-            'name' => 'Elder Asante',
-            'initials' => 'EA',
-            'role' => 'Administrator',
-            'email' => 'admin@hogccr.org'
-        ];
-        header('Location: index.php');
-        exit();
+    if ($username === '' || $password === '') {
+        $error = 'Please enter both username and password.';
     } else {
-        $error = 'Invalid username or password. Please try again.';
+        try {
+            $db   = getDB();
+            $stmt = $db->prepare("SELECT * FROM admins WHERE username = ? LIMIT 1");
+            $stmt->execute([$username]);
+            $admin = $stmt->fetch();
+
+            if ($admin && password_verify($password, $admin['password'])) {
+                // Regenerate session ID to prevent fixation
+                session_regenerate_id(true);
+
+                $_SESSION['user_id']   = $admin['id'];
+                $_SESSION['user_data'] = [
+                    'id'       => $admin['id'],
+                    'name'     => $admin['name'],
+                    'initials' => $admin['initials'],
+                    'role'     => $admin['role'],
+                    'email'    => $admin['email'],
+                ];
+
+                header('Location: index.php');
+                exit();
+            } else {
+                $error = 'Invalid username or password. Please try again.';
+            }
+        } catch (PDOException $e) {
+            error_log('Login error: ' . $e->getMessage());
+            $error = 'A system error occurred. Please try again later.';
+        }
     }
 }
 ?>

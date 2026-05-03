@@ -5,21 +5,23 @@
       <h3>Record Attendance</h3>
       <button class="close-btn" onclick="closeModal('recordAttModal')"><i class="ph ph-x"></i></button>
     </div>
-    <form action="" method="POST" id="recordAttForm">
+    <form action="handlers/attendance_handler.php" method="POST" id="recordAttForm">
+      <?= csrfField() ?>
+      <input type="hidden" name="action" value="record_attendance">
       <div class="modal-body">
         <div class="grid-2" style="gap:16px;">
           <div class="form-group">
             <label class="form-label">Session Type</label>
-            <select class="form-control" name="session_type">
-              <option>Sunday Service</option>
-              <option>Midweek Prayer</option>
-              <option>Youth Meeting</option>
-              <option>Special Program</option>
+            <select class="form-control" name="session_type" required>
+              <option value="Sunday Service">Sunday Service</option>
+              <option value="Midweek Prayer">Midweek Prayer</option>
+              <option value="Youth Meeting">Youth Meeting</option>
+              <option value="Special Program">Special Program</option>
             </select>
           </div>
           <div class="form-group">
             <label class="form-label">Date</label>
-            <input type="date" class="form-control" name="date" value="<?= date('Y-m-d') ?>">
+            <input type="date" class="form-control" name="date" value="<?= date('Y-m-d') ?>" required>
           </div>
         </div>
         <div class="form-group">
@@ -27,7 +29,7 @@
           <input type="time" class="form-control" name="time" value="08:00">
         </div>
         <div class="form-group">
-          <label class="form-label">Mark Attendance</label>
+          <label class="form-label">Mark Attendance (Present Members)</label>
           <div class="search-wrap" style="margin-bottom:8px;">
             <i class="ph ph-magnifying-glass"></i>
             <input class="search-input" placeholder="Search members…" id="attSearch" oninput="filterAttendance()"
@@ -39,34 +41,14 @@
             <input type="checkbox" id="markAllChk" onchange="toggleMarkAll(this)">
           </label>
           <div id="attList"
-            style="display:flex;flex-direction:column;gap:10px;max-height:200px;overflow-y:auto;padding-right:4px;">
-            <?php /* TODO: Backend team — render member rows here from your database */ ?>
-            <!-- Static placeholder rows -->
+            style="display:flex;flex-direction:column;gap:10px;max-height:250px;overflow-y:auto;padding-right:4px;">
+            <?php foreach ($allMembers as $m): ?>
             <label class="att-row"
               style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#F1F5F9;border-radius:8px;cursor:pointer;">
-              <span style="font-size:13px;font-weight:500;">Abena Kusi</span>
-              <input type="checkbox" name="attendance[]" value="CCR-001" class="att-member" checked>
+              <span style="font-size:13px;font-weight:500;"><?= htmlspecialchars($m['first_name'] . ' ' . $m['last_name']) ?> (<?= $m['member_code'] ?>)</span>
+              <input type="checkbox" name="present_members[]" value="<?= $m['id'] ?>" class="att-member">
             </label>
-            <label class="att-row"
-              style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#F1F5F9;border-radius:8px;cursor:pointer;">
-              <span style="font-size:13px;font-weight:500;">Kwame Ofori</span>
-              <input type="checkbox" name="attendance[]" value="CCR-002" class="att-member" checked>
-            </label>
-            <label class="att-row"
-              style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#F1F5F9;border-radius:8px;cursor:pointer;">
-              <span style="font-size:13px;font-weight:500;">Serwa Acheampong</span>
-              <input type="checkbox" name="attendance[]" value="CCR-003" class="att-member">
-            </label>
-            <label class="att-row"
-              style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#F1F5F9;border-radius:8px;cursor:pointer;">
-              <span style="font-size:13px;font-weight:500;">Michael Boateng</span>
-              <input type="checkbox" name="attendance[]" value="CCR-004" class="att-member" checked>
-            </label>
-            <label class="att-row"
-              style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#F1F5F9;border-radius:8px;cursor:pointer;">
-              <span style="font-size:13px;font-weight:500;">Efua Asare</span>
-              <input type="checkbox" name="attendance[]" value="CCR-005" class="att-member">
-            </label>
+            <?php endforeach; ?>
           </div>
         </div>
         <div class="form-group">

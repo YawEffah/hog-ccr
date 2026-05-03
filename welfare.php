@@ -1,37 +1,88 @@
 <?php
 /**
- * Welfare Management Page
+ * Welfare Management Module
  */
 require_once 'includes/auth.php';
 requireAuth();
+require_once 'includes/db.php';
+require_once 'includes/helpers.php';
 
 $pageTitle  = 'Welfare';
 $activePage = 'welfare';
 
-// Mock data — Backend team will replace these with real DB queries
-$welfare_stats = $welfare_stats ?? [
-    'total_members'    => 24,
-    'collected_month'  => '480.00',
-    'active_payers'    => 18,
-    'pending'          => 6,
-];
+$successMsg = flash('success');
+$errorMsg   = flash('error');
 
-$welfare_members = $welfare_members ?? [
-    ['id' => 'W-001', 'member_id' => 'CCR-001', 'name' => 'Abena Kusi',      'initials' => 'AK', 'phone' => '0244-123-456', 'enrolled' => 'Jan 2025', 'last_pay' => 'Apr 15, 2026', 'total' => '480.00', 'status' => 'Active',  'avatar_bg' => 'var(--gold-pale)', 'avatar_color' => 'var(--gold)'],
-    ['id' => 'W-002', 'member_id' => 'CCR-002', 'name' => 'Kwame Ofori',     'initials' => 'KO', 'phone' => '0200-987-654', 'enrolled' => 'Feb 2025', 'last_pay' => 'Apr 15, 2026', 'total' => '360.00', 'status' => 'Active',  'avatar_bg' => '#EEF2FF',          'avatar_color' => 'var(--deep)'],
-    ['id' => 'W-003', 'member_id' => 'CCR-004', 'name' => 'Michael Boateng', 'initials' => 'MB', 'phone' => '0277-456-123', 'enrolled' => 'Mar 2025', 'last_pay' => 'Mar 1, 2026',  'total' => '140.00', 'status' => 'Arrears', 'avatar_bg' => '#ECFDF5',          'avatar_color' => '#2E7D57'],
-    ['id' => 'W-004', 'member_id' => 'CCR-006', 'name' => 'Pastor Adu',      'initials' => 'PA', 'phone' => '0201-000-001', 'enrolled' => 'Jan 2025', 'last_pay' => 'Apr 28, 2026', 'total' => '600.00', 'status' => 'Active',  'avatar_bg' => '#EEF2FF',          'avatar_color' => 'var(--deep)'],
-    ['id' => 'W-005', 'member_id' => 'CCR-005', 'name' => 'Efua Asare',      'initials' => 'EA', 'phone' => '0244-678-901', 'enrolled' => 'Apr 2025', 'last_pay' => 'Apr 10, 2026', 'total' => '240.00', 'status' => 'Active',  'avatar_bg' => 'var(--gold-pale)', 'avatar_color' => 'var(--gold)'],
-];
+$db = getDB();
 
-$welfare_contributions = $welfare_contributions ?? [
-    ['member' => 'Abena Kusi',      'member_id' => 'CCR-001', 'amount' => '20.00', 'method' => 'MoMo',          'date' => 'Apr 15, 2026', 'reference' => 'TXN8821', 'notif_sent' => true],
-    ['member' => 'Kwame Ofori',     'member_id' => 'CCR-002', 'amount' => '20.00', 'method' => 'MoMo',          'date' => 'Apr 15, 2026', 'reference' => 'TXN8830', 'notif_sent' => true],
-    ['member' => 'Pastor Adu',      'member_id' => 'CCR-006', 'amount' => '50.00', 'method' => 'Bank Transfer', 'date' => 'Apr 28, 2026', 'reference' => 'BNK0042', 'notif_sent' => true],
-    ['member' => 'Efua Asare',      'member_id' => 'CCR-005', 'amount' => '20.00', 'method' => 'Cash',          'date' => 'Apr 10, 2026', 'reference' => '',        'notif_sent' => false],
-    ['member' => 'Michael Boateng', 'member_id' => 'CCR-004', 'amount' => '20.00', 'method' => 'Cash',          'date' => 'Mar 1, 2026',  'reference' => '',        'notif_sent' => false],
-    ['member' => 'Abena Kusi',      'member_id' => 'CCR-001', 'amount' => '20.00', 'method' => 'Cash',          'date' => 'Mar 12, 2026', 'reference' => '',        'notif_sent' => false],
+// ── Welfare Statistics ───────────────────────────────────────────────────────
+$welfare_stats = [
+    'total_members'    => (int)$db->query("SELECT COUNT(*) FROM welfare_members")->fetchColumn(),
+    'collected_month'  => number_format((float)$db->query("SELECT SUM(amount) FROM welfare_contributions WHERE MONTH(payment_date) = MONTH(CURRENT_DATE) AND YEAR(payment_date) = YEAR(CURRENT_DATE)")->fetchColumn(), 2),
+    'active_payers'    => (int)$db->query("SELECT COUNT(DISTINCT welfare_id) FROM welfare_contributions WHERE MONTH(payment_date) = MONTH(CURRENT_DATE) AND YEAR(payment_date) = YEAR(CURRENT_DATE)")->fetchColumn(),
+    'pending'          => 0 // Logic: total_members - active_payers
 ];
+$welfare_stats['pending'] = max(0, $welfare_stats['total_members'] - $welfare_stats['active_payers']);
+
+// ── Welfare Members Roster ───────────────────────────────────────────────────
+$membersStmt = $db->query(
+    "SELECT wm.*, m.first_name, m.last_name, m.member_code, m.phone, m.email,
+            (SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id) as total_paid,
+            (SELECT payment_date FROM welfare_contributions WHERE welfare_id = wm.id ORDER BY payment_date DESC LIMIT 1) as last_payment_date
+     FROM welfare_members wm
+     JOIN members m ON wm.member_id = m.id
+     ORDER BY m.last_name ASC"
+);
+$rawWelfareMembers = $membersStmt->fetchAll();
+
+// Map for display
+$welfare_members = array_map(function($wm) {
+    return [
+        'id'            => $wm['id'],
+        'member_id'     => $wm['member_code'],
+        'name'          => $wm['first_name'] . ' ' . $wm['last_name'],
+        'initials'      => strtoupper(substr($wm['first_name'],0,1) . substr($wm['last_name'],0,1)),
+        'phone'         => $wm['phone'] ?? '—',
+        'enrolled'      => date('M Y', strtotime($wm['enrol_date'])),
+        'last_pay'      => $wm['last_payment_date'] ? date('M j, Y', strtotime($wm['last_payment_date'])) : 'Never',
+        'total'         => number_format((float)$wm['total_paid'], 2),
+        'status'        => 'Active', // Simple logic for now
+        'avatar_bg'     => 'var(--gold-pale)',
+        'avatar_color'  => 'var(--gold)'
+    ];
+}, $rawWelfareMembers);
+
+// ── Contribution Log ─────────────────────────────────────────────────────────
+$contribStmt = $db->query(
+    "SELECT wc.*, m.first_name, m.last_name, m.member_code
+     FROM welfare_contributions wc
+     JOIN welfare_members wm ON wc.welfare_id = wm.id
+     JOIN members m ON wm.member_id = m.id
+     ORDER BY wc.payment_date DESC, wc.created_at DESC
+     LIMIT 50"
+);
+$rawContribs = $contribStmt->fetchAll();
+
+$welfare_contributions = array_map(function($c) {
+    return [
+        'member'    => $c['first_name'] . ' ' . $c['last_name'],
+        'member_id' => $c['member_code'],
+        'amount'    => number_format($c['amount'], 2),
+        'method'    => $c['payment_method'],
+        'date'      => date('M j, Y', strtotime($c['payment_date'])),
+        'reference' => $c['reference_no'],
+        'notif_sent' => (bool)$c['notif_sent']
+    ];
+}, $rawContribs);
+
+// ── Members not in Welfare (for enrollment dropdown) ────────────────────────
+$nonWelfareMembers = $db->query(
+    "SELECT id, first_name, last_name, member_code 
+     FROM members 
+     WHERE id NOT IN (SELECT member_id FROM welfare_members)
+     ORDER BY last_name ASC"
+)->fetchAll();
+
 ?>
 <!DOCTYPE html>
 <html lang="en">

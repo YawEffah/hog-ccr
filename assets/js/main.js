@@ -53,3 +53,51 @@ function toggleNotifications() {
     if (dot) dot.style.display = 'none';
   }
 }
+
+/**
+ * Global Confirm Modal Utility
+ * @param {string} title Modal title
+ * @param {string} message Modal body text
+ * @param {string} confirmText Text for confirm button
+ * @param {function} onConfirm Callback when confirm is clicked
+ * @param {string} type 'danger', 'warning', 'info'
+ */
+function showConfirmModal(title, message, confirmText, onConfirm, type = 'danger') {
+    document.getElementById('globalConfirmTitle').textContent = title;
+    document.getElementById('globalConfirmMessage').textContent = message;
+    
+    const btn = document.getElementById('globalConfirmBtn');
+    btn.textContent = confirmText;
+    
+    const icon = document.getElementById('globalConfirmIcon');
+    const iconWrap = icon.parentElement;
+    
+    if (type === 'danger') {
+        iconWrap.style.background = '#FEF2F2';
+        iconWrap.style.color = '#DC2626';
+        icon.className = 'ph ph-warning';
+        btn.style.background = '#DC2626';
+        btn.style.borderColor = '#DC2626';
+        btn.style.color = 'white';
+    } else {
+        iconWrap.style.background = '#EEF2FF';
+        iconWrap.style.color = 'var(--deep)';
+        icon.className = 'ph ph-info';
+        btn.style.background = 'var(--deep)';
+        btn.style.borderColor = 'var(--deep)';
+        btn.style.color = 'white';
+    }
+
+    // Remove old listeners to avoid multiple triggers
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+    
+    newBtn.onclick = function() {
+        closeModal('globalConfirmModal');
+        if (typeof onConfirm === 'function') {
+            onConfirm();
+        }
+    };
+    
+    openModal('globalConfirmModal');
+}

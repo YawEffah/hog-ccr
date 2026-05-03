@@ -5,16 +5,18 @@
       <h3>Record Transaction</h3>
       <button class="close-btn" onclick="closeModal('addFinanceModal')"><i class="ph ph-x"></i></button>
     </div>
-    <form action="" method="POST" id="addFinanceForm">
+    <form action="handlers/finance_handler.php" method="POST" id="addFinanceForm">
+      <?= csrfField() ?>
+      <input type="hidden" name="action" value="add_transaction">
       <div class="modal-body">
         <div class="grid-2" style="gap:16px;">
           <div class="form-group">
             <label class="form-label">Member (Search by Name or ID)</label>
-            <input class="form-control" name="member_search" placeholder="Enter name or member ID…">
+            <input class="form-control" name="member_search" placeholder="Enter name or member ID…" required>
           </div>
           <div class="form-group">
             <label class="form-label">Transaction Type</label>
-            <select class="form-control" name="transaction_type">
+            <select class="form-control" name="transaction_type" required>
               <option>Tithe</option>
               <option>Offering</option>
               <option>Donation</option>
@@ -26,14 +28,14 @@
         </div>
         <div class="grid-2" style="gap:16px;">
           <div class="form-group"><label class="form-label">Amount (GH₵)</label><input type="number" step="0.01"
-              class="form-control" name="amount" placeholder="0.00"></div>
+              class="form-control" name="amount" placeholder="0.00" required></div>
           <div class="form-group">
             <label class="form-label">Payment Method</label>
             <select class="form-control" name="payment_method" id="paymentMethodSelect">
-              <option>Cash</option>
-              <option>MoMo</option>
-              <option>Bank Transfer</option>
-              <option>Cheque</option>
+              <option value="Cash">Cash</option>
+              <option value="MoMo">MoMo</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+              <option value="Cheque">Cheque</option>
             </select>
           </div>
         </div>
@@ -59,7 +61,7 @@
           <div>
             <label for="genReceipt"
               style="font-size:13px;font-weight:600;cursor:pointer;color:var(--deep2);display:block;">Send
-              receipt automatically via email or SMS</label>
+              receipt automatically via email</label>
           </div>
         </div>
       </div>
@@ -78,16 +80,18 @@
       <h3>Set Monthly Target</h3>
       <button class="close-btn" onclick="closeModal('setTargetModal')"><i class="ph ph-x"></i></button>
     </div>
-    <form action="" method="POST">
+    <form action="handlers/finance_handler.php" method="POST">
+      <?= csrfField() ?>
+      <input type="hidden" name="action" value="set_target">
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label">Target Amount (GH₵)</label>
           <input type="number" step="0.01" class="form-control" name="monthly_target" placeholder="e.g. 30000"
-            value="30000">
+            value="30000" required>
         </div>
         <div class="form-group">
           <label class="form-label">Month</label>
-          <input type="month" class="form-control" name="target_month" value="<?= date('Y-m') ?>">
+          <input type="month" class="form-control" name="target_month" value="<?= date('Y-m') ?>" required>
         </div>
         <div class="form-group">
           <label class="form-label">Notes (Optional)</label>

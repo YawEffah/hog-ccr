@@ -4,26 +4,86 @@
  */
 require_once 'includes/auth.php';
 requireAuth();
+require_once 'includes/db.php';
+require_once 'includes/helpers.php';
 
-$pageTitle = 'My Profile';
+$pageTitle  = 'My Profile';
 $activePage = 'profile';
 
+$db      = getDB();
+$adminId = $_SESSION['user_id'];
 
-// Mock data (Backend team will replace this with logged-in user session data)
-$user_data = $currentUser ?? [
-  'id' => 'USR-001',
-  'first_name' => 'Elder',
-  'last_name' => 'Asante',
-  'email' => 'asante@ccrhog.org',
-  'phone' => '0244-123-456',
-  'role' => 'Administrator',
-  'initials' => 'EA',
-  'photo_url' => null
+$successMsg = '';
+$errorMsg   = '';
+
+// ── Handle POST ──────────────────────────────────────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrf();
+    $action = $_POST['form_action'] ?? '';
+
+    // Update profile info
+    if ($action === 'update_profile') {
+        $name  = trim($_POST['name']  ?? '');
+        $email = trim($_POST['email'] ?? '');
+
+        if (!$name || !$email) {
+            $errorMsg = 'Name and email are required.';
+        } else {
+            try {
+                $db->prepare("UPDATE admins SET name=?, email=? WHERE id=?")->execute([$name, $email, $adminId]);
+                $_SESSION['user_data']['name']  = $name;
+                $_SESSION['user_data']['email'] = $email;
+                $successMsg = 'Profile updated successfully.';
+            } catch (PDOException $e) {
+                $errorMsg = 'Failed to update profile. Email may already be in use.';
+                error_log('profile update: ' . $e->getMessage());
+            }
+        }
+    }
+
+    // Change password
+    if ($action === 'change_password') {
+        $current = $_POST['current_password'] ?? '';
+        $new     = $_POST['new_password']     ?? '';
+        $confirm = $_POST['confirm_password'] ?? '';
+
+        if (!$current || !$new || !$confirm) {
+            $errorMsg = 'All password fields are required.';
+        } elseif ($new !== $confirm) {
+            $errorMsg = 'New passwords do not match.';
+        } elseif (strlen($new) < 8) {
+            $errorMsg = 'Password must be at least 8 characters.';
+        } else {
+            $row = $db->prepare("SELECT password FROM admins WHERE id=?");
+            $row->execute([$adminId]);
+            $hash = $row->fetchColumn();
+
+            if (!password_verify($current, $hash)) {
+                $errorMsg = 'Current password is incorrect.';
+            } else {
+                $newHash = password_hash($new, PASSWORD_BCRYPT);
+                $db->prepare("UPDATE admins SET password=? WHERE id=?")->execute([$newHash, $adminId]);
+                logActivity('Changed account password', 'profile');
+                $successMsg = 'Password changed successfully.';
+            }
+        }
+    }
+}
+
+// ── Load fresh admin data from DB ────────────────────────────────────────────
+$adminRow = $db->prepare("SELECT * FROM admins WHERE id=?");
+$adminRow->execute([$adminId]);
+$admin = $adminRow->fetch();
+
+$user_data = [
+    'id'       => $admin['id'],
+    'name'     => $admin['name'],
+    'email'    => $admin['email'],
+    'role'     => $admin['role'],
+    'initials' => $admin['initials'] ?? strtoupper(substr($admin['name'], 0, 2)),
+    'photo_url'=> null,
 ];
-
-// Ensure sidebar uses the same data
-$currentUser = $user_data;
-$currentUser['name'] = $user_data['first_name'] . ' ' . $user_data['last_name'];
+$currentUser = array_merge($currentUser ?? [], $user_data);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -51,6 +111,17 @@ $currentUser['name'] = $user_data['first_name'] . ' ' . $user_data['last_name'];
       </div>
 
       <div class="content">
+        <?php if ($successMsg): ?>
+        <div class="alert alert-success" style="margin-bottom:24px;">
+          <i class="ph ph-check-circle"></i> <?= htmlspecialchars($successMsg) ?>
+        </div>
+        <?php endif; ?>
+        <?php if ($errorMsg): ?>
+        <div class="alert alert-error" style="margin-bottom:24px;">
+          <i class="ph ph-warning-circle"></i> <?= htmlspecialchars($errorMsg) ?>
+        </div>
+        <?php endif; ?>
+
         <div class="grid-2" style="gap:32px;">
 
           <!-- Personal Information Card -->
@@ -71,35 +142,26 @@ $currentUser['name'] = $user_data['first_name'] . ' ' . $user_data['last_name'];
                   onchange="handlePreview(this, 'profilePhotoPreview', 'profilePhotoPlaceholder')">
               </div>
               <h2 id="profileDisplayName">
-                <?= htmlspecialchars($user_data['first_name'] . ' ' . $user_data['last_name']) ?>
+                <?= htmlspecialchars($user_data['name']) ?>
               </h2>
               <p id="profileDisplayRole"><?= htmlspecialchars($user_data['role']) ?></p>
             </div>
 
             <div class="card-body">
               <form action="" method="POST" id="profileUpdateForm">
-                <div class="grid-2" style="gap:16px;">
-                  <div class="form-group">
-                    <label class="form-label">First Name</label>
-                    <input class="form-control" name="first_name"
-                      value="<?= htmlspecialchars($user_data['first_name']) ?>">
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Last Name</label>
-                    <input class="form-control" name="last_name"
-                      value="<?= htmlspecialchars($user_data['last_name']) ?>">
-                  </div>
+                <?= csrfField() ?>
+                <input type="hidden" name="form_action" value="update_profile">
+
+                <div class="form-group">
+                  <label class="form-label">Full Name</label>
+                  <input class="form-control" name="name" id="profileNameInput"
+                    value="<?= htmlspecialchars($user_data['name']) ?>" required>
                 </div>
 
                 <div class="form-group">
                   <label class="form-label">Email Address</label>
                   <input class="form-control" name="email" type="email"
-                    value="<?= htmlspecialchars($user_data['email']) ?>">
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">Phone Number</label>
-                  <input class="form-control" name="phone" value="<?= htmlspecialchars($user_data['phone']) ?>">
+                    value="<?= htmlspecialchars($user_data['email']) ?>" required>
                 </div>
 
                 <div style="margin-top:24px;">
@@ -119,6 +181,9 @@ $currentUser['name'] = $user_data['first_name'] . ' ' . $user_data['last_name'];
                 account secure.</p>
 
               <form action="" method="POST" id="passwordUpdateForm">
+                <?= csrfField() ?>
+                <input type="hidden" name="form_action" value="change_password">
+
                 <div class="form-group">
                   <label class="form-label">Current Password</label>
                   <div class="password-wrap">
@@ -196,19 +261,19 @@ $currentUser['name'] = $user_data['first_name'] . ' ' . $user_data['last_name'];
     }
 
     // Live name update
-    const fnInput = document.querySelector('[name="first_name"]');
-    const lnInput = document.querySelector('[name="last_name"]');
+    const nameInput = document.getElementById('profileNameInput');
     const displayNames = [document.getElementById('profileDisplayName'), document.querySelector('.user-info p')];
     
     function updateDisplayName() {
-      const name = (fnInput.value + ' ' + lnInput.value).trim();
+      const name = nameInput.value.trim();
       displayNames.forEach(el => {
         if (el) el.textContent = name || 'User Name';
       });
     }
 
-    fnInput.addEventListener('input', updateDisplayName);
-    lnInput.addEventListener('input', updateDisplayName);
+    if (nameInput) {
+      nameInput.addEventListener('input', updateDisplayName);
+    }
 
     // Toggle password visibility
     function togglePassword(btn) {

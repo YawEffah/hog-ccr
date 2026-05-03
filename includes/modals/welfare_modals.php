@@ -13,31 +13,28 @@
       <h3>Enrol Member into Welfare</h3>
       <button class="close-btn" onclick="closeModal('enrolWelfareModal')"><i class="ph ph-x"></i></button>
     </div>
-    <form action="" method="POST" id="enrolWelfareForm">
+    <form action="handlers/welfare_handler.php" method="POST" id="enrolWelfareForm">
+      <?= csrfField() ?>
       <input type="hidden" name="action" value="enrol_welfare">
       <div class="modal-body">
         <div class="form-group">
-          <label class="form-label">Search Member (Name or ID)</label>
-          <div class="search-wrap">
-            <i class="ph ph-magnifying-glass"></i>
-            <input class="search-input" id="enrolMemberSearch" name="member_search"
-              placeholder="e.g. Abena Kusi or CCR-001" style="width:100%;padding-left:36px;"
-              oninput="filterWelfareEnrolList(this.value)">
-          </div>
+          <label class="form-label">Select Member</label>
+          <select class="form-control" name="member_id" required>
+            <option value="">— Select Member —</option>
+            <?php foreach ($nonWelfareMembers as $m): ?>
+            <option value="<?= $m['id'] ?>"><?= htmlspecialchars($m['first_name'] . ' ' . $m['last_name']) ?> (<?= $m['member_code'] ?>)</option>
+            <?php endforeach; ?>
+          </select>
         </div>
-        <!-- Dropdown suggestion list -->
-        <div id="enrolSuggestions" style="background:#F8FAFC;border:1px solid #EDE8DF;border-radius:8px;max-height:150px;overflow-y:auto;display:none;margin-top:-10px;margin-bottom:14px;">
-        </div>
-        <input type="hidden" name="member_id" id="enrolMemberId">
 
         <div class="grid-2" style="gap:16px;">
           <div class="form-group">
             <label class="form-label">Date of Enrolment</label>
-            <input type="date" class="form-control" name="enrol_date" value="<?= date('Y-m-d') ?>">
+            <input type="date" class="form-control" name="enrol_date" value="<?= date('Y-m-d') ?>" required>
           </div>
           <div class="form-group">
             <label class="form-label">Monthly Contribution (GH₵)</label>
-            <input type="number" step="0.01" class="form-control" name="monthly_amount" placeholder="e.g. 20.00">
+            <input type="number" step="0.01" class="form-control" name="monthly_amount" placeholder="e.g. 20.00" required>
           </div>
         </div>
         <div class="form-group">
@@ -66,29 +63,30 @@
       <h3>Record Welfare Contribution</h3>
       <button class="close-btn" onclick="closeModal('recordWelfarePaymentModal')"><i class="ph ph-x"></i></button>
     </div>
-    <form action="" method="POST" id="recordWelfarePaymentForm">
+    <form action="handlers/welfare_handler.php" method="POST" id="recordWelfarePaymentForm">
+      <?= csrfField() ?>
       <input type="hidden" name="action" value="record_welfare_payment">
       <input type="hidden" name="welfare_member_id" id="paymentWelfareMemberId">
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label">Welfare Member</label>
           <input class="form-control" id="paymentMemberDisplay" name="member_display"
-            placeholder="Search or pre-filled from row action…" oninput="searchWelfarePayers(this.value)">
+            placeholder="Search or pre-filled from row action…" oninput="searchWelfarePayers(this.value)" required>
         </div>
         <div id="payerSuggestions" style="background:#F8FAFC;border:1px solid #EDE8DF;border-radius:8px;max-height:140px;overflow-y:auto;display:none;margin-top:-10px;margin-bottom:14px;"></div>
 
         <div class="grid-2" style="gap:16px;">
           <div class="form-group">
             <label class="form-label">Amount (GH₵)</label>
-            <input type="number" step="0.01" class="form-control" name="amount" id="welfarePayAmount" placeholder="0.00">
+            <input type="number" step="0.01" class="form-control" name="amount" id="welfarePayAmount" placeholder="0.00" required>
           </div>
           <div class="form-group">
             <label class="form-label">Payment Method</label>
             <select class="form-control" name="payment_method" id="welfarePayMethod">
-              <option>Cash</option>
-              <option>MoMo</option>
-              <option>Bank Transfer</option>
-              <option>Cheque</option>
+              <option value="Cash">Cash</option>
+              <option value="MoMo">MoMo</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+              <option value="Cheque">Cheque</option>
             </select>
           </div>
         </div>
@@ -114,7 +112,7 @@
             <label for="sendWelfareNotif" style="font-size:13px;font-weight:600;cursor:pointer;color:#0D9488;display:block;">
               Send payment confirmation to member
             </label>
-            <span style="font-size:11px;color:#0F766E;">Message will be sent via SMS / Email to the member's registered contact.</span>
+            <span style="font-size:11px;color:#0F766E;">Message will be sent via Email to the member's registered address.</span>
           </div>
         </div>
       </div>

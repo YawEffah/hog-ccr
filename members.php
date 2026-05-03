@@ -4,30 +4,127 @@
  */
 require_once 'includes/auth.php';
 requireAuth();
+require_once 'includes/db.php';
+require_once 'includes/helpers.php';
 
-$pageTitle = 'Members';
+$pageTitle  = 'Members';
 $activePage = 'members';
 
+// Flash messages
+$successMsg = flash('success');
+$errorMsg   = flash('error');
 
-// Mock data for initial refactor (Backend team will replace these)
-$members = $members ?? [
-    ['id' => 'CCR-001', 'first_name' => 'Abena', 'last_name' => 'Kusi', 'initials' => 'AK', 'phone' => '0244-123-456', 'email' => 'abena@email.com', 'ministry' => 'Music', 'status' => 'Active', 'status_class' => 'badge-green', 'ministry_class' => 'badge-purple', 'joined' => 'Jan 2023', 'avatar_bg' => 'var(--gold-pale)', 'avatar_color' => 'var(--gold)'],
-    ['id' => 'CCR-002', 'first_name' => 'Kwame', 'last_name' => 'Ofori', 'initials' => 'KO', 'phone' => '0200-987-654', 'email' => 'kwame@email.com', 'ministry' => 'Youth', 'status' => 'Active', 'status_class' => 'badge-green', 'ministry_class' => 'badge-blue', 'joined' => 'Mar 2023', 'avatar_bg' => '#EEF2FF', 'avatar_color' => 'var(--deep)'],
-    ['id' => 'CCR-003', 'first_name' => 'Serwa', 'last_name' => 'Acheampong', 'initials' => 'SA', 'phone' => '0555-234-789', 'email' => 'serwa@email.com', 'ministry' => 'None', 'status' => 'Visitor', 'status_class' => 'badge-yellow', 'ministry_class' => 'badge-gray', 'joined' => 'Apr 2026', 'avatar_bg' => 'var(--gold-pale)', 'avatar_color' => 'var(--gold)'],
-    ['id' => 'CCR-004', 'first_name' => 'Michael', 'last_name' => 'Boateng', 'initials' => 'MB', 'phone' => '0277-456-123', 'email' => 'michael@email.com', 'ministry' => 'Evangelism', 'status' => 'Active', 'status_class' => 'badge-green', 'ministry_class' => 'badge-green', 'joined' => 'Feb 2024', 'avatar_bg' => '#ECFDF5', 'avatar_color' => 'var(--success)'],
-    ['id' => 'CCR-005', 'first_name' => 'Efua', 'last_name' => 'Asare', 'initials' => 'EA', 'phone' => '0244-678-901', 'email' => 'efua@email.com', 'ministry' => 'Intercessory', 'status' => 'Inactive', 'status_class' => 'badge-red', 'ministry_class' => 'badge-yellow', 'joined' => 'Sep 2022', 'avatar_bg' => 'var(--gold-pale)', 'avatar_color' => 'var(--gold)'],
-    ['id' => 'CCR-006', 'first_name' => 'Pastor', 'last_name' => 'Adu', 'initials' => 'PA', 'phone' => '0201-000-001', 'email' => 'pastor@ccrhog.org', 'ministry' => 'Executives', 'status' => 'Active', 'status_class' => 'badge-green', 'ministry_class' => 'badge-purple', 'joined' => 'Jan 2015', 'avatar_bg' => '#EEF2FF', 'avatar_color' => 'var(--deep)']
+// Decode ?success= / ?error= query params (redirect-based pattern)
+if (!$successMsg && !$errorMsg) {
+    $successLabels = [
+        'member_added'   => 'Member registered successfully.',
+        'member_updated' => 'Member profile updated.',
+        'member_deleted' => 'Member deactivated successfully.',
+    ];
+    $errorLabels = [
+        'missing_fields' => 'Please fill in all required fields.',
+        'db_error'       => 'A database error occurred. Please try again.',
+        'not_found'      => 'Member not found.',
+    ];
+    $successMsg = $successLabels[$_GET['success'] ?? ''] ?? '';
+    $errorMsg   = $errorLabels[$_GET['error']   ?? ''] ?? '';
+}
+
+// ── Live DB queries ───────────────────────────────────────────────────────────
+$db      = getDB();
+$page    = currentPage();
+$perPage = 20;
+$offset  = paginationOffset($page, $perPage);
+
+// Search + filter
+$search    = trim($_GET['q']      ?? '');
+$statusFilter = $_GET['status']   ?? '';
+
+$where  = "WHERE 1=1";
+$params = [];
+
+if ($search) {
+    $where .= " AND (m.member_code LIKE ? OR m.first_name LIKE ? OR m.last_name LIKE ?
+                     OR m.phone LIKE ? OR min.name LIKE ?)";
+    $s = "%{$search}%";
+    $params = array_merge($params, [$s, $s, $s, $s, $s]);
+}
+if ($statusFilter && in_array($statusFilter, ['Active','Inactive','Visitor'], true)) {
+    $where    .= " AND m.status = ?";
+    $params[]  = $statusFilter;
+}
+
+// Total count
+$countStmt = $db->prepare("SELECT COUNT(*) FROM members m LEFT JOIN ministries min ON m.ministry_id = min.id {$where}");
+$countStmt->execute($params);
+$total_members = (int)$countStmt->fetchColumn();
+
+// Paged members - including sacraments group_concat
+$stmt = $db->prepare(
+    "SELECT m.*, min.name AS ministry_name,
+            (SELECT GROUP_CONCAT(sacrament) FROM member_sacraments WHERE member_id = m.id) as sacraments
+     FROM members m
+     LEFT JOIN ministries min ON m.ministry_id = min.id
+     {$where}
+     ORDER BY m.created_at DESC
+     LIMIT {$perPage} OFFSET {$offset}"
+);
+$stmt->execute($params);
+$rawMembers = $stmt->fetchAll();
+
+// Map to display format
+$avatarPalette = [
+    ['bg' => 'var(--gold-pale)', 'color' => 'var(--gold)'],
+    ['bg' => '#EEF2FF',          'color' => 'var(--deep)'],
+    ['bg' => '#ECFDF5',          'color' => '#2E7D57'],
+    ['bg' => '#F5F3FF',          'color' => 'var(--deep3)'],
 ];
+$statusBadge   = ['Active' => 'badge-green', 'Inactive' => 'badge-red', 'Visitor' => 'badge-yellow'];
+$ministryBadge = ['Music Ministry'=>'badge-purple','Youth Wing'=>'badge-blue','Evangelism'=>'badge-green',
+                  'Intercessory'=>'badge-yellow','Prayer Group'=>'badge-gray','Executives'=>'badge-purple'];
 
-$total_members = $total_members ?? 487;
+$members = array_map(function($m, $i) use ($avatarPalette, $statusBadge, $ministryBadge) {
+    $pal      = $avatarPalette[$i % count($avatarPalette)];
+    $ministry = $m['ministry_name'] ?? 'None';
+    return [
+        'id'            => $m['member_code'],
+        'db_id'         => $m['id'],
+        'first_name'    => $m['first_name'],
+        'last_name'     => $m['last_name'],
+        'gender'        => $m['gender'] ?? 'Male',
+        'initials'      => strtoupper(substr($m['first_name'],0,1) . substr($m['last_name'],0,1)),
+        'phone'         => $m['phone'] ?? '—',
+        'email'         => $m['email'] ?? '—',
+        'ministry'      => $ministry,
+        'ministry_id'   => $m['ministry_id'],
+        'status'        => $m['status'],
+        'status_class'  => $statusBadge[$m['status']] ?? 'badge-gray',
+        'ministry_class'=> $ministryBadge[$ministry]  ?? 'badge-gray',
+        'joined'        => $m['joined_date'] ? date('M Y', strtotime($m['joined_date'])) : '—',
+        'joined_raw'    => $m['joined_date'],
+        'dob'           => $m['dob'],
+        'address'       => $m['address'],
+        'avatar_bg'     => $pal['bg'],
+        'avatar_color'  => $pal['color'],
+        'photo_path'    => $m['photo_path'],
+        'sacraments'    => $m['sacraments'] ? explode(',', $m['sacraments']) : [],
+        'notes'         => $m['notes'] ?? '',
+    ];
+}, $rawMembers, array_keys($rawMembers));
+
 $members_shown = count($members);
 
-$member_stats = $member_stats ?? [
-    'total' => 487,
-    'active' => 412,
-    'male' => 210,
-    'female' => 277
+// Member Stats
+$member_stats = [
+    'total'  => (int)$db->query("SELECT COUNT(*) FROM members")->fetchColumn(),
+    'active' => (int)$db->query("SELECT COUNT(*) FROM members WHERE status='Active'")->fetchColumn(),
+    'male'   => (int)$db->query("SELECT COUNT(*) FROM members WHERE gender='Male'")->fetchColumn(),
+    'female' => (int)$db->query("SELECT COUNT(*) FROM members WHERE gender='Female'")->fetchColumn(),
 ];
+
+// Ministries for dropdown
+$ministries = $db->query("SELECT id, name FROM ministries ORDER BY name")->fetchAll();
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -57,6 +154,14 @@ $member_stats = $member_stats ?? [
           <button class="btn btn-primary btn-sm" onclick="openModal('addMemberModal')">+ Add Member</button>
         </div>
       </div>
+
+      <?php if ($successMsg): ?>
+      <div class="alert alert-success" style="margin: 20px;"><?= $successMsg ?></div>
+      <?php endif; ?>
+      <?php if ($errorMsg): ?>
+      <div class="alert alert-error" style="margin: 20px;"><?= $errorMsg ?></div>
+      <?php endif; ?>
+
       <div class="content">
         <!-- Member Stats -->
         <div class="grid-4" style="margin-bottom:24px;">
@@ -64,7 +169,6 @@ $member_stats = $member_stats ?? [
             <div class="accent-bar" style="background: var(--gold);"></div>
             <div class="label">Total Members</div>
             <div class="value"><?= $member_stats['total'] ?></div>
-            <div class="change" style="color:var(--success);">↑ 12 this month</div>
             <div class="icon-bg" style="background:var(--gold-pale);">
               <i class="ph ph-users" style="color:var(--gold); font-size: 20px;"></i>
             </div>
@@ -73,7 +177,6 @@ $member_stats = $member_stats ?? [
             <div class="accent-bar" style="background:var(--success);"></div>
             <div class="label">Active Members</div>
             <div class="value"><?= $member_stats['active'] ?></div>
-            <div class="change" style="color:var(--success);">85% of total</div>
             <div class="icon-bg" style="background:#ECFDF5;">
               <i class="ph ph-user-check" style="color:var(--success); font-size: 20px;"></i>
             </div>
@@ -82,7 +185,6 @@ $member_stats = $member_stats ?? [
             <div class="accent-bar" style="background:var(--deep);"></div>
             <div class="label">Male Members</div>
             <div class="value"><?= $member_stats['male'] ?></div>
-            <div class="change" style="color:var(--deep);"><?= round(($member_stats['male']/$member_stats['total'])*100) ?>% of total</div>
             <div class="icon-bg" style="background:#EEF2FF;">
               <i class="ph ph-gender-male" style="color:var(--deep); font-size: 20px;"></i>
             </div>
@@ -91,7 +193,6 @@ $member_stats = $member_stats ?? [
             <div class="accent-bar" style="background:var(--deep3);"></div>
             <div class="label">Female Members</div>
             <div class="value"><?= $member_stats['female'] ?></div>
-            <div class="change" style="color:var(--deep3);"><?= round(($member_stats['female']/$member_stats['total'])*100) ?>% of total</div>
             <div class="icon-bg" style="background:#F5F3FF;">
               <i class="ph ph-gender-female" style="color:var(--deep3); font-size: 20px;"></i>
             </div>
@@ -100,20 +201,20 @@ $member_stats = $member_stats ?? [
 
         <div class="table-wrap">
           <div style="padding: 16px 20px; border-bottom: 1px solid #EDE8DF; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-            <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 300px;">
+            <form action="members.php" method="GET" style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 300px;">
               <div class="search-wrap" style="flex: 1; max-width: 320px;">
                 <i class="ph ph-magnifying-glass"></i>
-                <input class="search-input" placeholder="Search by name, ID, or ministry…" id="memberSearch" oninput="filterMembers()" style="width: 100%;">
+                <input class="search-input" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Search by name, ID, or ministry…" style="width: 100%;">
               </div>
-              <select class="form-control" id="statusFilter" style="width:140px;padding:9px 14px;" onchange="filterMembers()">
-                <option value="All Status">All Status</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-                <option value="Visitor">Visitor</option>
+              <select class="form-control" name="status" style="width:140px;padding:9px 14px;" onchange="this.form.submit()">
+                <option value="">All Status</option>
+                <option value="Active" <?= $statusFilter === 'Active' ? 'selected' : '' ?>>Active</option>
+                <option value="Inactive" <?= $statusFilter === 'Inactive' ? 'selected' : '' ?>>Inactive</option>
+                <option value="Visitor" <?= $statusFilter === 'Visitor' ? 'selected' : '' ?>>Visitor</option>
               </select>
-            </div>
+            </form>
             <div style="font-size: 13px; color: var(--muted);">
-              Total Members: <strong id="membersCount"><?= $members_shown ?></strong>
+              Showing <strong id="membersCount"><?= $members_shown ?></strong> of <?= $total_members ?>
             </div>
           </div>
           <div class="table-responsive">
@@ -133,7 +234,13 @@ $member_stats = $member_stats ?? [
               <tr>
                 <td>
                   <div style="display:flex;align-items:center;gap:12px;">
-                    <div class="avatar" style="background:<?= $m['avatar_bg'] ?>;color:<?= $m['avatar_color'] ?>;"><?= $m['initials'] ?></div>
+                    <?php if ($m['photo_path']): ?>
+                      <div class="avatar" style="border:1px solid var(--border); overflow:hidden;">
+                        <img src="<?= $m['photo_path'] ?>" style="width:100%; height:100%; object-fit:cover;">
+                      </div>
+                    <?php else: ?>
+                      <div class="avatar" style="background:<?= $m['avatar_bg'] ?>;color:<?= $m['avatar_color'] ?>;"><?= $m['initials'] ?></div>
+                    <?php endif; ?>
                     <div>
                       <div style="font-weight:500;"><?= htmlspecialchars($m['first_name'] . ' ' . $m['last_name']) ?></div>
                       <div style="font-size:11px;color:var(--muted);"><?= $m['id'] ?></div>
@@ -148,30 +255,40 @@ $member_stats = $member_stats ?? [
                 <td><span class="badge <?= $m['status_class'] ?>"><?= $m['status'] ?></span></td>
                 <td style="font-size:12px;color:var(--muted);"><?= $m['joined'] ?></td>
                 <td>
-                  <div style="display:flex;gap:6px;">
-                    <button class="btn-icon" onclick="viewMember('<?= $m['id'] ?>')" title="View details">
-                      <i class="ph ph-eye"></i>
+                   <div style="display:flex;gap:6px;">
+                    <button class="btn-icon" onclick="editMember('<?= $m['id'] ?>')" title="View / Edit Profile">
+                      <i class="ph ph-address-book"></i>
                     </button>
-                    <button class="btn-icon" onclick="editMember('<?= $m['id'] ?>')" title="Edit member">
-                      <i class="ph ph-pencil"></i>
+                    <button class="btn-icon" onclick="confirmDeleteMember(<?= $m['db_id'] ?>, '<?= htmlspecialchars(addslashes($m['first_name'] . ' ' . $m['last_name'])) ?>')" title="Deactivate member" style="color:#DC2626;">
+                      <i class="ph ph-user-minus"></i>
                     </button>
                   </div>
                 </td>
               </tr>
               <?php endforeach; ?>
+              <?php if (empty($members)): ?>
+              <tr>
+                <td colspan="6" style="text-align:center; padding: 40px; color: var(--muted);">No members found matching your search.</td>
+              </tr>
+              <?php endif; ?>
             </tbody>
             </table>
           </div>
         </div>
-        <div
-          style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;font-size:13px;color:var(--muted);">
-          <span>Showing <?= $members_shown ?> of <?= $total_members ?> members</span>
+
+        <!-- Pagination -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;font-size:13px;color:var(--muted);">
+          <span>Page <?= $page ?> of <?= ceil($total_members / $perPage) ?: 1 ?></span>
           <div style="display:flex;gap:6px;">
-            <button class="btn btn-outline btn-sm"><i class="ph ph-caret-left"></i></button>
-            <button class="btn btn-primary btn-sm">1</button>
-            <button class="btn btn-outline btn-sm">2</button>
-            <button class="btn btn-outline btn-sm">3</button>
-            <button class="btn btn-outline btn-sm"><i class="ph ph-caret-right"></i></button>
+            <?php if ($page > 1): ?>
+              <a href="?page=<?= $page-1 ?>&q=<?= urlencode($search) ?>&status=<?= urlencode($statusFilter) ?>" class="btn btn-outline btn-sm"><i class="ph ph-caret-left"></i></a>
+            <?php endif; ?>
+            
+            <button class="btn btn-primary btn-sm"><?= $page ?></button>
+            
+            <?php if ($total_members > ($page * $perPage)): ?>
+              <a href="?page=<?= $page+1 ?>&q=<?= urlencode($search) ?>&status=<?= urlencode($statusFilter) ?>" class="btn btn-outline btn-sm"><i class="ph ph-caret-right"></i></a>
+            <?php endif; ?>
           </div>
         </div>
       </div>
@@ -181,33 +298,16 @@ $member_stats = $member_stats ?? [
 
   <?php require_once 'includes/modals/member_modals.php'; ?>
 
+  <!-- Hidden delete-member form -->
+  <form method="POST" action="handlers/member_handler.php" id="deleteMemberForm" style="display:none;">
+    <?= csrfField() ?>
+    <input type="hidden" name="action" value="delete_member">
+    <input type="hidden" name="member_id" id="deleteMemberId">
+  </form>
+
   <script src="assets/js/main.js"></script>
   <script>
-    // Mock data for members (TODO: Backend should ideally populate this via JSON or API)
     const membersData = <?php echo json_encode(array_column($members, null, 'id')); ?>;
-
-    /**
-     * Note: In a real backend implementation, membersData would likely be 
-     * simplified or the modals would fetch data via AJAX.
-     * For now, we keep the JS behavior compatible with the PHP rendering.
-     */
-     // Adapt the mock data structure for common JS functions if needed
-     Object.keys(membersData).forEach(id => {
-       const m = membersData[id];
-       membersData[id] = {
-         fn: m.first_name,
-         ln: m.last_name,
-         phone: m.phone,
-         email: m.email,
-         ministry: m.ministry === 'Music' ? 'Music Ministry' : (m.ministry === 'Youth' ? 'Youth Wing' : m.ministry),
-         status: m.status,
-         dob: m.dob || '1990-01-01', // Fallback for mock
-         joined: m.joined,
-         address: m.address || 'Street Name, City',
-         sacraments: m.sacraments || [],
-         photo: m.photo || null
-       };
-     });
 
     function handlePreview(input, previewId, placeholderId) {
       if (input.files && input.files[0]) {
@@ -222,108 +322,63 @@ $member_stats = $member_stats ?? [
       }
     }
 
-    function filterMembers() {
-      const q = document.getElementById('memberSearch').value.toLowerCase();
-      const status = document.getElementById('statusFilter').value;
-      let visibleCount = 0;
-
-      document.querySelectorAll('#membersTbody tr').forEach(row => {
-        const text = row.textContent.toLowerCase();
-        const rowStatus = row.querySelector('td:nth-child(4) .badge').textContent.trim();
-        
-        const matchesQuery = text.includes(q);
-        const matchesStatus = status === 'All Status' || rowStatus === status;
-
-        if (matchesQuery && matchesStatus) {
-          row.style.display = '';
-          visibleCount++;
-        } else {
-          row.style.display = 'none';
-        }
-      });
-      
-      document.getElementById('membersCount').textContent = visibleCount;
-    }
-
-    function viewMember(id) {
-      const m = membersData[id];
-      if (!m) return;
-
-      // Photo handling
-      const photoBox = document.getElementById('viewPhotoContainer');
-      const photoImg = document.getElementById('viewPhoto');
-      const avatarBox = document.getElementById('viewAvatar');
-
-      if (m.photo) {
-        photoImg.src = m.photo;
-        photoBox.style.display = 'block';
-        avatarBox.style.display = 'none';
-      } else {
-        avatarBox.textContent = m.fn[0] + m.ln[0];
-        avatarBox.style.display = 'flex';
-        photoBox.style.display = 'none';
-      }
-      document.getElementById('viewName').textContent = m.fn + ' ' + m.ln;
-      document.getElementById('viewId').textContent = id;
-      document.getElementById('viewPhone').textContent = m.phone;
-      document.getElementById('viewEmail').textContent = m.email;
-      document.getElementById('viewDob').textContent = m.dob;
-      document.getElementById('viewJoined').textContent = m.joined;
-      document.getElementById('viewAddress').textContent = m.address;
-
-      // Status Badge
-      const statusClass = m.status === 'Active' ? 'badge-green' : (m.status === 'Visitor' ? 'badge-yellow' : 'badge-red');
-      document.getElementById('viewStatus').innerHTML = `<span class="badge ${statusClass}">${m.status}</span>`;
-
-      // Ministry Badge
-      document.getElementById('viewMinistry').innerHTML = `<span class="badge badge-blue">${m.ministry}</span>`;
-
-      // Sacraments
-      const sacDiv = document.getElementById('viewSacraments');
-      sacDiv.innerHTML = '';
-      ['Baptised', 'Confirmed', 'First Communion'].forEach(s => {
-        const has = m.sacraments.includes(s);
-        sacDiv.innerHTML += `<span class="badge ${has ? 'badge-green' : 'badge-gray'}">${s}</span>`;
-      });
-
-      document.getElementById('viewEditBtn').onclick = () => {
-        closeModal('viewMemberModal');
-        editMember(id);
-      };
-
-      openModal('viewMemberModal');
-    }
 
     function editMember(id) {
       const m = membersData[id];
       if (!m) return;
 
-      // Photo handling
       const editPreview = document.getElementById('editPhotoPreview');
-      if (m.photo) {
-        editPreview.src = m.photo;
+      if (m.photo_path) {
+        editPreview.src = m.photo_path;
         editPreview.style.display = 'block';
+        document.getElementById('editPhotoPlaceholder').style.opacity = '0';
       } else {
         editPreview.style.display = 'none';
+        document.getElementById('editPhotoPlaceholder').style.opacity = '1';
       }
 
-      document.getElementById('editMemberId').value = id;
-      document.getElementById('editFn').value = m.fn;
-      document.getElementById('editLn').value = m.ln;
-      document.getElementById('editPhone').value = m.phone;
-      document.getElementById('editEmail').value = m.email;
-      document.getElementById('editDob').value = m.dob;
-      document.getElementById('editMinistry').value = m.ministry;
+      document.getElementById('editMemberId').value = m.db_id;
+      document.getElementById('editFirstName').value = m.first_name;
+      document.getElementById('editLastName').value = m.last_name;
+      document.getElementById('editGender').value = m.gender;
+      document.getElementById('editPhone').value = m.phone !== '—' ? m.phone : '';
+      document.getElementById('editEmail').value = m.email !== '—' ? m.email : '';
+      document.getElementById('editDob').value = m.dob || '';
+      document.getElementById('editMinistry').value = m.ministry_id || '';
       document.getElementById('editStatus').value = m.status;
-      document.getElementById('editAddress').value = m.address;
+      document.getElementById('editAddress').value = m.address || '';
+      document.getElementById('editNotes').value   = m.notes  || '';
 
-      document.getElementById('editBaptised').checked = m.sacraments.includes('Baptised');
-      document.getElementById('editConfirmed').checked = m.sacraments.includes('Confirmed');
-      document.getElementById('editCommunion').checked = m.sacraments.includes('First Communion');
+      // Checkboxes
+      const sacs = ['baptised', 'confirmed', 'communion', 'matrimony', 'orders'];
+      const sacMap = {
+        'baptised': 'Baptised',
+        'confirmed': 'Confirmed',
+        'communion': 'First Communion',
+        'matrimony': 'Matrimony',
+        'orders': 'Orders'
+      };
+      
+      sacs.forEach(s => {
+        const el = document.getElementById('sac_' + s);
+        if (el) el.checked = m.sacraments.includes(sacMap[s]);
+      });
 
       openModal('editMemberModal');
     }
+
+    function confirmDeleteMember(id, name) {
+      showConfirmModal(
+        'Deactivate Member',
+        'Are you sure you want to deactivate ' + name + '? Their record will be preserved but their status set to Inactive.',
+        'Deactivate',
+        function() {
+          document.getElementById('deleteMemberId').value = id;
+          document.getElementById('deleteMemberForm').submit();
+        },
+        'danger'
+      );
+    }
   </script>
 </body>
-
 </html>
