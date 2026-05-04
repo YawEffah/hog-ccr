@@ -18,7 +18,7 @@
           <textarea class="form-control" name="description" rows="3" placeholder="Describe the goal..."></textarea>
         </div>
         <div class="grid-2" style="gap:16px;">
-          <div class="form-group">
+          <div class="form-group" style="position: relative;">
             <label class="form-label">Ministry Head</label>
             <input class="form-control" id="add_mHeadDisplay" name="head_display"
               placeholder="Search member by name or ID..." oninput="filterMHeads(this.value, 'add')" autocomplete="off">
@@ -139,7 +139,7 @@
             <textarea class="form-control" name="description" id="edit_mDesc" rows="3"></textarea>
           </div>
           <div class="grid-2" style="gap:16px;">
-            <div class="form-group">
+            <div class="form-group" style="position: relative;">
               <label class="form-label">Ministry Head</label>
               <input class="form-control" id="edit_mHeadDisplay" name="head_display"
                 placeholder="Search member by name or ID..." oninput="filterMHeads(this.value, 'edit')"
