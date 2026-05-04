@@ -145,6 +145,7 @@ foreach ($rawMinistries as $m) {
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <span class="badge badge-blue"><?= $m['count'] ?> members</span>
               <div style="display:flex;gap:6px;">
+                <button class="btn btn-outline btn-sm" onclick="openMinistryBulkMessage('<?= $m['id'] ?>', '<?= htmlspecialchars(addslashes($m['name'])) ?>', '<?= $m['icon'] ?>', <?= $m['count'] ?>)" title="Message Ministry"><i class="ph ph-chat-centered-dots"></i></button>
                 <button class="btn btn-outline btn-sm" onclick="manageMinistry('<?= $m['id'] ?>')">Manage</button>
                 <button class="btn btn-outline btn-sm" onclick="confirmDeleteMinistry('<?= $m['id'] ?>', '<?= htmlspecialchars(addslashes($m['name'])) ?>')" style="color:#DC2626;border-color:#FECACA;background:#FEF2F2;" title="Delete Ministry">
                   <i class="ph ph-trash"></i>
@@ -224,6 +225,15 @@ foreach ($rawMinistries as $m) {
       document.getElementById('mOverview').classList.add('active');
 
       openModal('manageMinistryModal');
+    }
+
+    function openMinistryBulkMessage(id, name, icon, count) {
+      document.getElementById('bulkMsgMinId').value = id;
+      document.getElementById('bulkMsgMinName').textContent = name;
+      document.getElementById('bulkMsgIcon').textContent = icon;
+      document.getElementById('bulkMsgCount').textContent = count;
+      
+      openModal('sendMinistryMessageModal');
     }
 
     function switchMTab(el, paneId) {

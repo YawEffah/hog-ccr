@@ -608,3 +608,56 @@ function broadcastAnnouncement(array $ann): void
         }
     }
 }
+
+/**
+ * Broadcast a custom message to all active members of a specific ministry.
+ */
+function broadcastMinistryMessage(int $ministryId, string $subject, string $message, string $channel = 'both'): array
+{
+    set_time_limit(0);
+    $db = getDB();
+    
+    // Fetch ministry name
+    $mNameStmt = $db->prepare("SELECT name FROM ministries WHERE id = ?");
+    $mNameStmt->execute([$ministryId]);
+    $ministryName = $mNameStmt->fetchColumn() ?: 'Ministry';
+
+    $stmt = $db->prepare("SELECT first_name, last_name, email, phone FROM members WHERE ministry_id = ? AND status = 'Active'");
+    $stmt->execute([$ministryId]);
+    $members = $stmt->fetchAll();
+
+    $sent = $failed = 0;
+    
+    $htmlContent = <<<HTML
+    <div style="font-family:'DM Sans',Arial,sans-serif;max-width:540px;margin:0 auto;border:1px solid #EDE8DF;border-radius:12px;overflow:hidden;">
+      <div style="background:#2E2D7B;padding:32px;text-align:center;">
+        <h1 style="color:#ffffff;font-size:22px;margin:0;">{$ministryName} Message</h1>
+        <p style="color:#B0A090;font-size:13px;margin:4px 0 0;">House of Grace CCR</p>
+      </div>
+      <div style="padding:32px;">
+        <p style="color:#475569;font-size:15px;line-height:1.6;">{$message}</p>
+        <p style="margin-top:28px;font-size:14px;color:#94A3B8;">
+          Blessings, <br>
+          <strong>{$ministryName} Team</strong>
+        </p>
+      </div>
+    </div>
+    HTML;
+
+    foreach ($members as $m) {
+        $name = $m['first_name'] . ' ' . $m['last_name'];
+        $ok = false;
+
+        if (($channel === 'email' || $channel === 'both') && !empty($m['email'])) {
+            if (sendEmail($m['email'], $name, $subject ?: "{$ministryName} Notification", $htmlContent)) $ok = true;
+        }
+
+        if (($channel === 'sms' || $channel === 'both') && !empty($m['phone'])) {
+            if (sendSMS($m['phone'], $message)) $ok = true;
+        }
+
+        $ok ? $sent++ : $failed++;
+    }
+
+    return ['sent' => $sent, 'failed' => $failed, 'ministry' => $ministryName];
+}

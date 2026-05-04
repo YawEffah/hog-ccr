@@ -87,4 +87,20 @@ if ($action === 'delete_ministry') {
     }
 }
 
+if ($action === 'send_ministry_bulk_message') {
+    $ministryId = (int)($_POST['ministry_id'] ?? 0);
+    $subject    = trim($_POST['subject']      ?? '');
+    $message    = trim($_POST['message']      ?? '');
+    $channel    = $_POST['channel']           ?? 'both';
+
+    if (!$ministryId || !$message) {
+        redirect($redirect . '?error=missing_fields');
+    }
+
+    $result = broadcastMinistryMessage($ministryId, $subject, $message, $channel);
+
+    logActivity("Broadcast to {$result['ministry']}: {$result['sent']} sent, {$result['failed']} failed", 'ministries');
+    redirect($redirect . "?success=messages_sent&sent={$result['sent']}&failed={$result['failed']}");
+}
+
 redirect($redirect . '?error=unknown_action');

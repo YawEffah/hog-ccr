@@ -234,3 +234,54 @@
     }
   });
 </script>
+
+<!-- Send Ministry Message Modal -->
+<div class="modal-overlay" id="sendMinistryMessageModal">
+  <div class="modal" style="max-width:540px;">
+    <div class="modal-header">
+      <h3 id="bulkMsgTitle">Send Ministry Message</h3>
+      <button class="close-btn" onclick="closeModal('sendMinistryMessageModal')"><i class="ph ph-x"></i></button>
+    </div>
+    <form action="handlers/ministry_handler.php" method="POST" id="sendMinistryBulkForm">
+      <?= csrfField() ?>
+      <input type="hidden" name="action" value="send_ministry_bulk_message">
+      <input type="hidden" name="ministry_id" id="bulkMsgMinId">
+      
+      <div class="modal-body">
+        <div style="background:var(--deep-pale); border-radius:12px; padding:16px; display:flex; align-items:center; gap:14px; border:1px solid rgba(46,45,123,0.1); margin-bottom:20px;">
+          <div id="bulkMsgIcon" style="font-size:24px; width:48px; height:48px; display:flex; align-items:center; justify-content:center; border-radius:10px; background:white;">✝️</div>
+          <div>
+            <div id="bulkMsgMinName" style="font-weight:700; color:var(--deep); font-size:16px;">Ministry Name</div>
+            <div style="font-size:12px; color:var(--muted);"><span id="bulkMsgCount">0</span> active members will receive this message</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Message Subject (for Email)</label>
+          <input class="form-control" name="subject" id="bulkMsgSubject" placeholder="e.g. Upcoming Meeting Reminder">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Message Body</label>
+          <textarea class="form-control" name="message" id="bulkMsgBody" rows="5" placeholder="Type your message here..." required style="resize:none;"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Communication Channel</label>
+          <select class="form-control" name="channel">
+            <option value="both">Both (Email + SMS)</option>
+            <option value="email">Email Only</option>
+            <option value="sms">SMS Only</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('sendMinistryMessageModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">
+          <i class="ph ph-paper-plane-tilt"></i> Send Broadcast
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
