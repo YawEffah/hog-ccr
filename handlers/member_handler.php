@@ -68,6 +68,16 @@ if ($action === 'add_member') {
             }
         }
 
+        // Send Welcome Message
+        if (isset($_POST['send_welcome'])) {
+            sendWelcomeMessage([
+                'name'  => "$firstName $lastName",
+                'email' => $email,
+                'phone' => $phone,
+                'code'  => $code
+            ]);
+        }
+
         logActivity("Added member: {$firstName} {$lastName} ({$code})", 'members');
         redirect($redirect . '?success=member_added');
 

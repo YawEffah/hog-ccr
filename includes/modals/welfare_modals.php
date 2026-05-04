@@ -45,6 +45,16 @@
             style="resize:none;"></textarea>
         </div>
         <div
+          style="background:#F1F5F9;border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;margin-top:10px;margin-bottom:14px;">
+          <input type="checkbox" id="sendWelfareWelcome" name="send_welcome" checked
+            style="width:16px;height:16px;cursor:pointer;">
+          <div>
+            <label for="sendWelfareWelcome"
+              style="font-size:13px;font-weight:600;cursor:pointer;color:var(--deep2);display:block;">Send welcome
+              message automatically</label>
+          </div>
+        </div>
+        <div
           style="background:#F0FDF4;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;border:1px solid #BBF7D0;">
           <i class="ph ph-info" style="color:#15803D;font-size:18px;flex-shrink:0;"></i>
           <span style="font-size:12px;color:#15803D;">Only existing church members can be enrolled into Welfare. If the
@@ -214,58 +224,64 @@
 <!-- 4. Send Message Modal -->
 <div class="modal-overlay" id="sendWelfareMessageModal">
   <div class="modal" style="max-width:540px;">
-    <div class="modal-header">
-      <h3>Send Payment Message</h3>
-      <button class="close-btn" onclick="closeModal('sendWelfareMessageModal')"><i class="ph ph-x"></i></button>
-    </div>
-    <div class="modal-body">
-      <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">
-        Select a date to load all welfare members who made contributions on that day,
-        then send them a personalised confirmation message.
-      </p>
-      <div class="grid-2" style="gap:16px;margin-bottom:16px;">
-        <div class="form-group" style="margin-bottom:0;">
-          <label class="form-label">Payment Date</label>
-          <input type="date" class="form-control" id="msgPaymentDate" value="<?= date('Y-m-d') ?>"
-            oninput="loadPayersForDate(this.value)">
-        </div>
-        <div class="form-group" style="margin-bottom:0;">
-          <label class="form-label">Channel</label>
-          <select class="form-control" id="msgChannel">
-            <option value="sms">SMS</option>
-            <option value="email">Email</option>
-            <option value="both">Both (SMS + Email)</option>
-          </select>
-        </div>
+    <form action="handlers/welfare_handler.php" method="POST" id="bulkWelfareForm">
+      <?= csrfField() ?>
+      <input type="hidden" name="action" value="send_welfare_messages">
+      <div class="modal-header">
+        <h3>Send Payment Message</h3>
+        <button type="button" class="close-btn" onclick="closeModal('sendWelfareMessageModal')"><i
+            class="ph ph-x"></i></button>
       </div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">
+          Select a date to load all welfare members who made contributions on that day,
+          then send them a personalised confirmation message.
+        </p>
+        <div class="grid-2" style="gap:16px;margin-bottom:16px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Payment Date</label>
+            <input type="date" class="form-control" name="payment_date" id="msgPaymentDate" value="<?= date('Y-m-d') ?>"
+              oninput="loadPayersForDate(this.value)">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Channel</label>
+            <select class="form-control" name="channel" id="msgChannel">
+              <option value="sms">SMS</option>
+              <option value="email">Email</option>
+              <option value="both">Both (SMS + Email)</option>
+            </select>
+          </div>
+        </div>
 
-      <!-- Custom message toggle -->
-      <div class="form-group">
-        <label class="form-label">Message Preview</label>
-        <textarea class="form-control" id="msgBody" rows="3" style="resize:none;font-size:13px;"
-          placeholder="Auto-generated on date selection…"></textarea>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px;">You may edit this message before sending.</div>
-      </div>
+        <!-- Custom message toggle -->
+        <div class="form-group">
+          <label class="form-label">Message Preview</label>
+          <textarea class="form-control" id="msgBody" rows="3" style="resize:none;font-size:13px;"
+            placeholder="Auto-generated on date selection…"></textarea>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">You may edit this message before sending.</div>
+        </div>
 
-      <!-- Payer list -->
-      <div
-        style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:8px;">
-        Recipients <span id="payerCountBadge" class="badge badge-welfare"
-          style="font-size:11px;margin-left:6px;">0</span>
-      </div>
-      <div id="payerListBox"
-        style="background:#F8FAFC;border:1px solid #EDE8DF;border-radius:10px;max-height:180px;overflow-y:auto;padding:0;">
-        <div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">Select a date to load recipients.
+        <!-- Payer list -->
+        <div
+          style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:8px;">
+          Recipients <span id="payerCountBadge" class="badge badge-welfare"
+            style="font-size:11px;margin-left:6px;">0</span>
+        </div>
+        <div id="payerListBox"
+          style="background:#F8FAFC;border:1px solid #EDE8DF;border-radius:10px;max-height:180px;overflow-y:auto;padding:0;">
+          <div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">Select a date to load
+            recipients.
+          </div>
         </div>
       </div>
-    </div>
-    <div class="modal-footer">
-      <div id="msgResultBadge" style="flex:1;font-size:13px;display:none;"></div>
-      <button class="btn btn-outline" onclick="closeModal('sendWelfareMessageModal')">Cancel</button>
-      <button class="btn btn-primary" id="sendMsgBtn" onclick="dispatchWelfareMessages()">
-        <i class="ph ph-paper-plane-tilt"></i> Send Messages
-      </button>
-    </div>
+      <div class="modal-footer">
+        <div id="msgResultBadge" style="flex:1;font-size:13px;display:none;"></div>
+        <button type="button" class="btn btn-outline" onclick="closeModal('sendWelfareMessageModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="sendMsgBtn">
+          <i class="ph ph-paper-plane-tilt"></i> Send Messages
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -415,54 +431,51 @@
     const badge = document.getElementById('payerCountBadge');
     const msgBox = document.getElementById('msgBody');
 
-    // Simulate: members who paid on that date
-    const fmtDate = dateVal ? new Date(dateVal + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
-
-    // For demo, show payers if date is today or a known date
-    const payers = welfareMembersData.filter(m =>
-      m.history.some(h => h.date.includes('Apr 15') || h.date.includes('Apr 28'))
-    ).slice(0, 3); // mock subset
-
-    badge.textContent = payers.length;
-
-    if (!payers.length) {
-      box.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">No contributions recorded for this date.</div>';
+    if (!dateVal) {
+      box.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">Select a date to load recipients.</div>';
+      badge.textContent = '0';
       msgBox.value = '';
       return;
     }
 
-    box.innerHTML = payers.map(m => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #EDE8DF;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div class="avatar" style="width:30px;height:30px;font-size:12px;background:#CCFBF1;color:#0D9488;">${m.name.split(' ').map(w => w[0]).join('').substring(0, 2)}</div>
-        <div>
-          <div style="font-size:13px;font-weight:500;">${m.name}</div>
-          <div style="font-size:11px;color:var(--muted);">${m.phone}</div>
-        </div>
-      </div>
-      <span class="badge badge-welfare" style="font-size:11px;">GH₵ ${m.history[0].amount}</span>
-    </div>`).join('');
+    const fmtDate = new Date(dateVal + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
-    msgBox.value = `Dear [Name], your welfare contribution of GH₵ [amount] on ${fmtDate} has been received. God bless you. — House of Grace CCR`;
+    box.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;"><i class="ph ph-spinner" style="animation:spin 1s linear infinite;"></i> Loading payers...</div>';
+
+    fetch(`handlers/welfare_handler.php?action=fetch_payers_for_date&date=${dateVal}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success || !data.payers.length) {
+          box.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">No contributions recorded for this date.</div>';
+          badge.textContent = '0';
+          msgBox.value = '';
+          return;
+        }
+
+        const payers = data.payers;
+        badge.textContent = payers.length;
+
+        box.innerHTML = payers.map(m => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #EDE8DF;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="avatar" style="width:30px;height:30px;font-size:12px;background:#CCFBF1;color:#0D9488;">${m.first_name[0]}${m.last_name[0]}</div>
+              <div>
+                <div style="font-size:13px;font-weight:500;">${m.first_name} ${m.last_name}</div>
+                <div style="font-size:11px;color:var(--muted);">${m.phone || 'No phone'}</div>
+              </div>
+            </div>
+            <span class="badge badge-welfare" style="font-size:11px;">GH₵ ${m.amount}</span>
+          </div>`).join('');
+
+        msgBox.value = `Dear [Name], your welfare contribution of GH₵ [amount] on ${fmtDate} has been received. God bless you. — House of Grace CCR`;
+      })
+      .catch(err => {
+        console.error(err);
+        box.innerHTML = '<div style="padding:20px;text-align:center;color:#DC2626;font-size:13px;">Error loading payers.</div>';
+      });
   }
 
-  function dispatchWelfareMessages() {
-    const btn = document.getElementById('sendMsgBtn');
-    const result = document.getElementById('msgResultBadge');
-    const count = parseInt(document.getElementById('payerCountBadge').textContent) || 0;
-
-    if (!count) { alert('No recipients for the selected date.'); return; }
-
-    btn.disabled = true;
-    btn.innerHTML = '<i class="ph ph-spinner" style="animation:spin 1s linear infinite;"></i> Sending…';
-
-    setTimeout(() => {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="ph ph-paper-plane-tilt"></i> Send Messages';
-      result.style.display = 'block';
-      result.innerHTML = `<span class="badge badge-welfare"><i class="ph ph-check"></i> ${count} message(s) sent successfully</span>`;
-    }, 1800);
-  }
+  // Remove dispatchWelfareMessages as it is now a standard form submit
 
   // Auto-load for today when modal opens
   document.getElementById('sendWelfareMessageModal')?.addEventListener('click', function (e) {

@@ -418,6 +418,65 @@ function sendWelfareEmail(array $member, float $amount, string $date, string $re
     );
 }
 
+/**
+ * Build and send a welcome email and/or SMS for a new member.
+ *
+ * @param array $member ['name' => ..., 'email' => ..., 'phone' => ..., 'code' => ...]
+ */
+function sendWelcomeMessage(array $member): bool
+{
+    $name = htmlspecialchars($member['name']);
+    $code = htmlspecialchars($member['code']);
+    $year = date('Y');
+
+    $html = <<<HTML
+    <div style="font-family:'DM Sans',Arial,sans-serif;max-width:540px;margin:0 auto;border:1px solid #EDE8DF;border-radius:12px;overflow:hidden;">
+      <div style="background:#2E2D7B;padding:40px 32px;text-align:center;">
+        <h1 style="color:#ffffff;font-size:24px;margin:0;">Welcome to House of Grace CCR!</h1>
+        <p style="color:#B0A090;font-size:14px;margin:8px 0 0;">We're so blessed to have you with us</p>
+      </div>
+      <div style="padding:32px;">
+        <p style="color:#475569;font-size:15px;">Dear <strong>{$name}</strong>,</p>
+        <p style="color:#475569;font-size:15px;line-height:1.6;">
+          On behalf of the entire congregation, we welcome you to House of Grace CCR family. We believe your presence here is not by accident and we look forward to growing together in faith.
+        </p>
+        <div style="background:#F8FAFC;border-radius:8px;padding:20px;margin:24px 0;text-align:center;">
+          <p style="margin:0;color:#64748B;font-size:13px;text-transform:uppercase;letter-spacing:1px;">Your Official Member ID</p>
+          <p style="margin:8px 0 0;color:#2E2D7B;font-size:32px;font-weight:700;">{$code}</p>
+        </div>
+        <p style="color:#475569;font-size:15px;">
+          Should you have any questions or need any assistance, please don't hesitate to reach out to the church administration.
+        </p>
+        <p style="margin-top:28px;font-size:14px;color:#94A3B8;">
+          Blessings, <br>
+          <strong>House of Grace CCR Administration</strong>
+        </p>
+      </div>
+      <div style="background:#F8FAFC;padding:16px 32px;text-align:center;font-size:11px;color:#94A3B8;">
+        &copy; {$year} House of Grace CCR. All rights reserved.
+      </div>
+    </div>
+    HTML;
+
+    $emailSent = false;
+    if (!empty($member['email'])) {
+        $emailSent = sendEmail(
+            $member['email'],
+            $member['name'],
+            'Welcome to House of Grace CCR Family!',
+            $html
+        );
+    }
+
+    $smsSent = false;
+    if (!empty($member['phone'])) {
+        $smsMsg = "Welcome to House of Grace CCR, {$member['name']}! We're glad to have you in our family. Your Member ID is {$member['code']}. God bless you.";
+        $smsSent = sendSMS($member['phone'], $smsMsg);
+    }
+
+    return $emailSent || $smsSent;
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // PAGINATION HELPER
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -466,4 +525,86 @@ function flash(string $key): string
     $msg = $_SESSION['flash'][$key] ?? '';
     unset($_SESSION['flash'][$key]);
     return $msg;
+}
+
+/**
+ * Broadcast an event notification to all active members.
+ */
+function broadcastEvent(array $event): void
+{
+    set_time_limit(0);
+    $db = getDB();
+    $members = $db->query("SELECT first_name, last_name, email, phone FROM members WHERE status = 'Active'")->fetchAll();
+
+    $title = htmlspecialchars($event['title']);
+    $date  = date('D, M j, Y', strtotime($event['date']));
+    $time  = $event['time'] ? date('g:ia', strtotime($event['time'])) : 'TBA';
+    $venue = htmlspecialchars($event['venue'] ?: 'TBA');
+    $desc  = htmlspecialchars($event['description']);
+
+    $htmlBase = <<<HTML
+    <div style="font-family:'DM Sans',Arial,sans-serif;max-width:540px;margin:0 auto;border:1px solid #EDE8DF;border-radius:12px;overflow:hidden;">
+      <div style="background:#2E2D7B;padding:32px;text-align:center;">
+        <h1 style="color:#ffffff;font-size:22px;margin:0;">New Event Scheduled</h1>
+        <p style="color:#B0A090;font-size:13px;margin:4px 0 0;">House of Grace CCR</p>
+      </div>
+      <div style="padding:32px;">
+        <h2 style="color:#1E1B4B;font-size:18px;margin-top:0;">{$title}</h2>
+        <p style="color:#475569;font-size:14px;line-height:1.6;">{$desc}</p>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:20px;">
+          <tr><td style="padding:8px 0;color:#64748B;">Date</td><td style="padding:8px 0;font-weight:600;text-align:right;">{$date}</td></tr>
+          <tr><td style="padding:8px 0;color:#64748B;">Time</td><td style="padding:8px 0;font-weight:600;text-align:right;">{$time}</td></tr>
+          <tr><td style="padding:8px 0;color:#64748B;">Venue</td><td style="padding:8px 0;font-weight:600;text-align:right;">{$venue}</td></tr>
+        </table>
+      </div>
+    </div>
+    HTML;
+
+    foreach ($members as $m) {
+        $name = $m['first_name'] . ' ' . $m['last_name'];
+        if (!empty($m['email'])) {
+            sendEmail($m['email'], $name, "New Event: $title", $htmlBase);
+        }
+        if (!empty($m['phone'])) {
+            $sms = "New Event: {$title}\nDate: {$date}\nTime: {$time}\nVenue: {$venue}\n- House of Grace CCR";
+            sendSMS($m['phone'], $sms);
+        }
+    }
+}
+
+/**
+ * Broadcast an announcement to all active members.
+ */
+function broadcastAnnouncement(array $ann): void
+{
+    set_time_limit(0);
+    $db = getDB();
+    $members = $db->query("SELECT first_name, last_name, email, phone FROM members WHERE status = 'Active'")->fetchAll();
+
+    $title = htmlspecialchars($ann['title']);
+    $desc  = htmlspecialchars($ann['description']);
+
+    $htmlBase = <<<HTML
+    <div style="font-family:'DM Sans',Arial,sans-serif;max-width:540px;margin:0 auto;border:1px solid #EDE8DF;border-radius:12px;overflow:hidden;">
+      <div style="background:#2E2D7B;padding:32px;text-align:center;">
+        <h1 style="color:#ffffff;font-size:22px;margin:0;">New Announcement</h1>
+        <p style="color:#B0A090;font-size:13px;margin:4px 0 0;">House of Grace CCR</p>
+      </div>
+      <div style="padding:32px;">
+        <h2 style="color:#1E1B4B;font-size:18px;margin-top:0;">{$title}</h2>
+        <p style="color:#475569;font-size:14px;line-height:1.6;">{$desc}</p>
+      </div>
+    </div>
+    HTML;
+
+    foreach ($members as $m) {
+        $name = $m['first_name'] . ' ' . $m['last_name'];
+        if (!empty($m['email'])) {
+            sendEmail($m['email'], $name, "Announcement: $title", $htmlBase);
+        }
+        if (!empty($m['phone'])) {
+            $sms = "Announcement: {$title}\n{$desc}\n- House of Grace CCR";
+            sendSMS($m['phone'], $sms);
+        }
+    }
 }

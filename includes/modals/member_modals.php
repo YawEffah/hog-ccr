@@ -78,6 +78,16 @@
           <textarea class="form-control" name="notes" rows="2" placeholder="Any pastoral or general notes…"
             style="resize:none;"></textarea>
         </div>
+        <div
+          style="background:#F1F5F9;border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;margin-top:10px;">
+          <input type="checkbox" id="sendWelcome" name="send_welcome" checked
+            style="width:16px;height:16px;cursor:pointer;">
+          <div>
+            <label for="sendWelcome"
+              style="font-size:13px;font-weight:600;cursor:pointer;color:var(--deep2);display:block;">Send welcome
+              message automatically</label>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('addMemberModal')">Cancel</button>

@@ -61,6 +61,18 @@ if ($action === 'add_event') {
         ]);
 
         logActivity("Created new event: {$title}", 'events');
+
+        // Broadcast if requested
+        if (isset($_POST['notify_members'])) {
+            broadcastEvent([
+                'title' => $title,
+                'date'  => $date,
+                'time'  => $time,
+                'venue' => $venue,
+                'description' => $description
+            ]);
+        }
+
         redirect($redirect . '?success=event_added');
 
     } catch (PDOException $e) {
@@ -160,10 +172,45 @@ if ($action === 'add_announcement') {
         $stmt->execute([$title, $description, $pinned, $adminId]);
 
         logActivity("Posted announcement: {$title}", 'events');
+
+        // Broadcast if requested
+        if (isset($_POST['notify_members'])) {
+            broadcastAnnouncement([
+                'title' => $title,
+                'description' => $description
+            ]);
+        }
+
         redirect($redirect . '?success=announcement_posted');
 
     } catch (PDOException $e) {
         error_log('add_announcement error: ' . $e->getMessage());
+        redirect($redirect . '?error=db_error');
+    }
+}
+
+// ── EDIT ANNOUNCEMENT ────────────────────────────────────────────────────────
+if ($action === 'edit_announcement') {
+    $id          = (int)($_POST['announcement_id'] ?? 0);
+    $title       = trim($_POST['title']            ?? '');
+    $description = trim($_POST['description']      ?? '');
+    $pinned      = isset($_POST['pinned']) ? 1 : 0;
+
+    if (!$id || !$title || !$description) {
+        redirect($redirect . '?error=missing_fields');
+    }
+
+    try {
+        $stmt = $db->prepare(
+            "UPDATE announcements SET title=?, description=?, pinned=? WHERE id=?"
+        );
+        $stmt->execute([$title, $description, $pinned, $id]);
+
+        logActivity("Updated announcement: {$title}", 'events');
+        redirect($redirect . '?success=announcement_updated');
+
+    } catch (PDOException $e) {
+        error_log('edit_announcement error: ' . $e->getMessage());
         redirect($redirect . '?error=db_error');
     }
 }

@@ -123,9 +123,10 @@ if ($action === 'set_target') {
 // ── DELETE TRANSACTION ────────────────────────────────────────────────────────
 if ($action === 'delete_transaction') {
     $txnId = (int)($_POST['txn_id'] ?? 0);
+    $returnTo = $_POST['return_to'] ?? $redirect;
 
     if (!$txnId) {
-        redirect($redirect . '?error=invalid_data');
+        redirect($returnTo . '?error=invalid_data');
     }
 
     try {
@@ -138,11 +139,11 @@ if ($action === 'delete_transaction') {
         if ($txn) {
             logActivity('Deleted ' . $txn['type'] . ' transaction of ' . formatGhc($txn['amount']), 'finance');
         }
-        redirect($redirect . '?success=transaction_deleted');
+        redirect($returnTo . '?success=transaction_deleted');
 
     } catch (PDOException $e) {
         error_log('delete_transaction error: ' . $e->getMessage());
-        redirect($redirect . '?error=db_error');
+        redirect($returnTo . '?error=db_error');
     }
 }
 

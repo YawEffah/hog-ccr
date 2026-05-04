@@ -11,9 +11,33 @@ require_once '../includes/welfare_notify.php';
 
 verifyCsrf();
 
-$action   = $_POST['action'] ?? '';
+$action   = $_POST['action'] ?? $_GET['action'] ?? '';
 $db       = getDB();
 $redirect = '../welfare.php';
+
+// ── FETCH PAYERS FOR DATE (AJAX) ──────────────────────────────────────────────
+if ($action === 'fetch_payers_for_date') {
+    $date = $_GET['date'] ?? date('Y-m-d');
+    try {
+        $stmt = $db->prepare(
+            "SELECT m.first_name, m.last_name, m.phone, wc.amount
+             FROM welfare_contributions wc
+             JOIN welfare_members wm ON wc.welfare_id = wm.id
+             JOIN members m ON wm.member_id = m.id
+             WHERE wc.payment_date = ?"
+        );
+        $stmt->execute([$date]);
+        $payers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'payers' => $payers]);
+        exit;
+    } catch (PDOException $e) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        exit;
+    }
+}
 
 // ── ENROL MEMBER ──────────────────────────────────────────────────────────────
 if ($action === 'enrol_welfare') {
@@ -41,6 +65,25 @@ if ($action === 'enrol_welfare') {
         $fullName = $name->fetchColumn() ?: 'Unknown';
 
         logActivity("Enrolled {$fullName} into Welfare", 'welfare');
+
+        // Send Welcome Message
+        if (isset($_POST['send_welcome'])) {
+            // Fetch member details if we don't have them (we only have the ID)
+            $mStmt = $db->prepare("SELECT first_name, last_name, phone, email FROM members WHERE id = ?");
+            $mStmt->execute([$memberId]);
+            $member = $mStmt->fetch();
+            if ($member) {
+                sendWelfareWelcomeMessage(
+                    [
+                        'name'  => $member['first_name'] . ' ' . $member['last_name'],
+                        'phone' => $member['phone'],
+                        'email' => $member['email'] ?? '',
+                    ],
+                    $monthlyAmount
+                );
+            }
+        }
+
         redirect($redirect . '?success=enrolled');
 
     } catch (PDOException $e) {
@@ -144,7 +187,7 @@ if ($action === 'send_welfare_messages') {
             'reference' => $p['reference_no'] ?? '',
         ], $payers);
 
-        $result = sendBulkWelfareNotifications($members, $displayDate);
+        $result = sendBulkWelfareNotifications($members, $displayDate, $channel);
 
         logActivity(
             "Sent bulk welfare messages for {$displayDate}: {$result['sent']} sent, {$result['failed']} failed",

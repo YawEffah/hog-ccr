@@ -73,8 +73,18 @@
         </div>
         <div class="form-group">
           <label class="form-label">Description</label>
-          <textarea class="form-control" name="description" rows="3"
-            placeholder="Event details…" style="resize:none;"></textarea>
+          <textarea class="form-control" name="description" rows="3" placeholder="Event details…"
+            style="resize:none;"></textarea>
+        </div>
+        <div
+          style="background:#F1F5F9;border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;margin-top:10px;">
+          <input type="checkbox" name="notify_members" id="eventNotify" value="1"
+            style="width:16px;height:16px;cursor:pointer;">
+          <div>
+            <label for="eventNotify"
+              style="font-size:13px;font-weight:600;cursor:pointer;color:var(--deep2);display:block;">Notify all
+              members</label>
+          </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -144,8 +154,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">Description</label>
-          <textarea class="form-control" name="description" id="editEventDesc" rows="3"
-            style="resize:none;"></textarea>
+          <textarea class="form-control" name="description" id="editEventDesc" rows="3" style="resize:none;"></textarea>
         </div>
       </div>
       <div class="modal-footer">
@@ -173,18 +182,63 @@
         </div>
         <div class="form-group">
           <label class="form-label">Content / Description</label>
-          <textarea class="form-control" name="description" rows="5"
-            placeholder="Write the announcement details…" required style="resize:none;"></textarea>
+          <textarea class="form-control" name="description" rows="5" placeholder="Write the announcement details…"
+            required style="resize:none;"></textarea>
         </div>
         <div class="form-group" style="display:flex;align-items:center;gap:10px;margin-top:10px;">
           <input type="checkbox" name="pinned" id="annPinned" value="1"
             style="width:16px;height:16px;accent-color:var(--gold);">
           <label for="annPinned" style="font-size:14px;cursor:pointer;">Pin this announcement to top</label>
         </div>
+        <div
+          style="background:#F1F5F9;border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;margin-top:10px;">
+          <input type="checkbox" name="notify_members" id="annNotify" value="1"
+            style="width:16px;height:16px;cursor:pointer;">
+          <div>
+            <label for="annNotify"
+              style="font-size:13px;font-weight:600;cursor:pointer;color:var(--deep2);display:block;">Notify all
+              members</label>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('addAnnounceModal')">Cancel</button>
         <button type="submit" class="btn btn-primary">Post Announcement</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── EDIT ANNOUNCEMENT MODAL ────────────────────────────────────────────── -->
+<div class="modal-overlay" id="editAnnounceModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Edit Announcement</h3>
+      <button class="close-btn" onclick="closeModal('editAnnounceModal')"><i class="ph ph-x"></i></button>
+    </div>
+    <form action="handlers/event_handler.php" method="POST" id="editAnnounceForm">
+      <?= csrfField() ?>
+      <input type="hidden" name="action" value="edit_announcement">
+      <input type="hidden" name="announcement_id" id="editAnnounceId">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Announcement Title</label>
+          <input class="form-control" name="title" id="editAnnounceTitle" placeholder="e.g. Monthly All-Night Service" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Content / Description</label>
+          <textarea class="form-control" name="description" id="editAnnounceDesc" rows="5" placeholder="Write the announcement details…"
+            required style="resize:none;"></textarea>
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+          <input type="checkbox" name="pinned" id="editAnnPinned" value="1"
+            style="width:16px;height:16px;accent-color:var(--gold);">
+          <label for="editAnnPinned" style="font-size:14px;cursor:pointer;">Pin this announcement to top</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('editAnnounceModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
       </div>
     </form>
   </div>

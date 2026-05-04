@@ -12,9 +12,13 @@
         <div class="grid-2" style="gap:16px;">
           <div class="form-group" style="position: relative;">
             <label class="form-label">Member (Search by Name or ID)</label>
-            <input class="form-control" id="financeMemberSearch" name="member_display" placeholder="Enter name or member ID…" oninput="filterFinanceMember(this.value)" autocomplete="off" required>
+            <input class="form-control" id="financeMemberSearch" name="member_display"
+              placeholder="Enter name or member ID…" oninput="filterFinanceMember(this.value)" autocomplete="off"
+              required>
             <input type="hidden" name="member_id" id="financeMemberId">
-            <div id="financeSuggestions" style="position:absolute; top:100%; left:0; right:0; z-index:100; background:#fff; border:1px solid #EDE8DF; border-radius:8px; max-height:200px; overflow-y:auto; display:none; box-shadow:0 4px 12px rgba(0,0,0,0.1); margin-top:4px;"></div>
+            <div id="financeSuggestions"
+              style="position:absolute; top:100%; left:0; right:0; z-index:100; background:#fff; border:1px solid #EDE8DF; border-radius:8px; max-height:200px; overflow-y:auto; display:none; box-shadow:0 4px 12px rgba(0,0,0,0.1); margin-top:4px;">
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">Transaction Type</label>
@@ -63,7 +67,7 @@
           <div>
             <label for="genReceipt"
               style="font-size:13px;font-weight:600;cursor:pointer;color:var(--deep2);display:block;">Send
-              receipt automatically via email</label>
+              receipt automatically via SMS & email</label>
           </div>
         </div>
       </div>

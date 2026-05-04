@@ -226,11 +226,11 @@ $allMembers = $allMembersStmt->fetchAll();
 
         <div class="grid-2" style="gap:24px;">
           <div class="card">
-            <div class="card-header">
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
               <h3>Recent Transactions</h3>
-              <div>
+              <div style="display:flex; gap:8px;">
                 <button class="btn btn-outline btn-sm">Export CSV</button>
-                <button class="btn btn-outline btn-sm">View All</button>
+                <a href="finance_history.php" class="btn btn-outline btn-sm">View All</a>
               </div>
             </div>
             <div class="table-responsive">

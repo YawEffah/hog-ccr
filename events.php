@@ -205,14 +205,20 @@ $announcements = array_map(function($a) {
                 <div style="font-size:13px;color:var(--mid);line-height:1.6;"><?= htmlspecialchars($announce['description']) ?></div>
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
                   <div style="font-size:11px;color:var(--muted);">Posted by <?= htmlspecialchars($announce['posted_by']) ?> · <?= htmlspecialchars($announce['date']) ?></div>
-                  <form method="POST" action="handlers/event_handler.php" style="margin:0;" id="deleteAnnounceForm_<?= $announce['id'] ?>">
-                    <?= csrfField() ?>
-                    <input type="hidden" name="action" value="delete_announcement">
-                    <input type="hidden" name="announcement_id" value="<?= $announce['id'] ?>">
-                    <button type="button" class="btn btn-sm" style="font-size:11px;padding:4px 10px;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;" onclick="confirmDeleteAnnounce(<?= $announce['id'] ?>)">
-                      <i class="ph ph-trash"></i> Delete
+                  <div style="display:flex;gap:8px;">
+                    <button class="btn btn-outline btn-sm" style="font-size:11px;padding:4px 10px;"
+                      onclick="openEditAnnouncement(<?= htmlspecialchars(json_encode($announce)) ?>)">
+                      <i class="ph ph-pencil"></i> Edit
                     </button>
-                  </form>
+                    <form method="POST" action="handlers/event_handler.php" style="margin:0;" id="deleteAnnounceForm_<?= $announce['id'] ?>">
+                      <?= csrfField() ?>
+                      <input type="hidden" name="action" value="delete_announcement">
+                      <input type="hidden" name="announcement_id" value="<?= $announce['id'] ?>">
+                      <button type="button" class="btn btn-sm" style="font-size:11px;padding:4px 10px;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;" onclick="confirmDeleteAnnounce(<?= $announce['id'] ?>)">
+                        <i class="ph ph-trash"></i> Delete
+                      </button>
+                    </form>
+                  </div>
                 </div>
               </div>
               <?php endforeach; ?>
@@ -257,6 +263,15 @@ $announcements = array_map(function($a) {
       }
 
       openModal('editEventModal');
+    }
+
+    function openEditAnnouncement(ann) {
+      document.getElementById('editAnnounceId').value    = ann.id;
+      document.getElementById('editAnnounceTitle').value = ann.title;
+      document.getElementById('editAnnounceDesc').value  = ann.description;
+      document.getElementById('editAnnPinned').checked   = parseInt(ann.pinned) === 1;
+      
+      openModal('editAnnounceModal');
     }
 
     function confirmDeleteEvent(id, title) {
