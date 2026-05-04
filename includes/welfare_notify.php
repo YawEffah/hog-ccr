@@ -29,20 +29,20 @@ function buildWelfareMessage(string $name, float $amount, string $date, string $
  */
 function sendWelfareNotification(array $member, float $amount, string $date, string $reference): bool
 {
+    $emailSent = false;
     // Send email if address is available
     if (!empty($member['email'])) {
-        return sendWelfareEmail($member, $amount, $date, $reference);
+        $emailSent = sendWelfareEmail($member, $amount, $date, $reference);
     }
 
-    // Fallback: log to file (useful for cash payers with no email)
-    $message = buildWelfareMessage($member['name'], $amount, $date, $reference);
-    $logLine = date('[Y-m-d H:i:s]')
-             . " TO: {$member['name']} | Phone: {$member['phone']}\n"
-             . "  MSG: {$message}\n";
+    $smsSent = false;
+    // Send SMS if phone is available
+    if (!empty($member['phone'])) {
+        $message = buildWelfareMessage($member['name'], $amount, $date, $reference);
+        $smsSent = sendSMS($member['phone'], $message);
+    }
 
-    $logFile = __DIR__ . '/../assets/docs/welfare_notifications.log';
-    file_put_contents($logFile, $logLine, FILE_APPEND | LOCK_EX);
-    return true;
+    return $emailSent || $smsSent;
 }
 
 /**

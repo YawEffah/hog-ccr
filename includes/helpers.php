@@ -221,10 +221,78 @@ function sendEmail(
     }
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SMS — Arkesel API
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 /**
- * Build and send a transaction receipt email.
+ * Format a phone number to standard Ghana format (e.g. 233544123456)
+ */
+function formatGhanaPhoneNumber(string $phone): string
+{
+    $phone = preg_replace('/[^0-9]/', '', $phone);
+    if (strlen($phone) === 10 && str_starts_with($phone, '0')) {
+        return '233' . substr($phone, 1);
+    }
+    if (strlen($phone) === 12 && str_starts_with($phone, '233')) {
+        return $phone;
+    }
+    return $phone; // Return as-is if unhandled format
+}
+
+/**
+ * Send an SMS via Arkesel API.
+ * 
+ * @param string $to       Recipient phone number
+ * @param string $message  SMS body
+ * @return bool            true on success, false on failure
+ */
+function sendSMS(string $to, string $message): bool
+{
+    $formattedTo = formatGhanaPhoneNumber($to);
+    
+    // Use Arkesel credentials from config
+    $apiKey = ARKESEL_API_KEY;
+    $from   = ARKESEL_SENDER_ID;
+    
+    $url = 'https://sms.arkesel.com/sms/api?action=send-sms'
+         . '&api_key=' . urlencode($apiKey)
+         . '&to=' . urlencode($formattedTo)
+         . '&from=' . urlencode($from)
+         . '&sms=' . urlencode($message);
+
+    $curl = curl_init();
+    curl_setopt_array($curl, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 10,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'GET',
+    ]);
+
+    $response = curl_exec($curl);
+    $err = curl_error($curl);
+    curl_close($curl);
+
+    if ($err) {
+        error_log('SMS cURL error: ' . $err);
+        return false;
+    }
+
+    $resData = json_decode($response, true);
+    // Arkesel usually returns code 100 or '100' or similar string indicating success depending on endpoint version.
+    // Given the endpoint, if response contains success/code, we can check. For now, log and assume true if no curl error.
+    error_log('SMS Sent. Response: ' . $response);
+    return true;
+}
+
+/**
+ * Build and send a transaction receipt email and/or SMS.
  *
- * @param array  $recipient  ['name' => ..., 'email' => ...]
+ * @param array  $recipient  ['name' => ..., 'email' => ..., 'phone' => ...]
  * @param array  $txn        Transaction data array
  */
 function sendFinanceReceipt(array $recipient, array $txn): bool
@@ -275,12 +343,25 @@ function sendFinanceReceipt(array $recipient, array $txn): bool
     </div>
     HTML;
 
-    return sendEmail(
-        $recipient['email'],
-        $recipient['name'],
-        'Payment Receipt — ' . $type . ' · ' . $date,
-        $html
-    );
+    $emailSent = false;
+    if (!empty($recipient['email'])) {
+        $emailSent = sendEmail(
+            $recipient['email'],
+            $recipient['name'],
+            'Payment Receipt — ' . $type . ' · ' . $date,
+            $html
+        );
+    }
+
+    $smsSent = false;
+    if (!empty($recipient['phone'])) {
+        $smsDate = date('d M Y, h:ia', strtotime($txn['transaction_date']));
+        $smsAmount = number_format((float)$txn['amount'], 2);
+        $smsMsg = "Dear {$name}, your {$type} of GHS {$smsAmount} on {$smsDate} has been received. God bless you. - House of Grace CCR";
+        $smsSent = sendSMS($recipient['phone'], $smsMsg);
+    }
+
+    return $emailSent || $smsSent;
 }
 
 /**

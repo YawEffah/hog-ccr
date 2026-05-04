@@ -28,7 +28,11 @@ if (!$successMsg && !$errorMsg) {
 }
 
 $db = getDB();
-$currentMonth = date('Y-m');
+$filterMonth = $_GET['month'] ?? date('Y-m');
+// Ensure format is valid (YYYY-MM), else fallback
+if (!preg_match('/^\d{4}-\d{2}$/', $filterMonth)) {
+    $filterMonth = date('Y-m');
+}
 
 // ── Finance Statistics ───────────────────────────────────────────────────────
 $statsStmt = $db->prepare(
@@ -40,11 +44,11 @@ $statsStmt = $db->prepare(
      FROM finance_transactions 
      WHERE DATE_FORMAT(transaction_date, '%Y-%m') = ?"
 );
-$statsStmt->execute([$currentMonth]);
+$statsStmt->execute([$filterMonth]);
 $rawStats = $statsStmt->fetch();
 
 $targetStmt = $db->prepare("SELECT target_amount FROM finance_targets WHERE DATE_FORMAT(target_month, '%Y-%m') = ?");
-$targetStmt->execute([$currentMonth]);
+$targetStmt->execute([$filterMonth]);
 $monthlyTarget = (float)$targetStmt->fetchColumn() ?: 10000;
 
 $totalIncome = (float)($rawStats['total'] ?? 0);
@@ -62,10 +66,11 @@ $txnStmt = $db->prepare(
     "SELECT t.*, m.first_name, m.last_name 
      FROM finance_transactions t
      LEFT JOIN members m ON t.member_id = m.id
+     WHERE DATE_FORMAT(t.transaction_date, '%Y-%m') = ?
      ORDER BY t.transaction_date DESC, t.created_at DESC
-     LIMIT 10"
+     LIMIT 100"
 );
-$txnStmt->execute();
+$txnStmt->execute([$filterMonth]);
 $rawTxns = $txnStmt->fetchAll();
 
 $typeBadges = [
@@ -95,7 +100,7 @@ $breakdownStmt = $db->prepare(
      WHERE DATE_FORMAT(transaction_date, '%Y-%m') = ?
      GROUP BY type"
 );
-$breakdownStmt->execute([$currentMonth]);
+$breakdownStmt->execute([$filterMonth]);
 $rawBreakdown = $breakdownStmt->fetchAll();
 
 $breakdownColors = [
@@ -114,6 +119,16 @@ $income_breakdown = array_map(function($b) use ($totalIncome, $breakdownColors) 
         'bar_class' => $breakdownColors[$b['type']] ?? 'var(--gold)'
     ];
 }, $rawBreakdown);
+
+// ── All Members (for Finance Search) ─────────────────────────────────────────
+$allMembersStmt = $db->query(
+    "SELECT id, first_name, last_name, member_code 
+     FROM members 
+     WHERE status = 'Active' 
+     ORDER BY last_name ASC"
+);
+$allMembers = $allMembersStmt->fetchAll();
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -136,6 +151,28 @@ $income_breakdown = array_map(function($b) use ($totalIncome, $breakdownColors) 
           <div class="topbar-title">Finance</div>
         </div>
         <div class="topbar-actions">
+          <?php
+            $currentY = explode('-', $filterMonth)[0];
+            $currentM = explode('-', $filterMonth)[1];
+            $monthsList = [
+                '01' => 'January', '02' => 'February', '03' => 'March', '04' => 'April',
+                '05' => 'May', '06' => 'June', '07' => 'July', '08' => 'August',
+                '09' => 'September', '10' => 'October', '11' => 'November', '12' => 'December'
+            ];
+            $thisYear = date('Y');
+          ?>
+          <div style="display:flex;gap:8px;">
+            <select class="form-control" style="width:120px;padding:8px 12px;" id="financeMonthSelect" onchange="updateFinanceFilter()">
+              <?php foreach($monthsList as $num => $name): ?>
+                <option value="<?= $num ?>" <?= $currentM === $num ? 'selected' : '' ?>><?= $name ?></option>
+              <?php endforeach; ?>
+            </select>
+            <select class="form-control" style="width:90px;padding:8px 12px;" id="financeYearSelect" onchange="updateFinanceFilter()">
+              <?php for($y = $thisYear; $y >= $thisYear - 5; $y--): ?>
+                <option value="<?= $y ?>" <?= (string)$currentY === (string)$y ? 'selected' : '' ?>><?= $y ?></option>
+              <?php endfor; ?>
+            </select>
+          </div>
           <button class="btn btn-outline btn-sm" id="notifBtn" onclick="toggleNotifications()">
             <i class="ph ph-bell"></i>
           </button>
@@ -285,6 +322,56 @@ $income_breakdown = array_map(function($b) use ($totalIncome, $breakdownColors) 
         },
         'danger'
       );
+    }
+
+    const allFinanceMembers = <?= json_encode($allMembers) ?>;
+
+    function filterFinanceMember(query) {
+      const q = query.toLowerCase();
+      const sugDiv = document.getElementById('financeSuggestions');
+      const hiddenId = document.getElementById('financeMemberId');
+      
+      // Clear ID if they keep typing after selection
+      hiddenId.value = '';
+
+      if (!q) {
+        sugDiv.style.display = 'none';
+        return;
+      }
+      
+      const matches = allFinanceMembers.filter(m => {
+        const full = (m.first_name + ' ' + m.last_name).toLowerCase();
+        return full.includes(q) || m.member_code.toLowerCase().includes(q);
+      });
+      
+      if (matches.length > 0) {
+        sugDiv.innerHTML = '';
+        matches.forEach(m => {
+          const div = document.createElement('div');
+          div.style.padding = '10px 14px';
+          div.style.cursor = 'pointer';
+          div.style.borderBottom = '1px solid #EDE8DF';
+          div.style.fontSize = '13px';
+          div.innerHTML = `<strong>${m.first_name} ${m.last_name}</strong> <span style="color:var(--muted);font-size:11px;margin-left:6px;">${m.member_code}</span>`;
+          div.onclick = () => selectFinanceMember(m.id, `${m.first_name} ${m.last_name}`);
+          sugDiv.appendChild(div);
+        });
+        sugDiv.style.display = 'block';
+      } else {
+        sugDiv.style.display = 'none';
+      }
+    }
+
+    function selectFinanceMember(id, name) {
+      document.getElementById('financeMemberSearch').value = name;
+      document.getElementById('financeMemberId').value = id;
+      document.getElementById('financeSuggestions').style.display = 'none';
+    }
+
+    function updateFinanceFilter() {
+      const y = document.getElementById('financeYearSelect').value;
+      const m = document.getElementById('financeMonthSelect').value;
+      window.location.href = `finance.php?month=${y}-${m}`;
     }
   </script>
 </body>

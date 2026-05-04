@@ -16,7 +16,8 @@ $redirect = '../finance.php';
 
 // ── RECORD TRANSACTION ────────────────────────────────────────────────────────
 if ($action === 'add_transaction') {
-    $memberSearch  = trim($_POST['member_search']    ?? '');
+    $memberDisplay = trim($_POST['member_display'] ?? '');
+    $memberIdRaw   = trim($_POST['member_id'] ?? '');
     $type          = $_POST['transaction_type']      ?? '';
     $amount        = (float)($_POST['amount']        ?? 0);
     $method        = $_POST['payment_method']        ?? 'Cash';
@@ -34,17 +35,13 @@ if ($action === 'add_transaction') {
         redirect($redirect . '?error=invalid_data');
     }
 
-    // Try to match an existing member by name or code
     $memberId   = null;
-    $memberName = $memberSearch;
-    if ($memberSearch) {
-        $mStmt = $db->prepare(
-            "SELECT id, CONCAT(first_name,' ',last_name) AS full_name
-             FROM members
-             WHERE member_code = ? OR CONCAT(first_name,' ',last_name) LIKE ?
-             LIMIT 1"
-        );
-        $mStmt->execute([$memberSearch, '%' . $memberSearch . '%']);
+    $memberName = $memberDisplay;
+
+    // If an ID was explicitly selected from the dropdown, verify it
+    if (!empty($memberIdRaw)) {
+        $mStmt = $db->prepare("SELECT id, CONCAT(first_name,' ',last_name) AS full_name FROM members WHERE id = ?");
+        $mStmt->execute([$memberIdRaw]);
         $found = $mStmt->fetch();
         if ($found) {
             $memberId   = $found['id'];
@@ -68,8 +65,8 @@ if ($action === 'add_transaction') {
         ]);
         $txnId = (int)$db->lastInsertId();
 
-        // Send receipt email
-        if ($sendReceipt && $email) {
+        // Send receipt email / SMS
+        if ($sendReceipt && ($email || $phone)) {
             $txnData = [
                 'type'             => $type,
                 'amount'           => $amount,
@@ -77,7 +74,7 @@ if ($action === 'add_transaction') {
                 'reference_no'     => $reference,
                 'transaction_date' => $date,
             ];
-            $sent = sendFinanceReceipt(['name' => $memberName, 'email' => $email], $txnData);
+            $sent = sendFinanceReceipt(['name' => $memberName, 'email' => $email, 'phone' => $phone], $txnData);
             if ($sent) {
                 $db->prepare("UPDATE finance_transactions SET receipt_sent = 1 WHERE id = ?")
                    ->execute([$txnId]);
