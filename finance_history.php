@@ -16,9 +16,12 @@ $errorMsg   = flash('error');
 if (!$successMsg && !$errorMsg) {
     $successLabels = [
         'transaction_deleted'=> 'Transaction deleted successfully.',
+        'receipt_resent'     => 'Receipt resent successfully.',
     ];
     $errorLabels = [
         'db_error' => 'A database error occurred.',
+        'send_failed' => 'Failed to send receipt. Please check API settings.',
+        'not_found'   => 'Transaction not found.',
     ];
     $successMsg = $successLabels[$_GET['success'] ?? ''] ?? '';
     $errorMsg   = $errorLabels[$_GET['error']   ?? ''] ?? '';
@@ -270,7 +273,9 @@ $transactions = array_map(function($t) use ($typeBadges) {
                     </td>
                     <td style="text-align:right;">
                       <div style="display:flex; justify-content:flex-end; gap:4px;">
-                        <button class="btn btn-outline btn-sm" title="View Receipt"><i class="ph ph-receipt"></i></button>
+                        <button class="btn btn-outline btn-sm" title="View Receipt" onclick='openReceiptModal(<?= json_encode($tx) ?>)'>
+                          <i class="ph ph-receipt"></i>
+                        </button>
                         <button class="btn btn-sm" title="Delete"
                           style="background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;"
                           onclick="confirmDeleteTxn(<?= $tx['id'] ?>)">
@@ -290,6 +295,9 @@ $transactions = array_map(function($t) use ($typeBadges) {
     </div>
 
   </main>
+
+  <?php include 'includes/modals/finance_modal.php'; ?>
+  <?php include 'includes/modals/receipt_modal.php'; ?>
 
   <!-- Hidden delete-transaction form -->
   <form method="POST" action="handlers/finance_handler.php" id="deleteTxnForm" style="display:none;">
@@ -329,6 +337,20 @@ $transactions = array_map(function($t) use ($typeBadges) {
         },
         'danger'
       );
+    }
+
+    function openReceiptModal(tx) {
+      document.getElementById('receiptId').textContent     = '#' + tx.id;
+      document.getElementById('receiptDate').textContent   = tx.date;
+      document.getElementById('receiptMember').textContent = tx.member;
+      document.getElementById('receiptType').textContent   = tx.type;
+      document.getElementById('receiptAmount').textContent = tx.amount;
+      document.getElementById('receiptMethod').textContent = tx.method;
+      document.getElementById('receiptRef').textContent    = tx.reference && tx.reference !== 'N/A' ? `(Ref: ${tx.reference})` : '';
+      
+      document.getElementById('resendTxnId').value = tx.id;
+      
+      openModal('viewReceiptModal');
     }
   </script>
 </body>

@@ -147,4 +147,58 @@ if ($action === 'delete_transaction') {
     }
 }
 
+// ── RESEND RECEIPT ────────────────────────────────────────────────────────────
+if ($action === 'resend_receipt') {
+    $txnId    = (int)($_POST['txn_id'] ?? 0);
+    $returnTo = $_POST['return_to'] ?? $redirect;
+
+    if (!$txnId) {
+        redirect($returnTo . '?error=invalid_data');
+    }
+
+    try {
+        $stmt = $db->prepare(
+            "SELECT t.*, m.first_name, m.last_name 
+             FROM finance_transactions t
+             LEFT JOIN members m ON t.member_id = m.id
+             WHERE t.id = ?"
+        );
+        $stmt->execute([$txnId]);
+        $tx = $stmt->fetch();
+
+        if (!$tx) {
+            redirect($returnTo . '?error=not_found');
+        }
+
+        $memberName = $tx['first_name'] ? ($tx['first_name'] . ' ' . $tx['last_name']) : $tx['member_name'];
+        
+        $txnData = [
+            'type'             => $tx['type'],
+            'amount'           => $tx['amount'],
+            'payment_method'   => $tx['payment_method'],
+            'reference_no'     => $tx['reference_no'],
+            'transaction_date' => $tx['transaction_date'],
+        ];
+
+        // Send receipt email / SMS
+        $sent = sendFinanceReceipt(
+            ['name' => $memberName, 'email' => $tx['email'], 'phone' => $tx['phone']], 
+            $txnData
+        );
+
+        if ($sent) {
+            $db->prepare("UPDATE finance_transactions SET receipt_sent = 1 WHERE id = ?")
+               ->execute([$txnId]);
+            logActivity("Resent receipt for {$tx['type']} to {$memberName}", 'finance');
+            redirect($returnTo . '&success=receipt_resent');
+        } else {
+            redirect($returnTo . '&error=send_failed');
+        }
+
+    } catch (PDOException $e) {
+        error_log('resend_receipt error: ' . $e->getMessage());
+        redirect($returnTo . '&error=db_error');
+    }
+}
+
 redirect($redirect . '?error=unknown_action');
