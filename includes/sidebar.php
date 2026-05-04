@@ -62,6 +62,10 @@ $currentUser = $currentUser ?? [
     </a>
 
     <div class="nav-section-label">System</div>
+    <a href="users.php" class="nav-item <?= $activePage === 'users' ? 'active' : '' ?>">
+      <i class="ph ph-shield-check"></i>
+      User Management
+    </a>
     <a href="logout.php" class="nav-item">
       <i class="ph ph-sign-out"></i>
       Logout
