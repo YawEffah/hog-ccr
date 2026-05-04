@@ -21,12 +21,12 @@
           </div>
           <div class="form-group">
             <label class="form-label">Date</label>
-            <input type="date" class="form-control" name="date" value="<?= date('Y-m-d') ?>" required>
+            <input type="date" class="form-control" name="session_date" value="<?= date('Y-m-d') ?>" required>
           </div>
         </div>
         <div class="form-group">
           <label class="form-label">Time</label>
-          <input type="time" class="form-control" name="time" value="08:00">
+          <input type="time" class="form-control" name="session_time" value="<?= date('H:i') ?>">
         </div>
         <div class="form-group">
           <label class="form-label">Mark Attendance (Present Members)</label>

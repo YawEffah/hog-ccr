@@ -51,18 +51,20 @@ if ($action === 'record_attendance') {
         $visitorSet = array_map('intval', $visitorIds);
 
         $recStmt = $db->prepare(
-            "INSERT INTO attendance_records (session_id, member_id, status)
-             VALUES (?, ?, ?)
-             ON DUPLICATE KEY UPDATE status = VALUES(status)"
+            "INSERT INTO attendance_records (session_id, member_id, status, check_in_time)
+             VALUES (?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE status = VALUES(status), check_in_time = VALUES(check_in_time)"
         );
+
+        $checkInTime = $sessionTime ?: date('H:i:s');
 
         foreach ($allMembers as $mid) {
             if (in_array($mid, $presentSet, true)) {
-                $recStmt->execute([$sessionId, $mid, 'Present']);
+                $recStmt->execute([$sessionId, $mid, 'Present', $checkInTime]);
             } elseif (in_array($mid, $visitorSet, true)) {
-                $recStmt->execute([$sessionId, $mid, 'Visitor']);
+                $recStmt->execute([$sessionId, $mid, 'Visitor', $checkInTime]);
             } else {
-                $recStmt->execute([$sessionId, $mid, 'Absent']);
+                $recStmt->execute([$sessionId, $mid, 'Absent', null]);
             }
         }
 
