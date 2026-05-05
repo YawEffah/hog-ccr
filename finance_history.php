@@ -141,10 +141,7 @@ $transactions = array_map(function($t) use ($typeBadges) {
           <a href="finance.php" class="btn btn-outline btn-sm">
             <i class="ph ph-arrow-left"></i> Back to Finance
           </a>
-          <button class="btn btn-outline btn-sm" id="notifBtn" onclick="toggleNotifications()">
-            <i class="ph ph-bell"></i>
-          </button>
-          <?php include 'includes/notifications.php'; ?>
+
         </div>
       </div>
 

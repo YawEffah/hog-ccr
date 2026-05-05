@@ -352,6 +352,71 @@
   </div>
 </div>
 
+<!-- Record Expense / Journal Modal -->
+<div class="modal-overlay" id="recordExpenseModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Record Welfare Expense</h3>
+      <button class="close-btn" onclick="closeModal('recordExpenseModal')"><i class="ph ph-x"></i></button>
+    </div>
+    <form action="handlers/welfare_handler.php" method="POST">
+      <?= csrfField() ?>
+      <input type="hidden" name="action" value="record_journal">
+      <div class="modal-body">
+        
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Expense Category</label>
+            <select class="form-control" name="expense_account" required>
+              <option value="">Select Category...</option>
+              <?php
+                $expenses = $db->query("SELECT code, name FROM welfare_accounts WHERE type = 'Expense' ORDER BY code")->fetchAll();
+                foreach($expenses as $exp):
+              ?>
+              <option value="<?= $exp['code'] ?>"><?= htmlspecialchars($exp['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Paid From (Asset)</label>
+            <select class="form-control" name="asset_account" required>
+              <?php
+                $assets = $db->query("SELECT code, name FROM welfare_accounts WHERE type = 'Asset' AND name LIKE 'Cash%' ORDER BY code")->fetchAll();
+                foreach($assets as $ast):
+              ?>
+              <option value="<?= $ast['code'] ?>"><?= htmlspecialchars($ast['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Amount (GH₵)</label>
+            <input type="number" step="0.01" class="form-control" name="amount" placeholder="0.00" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control" name="journal_date" value="<?= date('Y-m-d') ?>" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description / Reason</label>
+          <textarea class="form-control" name="description" rows="2" placeholder="e.g. Wedding gift for John Doe" required style="resize:none;"></textarea>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('recordExpenseModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">
+          <i class="ph ph-check-circle"></i> Save Expense
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
   /* =====================================================
      WELFARE MODAL JAVASCRIPT

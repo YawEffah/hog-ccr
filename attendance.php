@@ -125,10 +125,7 @@ $allMembers = $db->query(
           <form method="GET" action="attendance.php" style="margin:0;">
             <input type="date" name="date" class="form-control" value="<?= htmlspecialchars($activeDate) ?>" style="width:160px;padding:8px 12px;" onchange="this.form.submit()">
           </form>
-          <button class="btn btn-outline btn-sm" id="notifBtn" onclick="toggleNotifications()">
-            <i class="ph ph-bell"></i>
-          </button>
-          <?php include 'includes/notifications.php'; ?>
+
           <button class="btn btn-primary btn-sm" onclick="openModal('recordAttModal')">+ Record Attendance</button>
         </div>
       </div>

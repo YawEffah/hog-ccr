@@ -178,10 +178,7 @@ $allMembers = $allMembersStmt->fetchAll();
               <?php endfor; ?>
             </select>
           </div>
-          <button class="btn btn-outline btn-sm" id="notifBtn" onclick="toggleNotifications()">
-            <i class="ph ph-bell"></i>
-          </button>
-          <?php include 'includes/notifications.php'; ?>
+
           <button class="btn btn-outline btn-sm" onclick="openModal('setTargetModal')">
             <i class="ph ph-target"></i> Set Target
           </button>

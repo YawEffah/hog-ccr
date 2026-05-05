@@ -117,10 +117,7 @@ $records = $stmt->fetchAll();
           <a href="attendance.php" class="btn btn-outline btn-sm">
             <i class="ph ph-arrow-left"></i> Back to Dashboard
           </a>
-          <button class="btn btn-outline btn-sm" id="notifBtn" onclick="toggleNotifications()">
-            <i class="ph ph-bell"></i>
-          </button>
-          <?php include 'includes/notifications.php'; ?>
+
         </div>
       </div>
 

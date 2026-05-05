@@ -184,6 +184,22 @@ if ($action === 'record_welfare_payment') {
         );
         $mStmt->execute([$welfareId]);
         $member = $mStmt->fetch();
+        $name = $member ? $member['first_name'] . ' ' . $member['last_name'] : 'Unknown';
+
+        // Auto-post to Ledger
+        $assetCode = ($method === 'Cash') ? '1010' : '1000';
+        $assetAccountId = $db->query("SELECT id FROM welfare_accounts WHERE code = '$assetCode'")->fetchColumn();
+        $revenueAccountId = $db->query("SELECT id FROM welfare_accounts WHERE code = '4000'")->fetchColumn();
+        $desc = "Subscription from {$name}";
+
+        if ($assetAccountId && $revenueAccountId) {
+            // Debit Asset (Cash/Bank)
+            $db->prepare("INSERT INTO welfare_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
+               ->execute([$payDate, $assetAccountId, $desc, $amount, 0, $reference ?: null, $_SESSION['user_id']]);
+            // Credit Revenue (Subscription)
+            $db->prepare("INSERT INTO welfare_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
+               ->execute([$payDate, $revenueAccountId, $desc, 0, $amount, $reference ?: null, $_SESSION['user_id']]);
+        }
 
         $notifSent = 0;
         if ($sendNotif && $member) {
@@ -203,7 +219,6 @@ if ($action === 'record_welfare_payment') {
             }
         }
 
-        $name = $member ? $member['first_name'] . ' ' . $member['last_name'] : 'Unknown';
         logActivity("Recorded welfare payment of " . formatGhc($amount) . " from {$name}", 'welfare');
         redirect($redirect . '?success=payment_recorded');
 
@@ -392,6 +407,42 @@ if ($action === 'resend_welfare_receipt') {
     } catch (PDOException $e) {
         error_log('resend_welfare_receipt error: ' . $e->getMessage());
         redirect($returnTo . '&error=db_error');
+    }
+}
+// ── RECORD JOURNAL ENTRY ──────────────────────────────────────────────────────
+if ($action === 'record_journal') {
+    $date        = $_POST['journal_date'] ?? date('Y-m-d');
+    $expenseCode = $_POST['expense_account'] ?? '';
+    $assetCode   = $_POST['asset_account'] ?? '1000'; // Default to Bank
+    $amount      = (float)($_POST['amount'] ?? 0);
+    $desc        = trim($_POST['description'] ?? '');
+
+    if (!$expenseCode || !$assetCode || $amount <= 0 || !$desc) {
+        redirect($redirect . '?error=missing_fields');
+    }
+
+    try {
+        $expenseId = $db->query("SELECT id FROM welfare_accounts WHERE code = '$expenseCode'")->fetchColumn();
+        $assetId   = $db->query("SELECT id FROM welfare_accounts WHERE code = '$assetCode'")->fetchColumn();
+
+        if (!$expenseId || !$assetId) {
+            redirect($redirect . '?error=invalid_data');
+        }
+
+        // Debit Expense
+        $db->prepare("INSERT INTO welfare_ledger (transaction_date, account_id, description, debit, credit, created_by) VALUES (?, ?, ?, ?, ?, ?)")
+           ->execute([$date, $expenseId, $desc, $amount, 0, $_SESSION['user_id']]);
+
+        // Credit Asset (Cash/Bank)
+        $db->prepare("INSERT INTO welfare_ledger (transaction_date, account_id, description, debit, credit, created_by) VALUES (?, ?, ?, ?, ?, ?)")
+           ->execute([$date, $assetId, $desc, 0, $amount, $_SESSION['user_id']]);
+
+        logActivity("Recorded welfare journal entry: " . formatGhc($amount) . " for '{$desc}'", 'welfare');
+        redirect($redirect . '?success=journal_recorded');
+
+    } catch (PDOException $e) {
+        error_log('record_journal error: ' . $e->getMessage());
+        redirect($redirect . '?error=db_error');
     }
 }
 

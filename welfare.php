@@ -148,11 +148,10 @@ $nonWelfareMembers = $db->query(
               <?php endfor; ?>
             </select>
           </div>
-          <button class="btn btn-outline btn-sm" id="notifBtn" onclick="toggleNotifications()">
-            <i class="ph ph-bell"></i>
-            <span class="notif-dot"></span>
+
+          <button class="btn btn-outline btn-sm" onclick="openModal('recordExpenseModal')">
+            <i class="ph ph-receipt"></i> Record Expense
           </button>
-          <?php include 'includes/notifications.php'; ?>
           <button class="btn btn-primary btn-sm" onclick="openModal('enrolWelfareModal')">
             <i class="ph ph-hand-heart"></i> Enrol Member
           </button>

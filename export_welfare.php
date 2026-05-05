@@ -65,7 +65,20 @@ $momoExpense = $balances['5100']['balance'] ?? 0;
 $totalExpense = $benExpense + $momoExpense;
 $surplus = $totalIncome - $totalExpense;
 
-$openAR = 19790.00; 
+$prevYearEnd = ($currentYear - 1) . '-12-31';
+$openStmt = $db->prepare("
+    SELECT a.code, 
+           SUM(l.debit) - SUM(l.credit) as bal 
+    FROM welfare_accounts a 
+    JOIN welfare_ledger l ON a.id = l.account_id 
+    WHERE l.transaction_date <= ? 
+      AND a.type IN ('Asset')
+    GROUP BY a.code
+");
+$openStmt->execute([$prevYearEnd]);
+$openBals = $openStmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+$openAR = $openBals['1100'] ?? 0;
 $closeAR = $balances['1100']['balance'] ?? 0;
 $cashReceived = $subIncome - ($closeAR - $openAR); 
 $cashPaid = $totalExpense;
@@ -74,7 +87,7 @@ $netOperating = $cashReceived - $cashPaid;
 $investing = $othIncome;
 $financing = 0;
 $netIncrease = $netOperating + $investing + $financing;
-$openBank = 98344.33; 
+$openBank = ($openBals['1000'] ?? 0) + ($openBals['1010'] ?? 0);
 $closeBank = $openBank + $netIncrease;
 
 $cashAtBank = $balances['1000']['balance'] ?? 0;

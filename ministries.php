@@ -154,10 +154,7 @@ foreach ($rawMinistries as $m) {
           <div class="topbar-title">Ministries & Groups</div>
         </div>
         <div class="topbar-actions">
-          <button class="btn btn-outline btn-sm" id="notifBtn" onclick="toggleNotifications()">
-            <i class="ph ph-bell"></i>
-          </button>
-          <?php include 'includes/notifications.php'; ?>
+
           <button class="btn btn-primary btn-sm" onclick="openModal('addMinistryModal')">+ New Ministry</button>
         </div>
       </div>
