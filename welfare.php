@@ -161,6 +161,7 @@ $nonWelfareMembers = $db->query(
       </div>
 
       <div class="content">
+        <?php renderToastAlerts($successMsg, $errorMsg); ?>
 
         <!-- Stat Cards -->
         <div class="grid-4" style="margin-bottom:24px;">
@@ -343,7 +344,9 @@ $nonWelfareMembers = $db->query(
                     </td>
                     <td>
                       <div style="display:flex;gap:6px;">
-                        <button class="btn btn-outline btn-sm" title="View Receipt"><i class="ph ph-receipt"></i></button>
+                        <button class="btn btn-outline btn-sm" title="View Receipt" onclick='openWelfareReceiptModal(<?= htmlspecialchars(json_encode($c), ENT_QUOTES, "UTF-8") ?>)'>
+                          <i class="ph ph-receipt"></i>
+                        </button>
                         <button class="btn btn-outline btn-sm" onclick="confirmDeleteContrib('<?= $c['id'] ?>')" style="color:#DC2626;border-color:#FECACA;background:#FEF2F2;" title="Delete Contribution">
                           <i class="ph ph-trash"></i>
                         </button>

@@ -124,16 +124,7 @@ $announcements = array_map(function($a) {
         </div>
       </div>
 
-      <?php if ($successMsg): ?>
-      <div class="alert alert-success" style="margin:20px 20px 0;">
-        <i class="ph ph-check-circle"></i> <?= htmlspecialchars($successMsg) ?>
-      </div>
-      <?php endif; ?>
-      <?php if ($errorMsg): ?>
-      <div class="alert alert-error" style="margin:20px 20px 0;">
-        <i class="ph ph-warning-circle"></i> <?= htmlspecialchars($errorMsg) ?>
-      </div>
-      <?php endif; ?>
+      <?php renderToastAlerts($successMsg, $errorMsg); ?>
 
       <div class="content">
         <div class="grid-2" style="gap:24px;">

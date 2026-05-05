@@ -15,12 +15,12 @@ $action   = $_POST['action'] ?? $_GET['action'] ?? '';
 $db       = getDB();
 $redirect = '../welfare.php';
 
-// ── FETCH PAYERS FOR DATE (AJAX) ──────────────────────────────────────────────
+// ── FETCH PAYERS FOR DATE (AJAX — legacy, kept for backward compat) ──────────
 if ($action === 'fetch_payers_for_date') {
     $date = $_GET['date'] ?? date('Y-m-d');
     try {
         $stmt = $db->prepare(
-            "SELECT m.first_name, m.last_name, m.phone, wc.amount
+            "SELECT m.first_name, m.last_name, m.phone, wc.amount, m.email
              FROM welfare_contributions wc
              JOIN welfare_members wm ON wc.welfare_id = wm.id
              JOIN members m ON wm.member_id = m.id
@@ -28,9 +28,61 @@ if ($action === 'fetch_payers_for_date') {
         );
         $stmt->execute([$date]);
         $payers = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
         header('Content-Type: application/json');
-        echo json_encode(['success' => true, 'payers' => $payers]);
+        echo json_encode(['success' => true, 'recipients' => $payers]);
+        exit;
+    } catch (PDOException $e) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        exit;
+    }
+}
+
+// ── FETCH WELFARE RECIPIENTS BY AUDIENCE (AJAX) ───────────────────────────────
+if ($action === 'fetch_welfare_recipients') {
+    $audience     = $_GET['audience'] ?? 'all';
+    $date         = $_GET['date']     ?? date('Y-m-d');
+    $currentMonth = date('Y-m');
+
+    try {
+        if ($audience === 'all') {
+            $stmt = $db->prepare(
+                "SELECT m.first_name, m.last_name, m.phone, m.email
+                 FROM welfare_members wm
+                 JOIN members m ON wm.member_id = m.id
+                 WHERE m.status = 'Active'
+                 ORDER BY m.last_name ASC"
+            );
+            $stmt->execute();
+        } elseif ($audience === 'arrears') {
+            $stmt = $db->prepare(
+                "SELECT m.first_name, m.last_name, m.phone, m.email
+                 FROM welfare_members wm
+                 JOIN members m ON wm.member_id = m.id
+                 WHERE m.status = 'Active'
+                   AND wm.id NOT IN (
+                       SELECT DISTINCT welfare_id
+                       FROM welfare_contributions
+                       WHERE DATE_FORMAT(payment_date, '%Y-%m') = ?
+                   )
+                 ORDER BY m.last_name ASC"
+            );
+            $stmt->execute([$currentMonth]);
+        } else {
+            $stmt = $db->prepare(
+                "SELECT m.first_name, m.last_name, m.phone, m.email, wc.amount
+                 FROM welfare_contributions wc
+                 JOIN welfare_members wm ON wc.welfare_id = wm.id
+                 JOIN members m ON wm.member_id = m.id
+                 WHERE wc.payment_date = ?
+                 ORDER BY m.last_name ASC"
+            );
+            $stmt->execute([$date]);
+        }
+
+        $recipients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'recipients' => $recipients]);
         exit;
     } catch (PDOException $e) {
         header('Content-Type: application/json');
@@ -104,7 +156,9 @@ if ($action === 'record_welfare_payment') {
     $reference    = trim($_POST['reference']          ?? '');
     $payDate      = $_POST['payment_date']            ?? date('Y-m-d');
     $notes        = trim($_POST['notes']              ?? '');
-    $sendNotif    = isset($_POST['send_notification']);
+    
+    // Always send notification since the UI toggle was removed
+    $sendNotif    = true;
 
     if (!$welfareId || $amount <= 0) {
         redirect($redirect . '?error=invalid_data');
@@ -161,39 +215,83 @@ if ($action === 'record_welfare_payment') {
 
 // ── SEND BULK MESSAGES ────────────────────────────────────────────────────────
 if ($action === 'send_welfare_messages') {
-    $payDate = $_POST['payment_date'] ?? date('Y-m-d');
-    $channel = $_POST['channel']      ?? 'email';
+    $audience    = $_POST['audience']     ?? 'all';
+    $payDate     = $_POST['payment_date'] ?? date('Y-m-d');
+    $channel     = $_POST['channel']      ?? 'both';
+    $messageBody = trim($_POST['message_body'] ?? '');
+    $currentMonth = date('Y-m');
+
+    if (!$messageBody) {
+        redirect($redirect . '?error=missing_fields');
+    }
 
     try {
-        // Fetch all contributions on the given date with member details
-        $stmt = $db->prepare(
-            "SELECT wc.amount, wc.reference_no,
-                    m.first_name, m.last_name, m.phone, m.email
-             FROM welfare_contributions wc
-             JOIN welfare_members wm ON wc.welfare_id = wm.id
-             JOIN members m ON wm.member_id = m.id
-             WHERE wc.payment_date = ?"
-        );
-        $stmt->execute([$payDate]);
-        $payers = $stmt->fetchAll();
+        if ($audience === 'all') {
+            $stmt = $db->prepare(
+                "SELECT m.first_name, m.last_name, m.phone, m.email, NULL as amount
+                 FROM welfare_members wm
+                 JOIN members m ON wm.member_id = m.id
+                 WHERE m.status = 'Active'
+                 ORDER BY m.last_name ASC"
+            );
+            $stmt->execute();
+        } elseif ($audience === 'arrears') {
+            $stmt = $db->prepare(
+                "SELECT m.first_name, m.last_name, m.phone, m.email, NULL as amount
+                 FROM welfare_members wm
+                 JOIN members m ON wm.member_id = m.id
+                 WHERE m.status = 'Active'
+                   AND wm.id NOT IN (
+                       SELECT DISTINCT welfare_id
+                       FROM welfare_contributions
+                       WHERE DATE_FORMAT(payment_date, '%Y-%m') = ?
+                   )
+                 ORDER BY m.last_name ASC"
+            );
+            $stmt->execute([$currentMonth]);
+        } else {
+            $stmt = $db->prepare(
+                "SELECT m.first_name, m.last_name, m.phone, m.email, wc.amount
+                 FROM welfare_contributions wc
+                 JOIN welfare_members wm ON wc.welfare_id = wm.id
+                 JOIN members m ON wm.member_id = m.id
+                 WHERE wc.payment_date = ?
+                 ORDER BY m.last_name ASC"
+            );
+            $stmt->execute([$payDate]);
+        }
 
-        $displayDate = date('j F Y', strtotime($payDate));
+        $recipients = $stmt->fetchAll();
+        $sent = $failed = 0;
 
-        $members = array_map(fn($p) => [
-            'name'      => $p['first_name'] . ' ' . $p['last_name'],
-            'phone'     => $p['phone'],
-            'email'     => $p['email'] ?? '',
-            'amount'    => $p['amount'],
-            'reference' => $p['reference_no'] ?? '',
-        ], $payers);
+        foreach ($recipients as $r) {
+            $name      = $r['first_name'] . ' ' . $r['last_name'];
+            $ok        = false;
 
-        $result = sendBulkWelfareNotifications($members, $displayDate, $channel);
+            // Personalise — replace [Name] and optionally [Amount]
+            $personalised = str_replace('[Name]', $r['first_name'], $messageBody);
+            if (!empty($r['amount'])) {
+                $personalised = str_replace('[Amount]', 'GH₵ ' . number_format((float)$r['amount'], 2), $personalised);
+            }
 
-        logActivity(
-            "Sent bulk welfare messages for {$displayDate}: {$result['sent']} sent, {$result['failed']} failed",
-            'welfare'
-        );
-        redirect($redirect . '?success=messages_sent&sent=' . $result['sent'] . '&failed=' . $result['failed']);
+            if (($channel === 'sms' || $channel === 'both') && !empty($r['phone'])) {
+                if (sendSMS($r['phone'], $personalised)) $ok = true;
+            }
+            if (($channel === 'email' || $channel === 'both') && !empty($r['email'])) {
+                $html = buildWelfareBulkEmailHtml($name, $personalised);
+                if (sendEmail($r['email'], $name, 'House of Grace CCR — Welfare Message', $html)) $ok = true;
+            }
+
+            $ok ? $sent++ : $failed++;
+        }
+
+        $audienceLabel = match($audience) {
+            'all'    => 'all welfare members',
+            'arrears'=> 'members in arrears',
+            default  => "payers on {$payDate}",
+        };
+        logActivity("Sent bulk welfare message to {$audienceLabel}: {$sent} sent, {$failed} failed", 'welfare');
+        redirect($redirect . "?success=messages_sent&sent={$sent}&failed={$failed}");
 
     } catch (PDOException $e) {
         error_log('send_welfare_messages error: ' . $e->getMessage());
@@ -245,6 +343,55 @@ if ($action === 'delete_contribution') {
     } catch (PDOException $e) {
         error_log('delete_contribution error: ' . $e->getMessage());
         redirect($redirect . '?error=db_error');
+    }
+}
+
+// ── RESEND RECEIPT ────────────────────────────────────────────────────────────
+if ($action === 'resend_welfare_receipt') {
+    $contribId = (int)($_POST['contrib_id'] ?? 0);
+    $returnTo  = $_POST['return_to'] ?? $redirect;
+
+    if (!$contribId) {
+        redirect($returnTo . '?error=invalid_data');
+    }
+
+    try {
+        $stmt = $db->prepare(
+            "SELECT wc.*, m.first_name, m.last_name, m.phone, m.email
+             FROM welfare_contributions wc
+             JOIN welfare_members wm ON wc.welfare_id = wm.id
+             JOIN members m ON wm.member_id = m.id
+             WHERE wc.id = ?"
+        );
+        $stmt->execute([$contribId]);
+        $tx = $stmt->fetch();
+
+        if (!$tx) {
+            redirect($returnTo . '?error=not_found');
+        }
+
+        $memberName  = $tx['first_name'] . ' ' . $tx['last_name'];
+        $displayDate = date('j F Y', strtotime($tx['payment_date']));
+
+        $memberData = [
+            'name'  => $memberName,
+            'phone' => $tx['phone'],
+            'email' => $tx['email'] ?? '',
+        ];
+
+        $sent = sendWelfareNotification($memberData, (float)$tx['amount'], $displayDate, $tx['reference_no'] ?? '', 'both');
+
+        if ($sent) {
+            $db->prepare("UPDATE welfare_contributions SET notif_sent = 1 WHERE id = ?")->execute([$contribId]);
+            logActivity("Resent welfare receipt for GH₵ {$tx['amount']} to {$memberName}", 'welfare');
+            redirect($returnTo . '&success=receipt_resent');
+        } else {
+            redirect($returnTo . '&error=send_failed');
+        }
+
+    } catch (PDOException $e) {
+        error_log('resend_welfare_receipt error: ' . $e->getMessage());
+        redirect($returnTo . '&error=db_error');
     }
 }
 

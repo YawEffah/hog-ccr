@@ -155,12 +155,7 @@ $ministries = $db->query("SELECT id, name FROM ministries ORDER BY name")->fetch
         </div>
       </div>
 
-      <?php if ($successMsg): ?>
-      <div class="alert alert-success" style="margin: 20px;"><?= $successMsg ?></div>
-      <?php endif; ?>
-      <?php if ($errorMsg): ?>
-      <div class="alert alert-error" style="margin: 20px;"><?= $errorMsg ?></div>
-      <?php endif; ?>
+      <?php renderToastAlerts($successMsg, $errorMsg); ?>
 
       <div class="content">
         <!-- Member Stats -->

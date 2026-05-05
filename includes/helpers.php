@@ -179,7 +179,7 @@ function uploadMemberPhoto(array $file, string $memberCode): ?string
  * @param string $altBody     Plain-text fallback
  * @return bool               true on success, false on failure
  */
-function sendEmail(
+function executeEmailSend(
     string $toEmail,
     string $toName,
     string $subject,
@@ -221,6 +221,31 @@ function sendEmail(
     }
 }
 
+/**
+ * Queue an email for background sending.
+ * (Replaces original sendEmail to make it non-blocking)
+ */
+function sendEmail(
+    string $toEmail,
+    string $toName,
+    string $subject,
+    string $htmlBody,
+    string $altBody = ''
+): bool {
+    try {
+        $db = getDB();
+        $stmt = $db->prepare(
+            "INSERT INTO message_queue (type, recipient, recipient_name, subject, body, status) 
+             VALUES ('email', ?, ?, ?, ?, 'pending')"
+        );
+        $stmt->execute([$toEmail, $toName, $subject, $htmlBody]);
+        return true;
+    } catch (PDOException $e) {
+        error_log('Queue Email error: ' . $e->getMessage());
+        return false;
+    }
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // SMS — Arkesel API
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -247,7 +272,7 @@ function formatGhanaPhoneNumber(string $phone): string
  * @param string $message  SMS body
  * @return bool            true on success, false on failure
  */
-function sendSMS(string $to, string $message): bool
+function executeSmsSend(string $to, string $message): bool
 {
     $formattedTo = formatGhanaPhoneNumber($to);
     
@@ -287,6 +312,26 @@ function sendSMS(string $to, string $message): bool
     // Given the endpoint, if response contains success/code, we can check. For now, log and assume true if no curl error.
     error_log('SMS Sent. Response: ' . $response);
     return true;
+}
+
+/**
+ * Queue an SMS for background sending.
+ * (Replaces original sendSMS to make it non-blocking)
+ */
+function sendSMS(string $to, string $message): bool
+{
+    try {
+        $db = getDB();
+        $stmt = $db->prepare(
+            "INSERT INTO message_queue (type, recipient, body, status) 
+             VALUES ('sms', ?, ?, 'pending')"
+        );
+        $stmt->execute([$to, $message]);
+        return true;
+    } catch (PDOException $e) {
+        error_log('Queue SMS error: ' . $e->getMessage());
+        return false;
+    }
 }
 
 /**
@@ -660,4 +705,27 @@ function broadcastMinistryMessage(int $ministryId, string $subject, string $mess
     }
 
     return ['sent' => $sent, 'failed' => $failed, 'ministry' => $ministryName];
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// UI HELPERS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/**
+ * Render global toast alerts by echoing a <script> block
+ * to trigger the JS showToast() function.
+ * 
+ * @param string|null $successMsg
+ * @param string|null $errorMsg
+ */
+function renderToastAlerts(?string $successMsg, ?string $errorMsg): void
+{
+    if ($successMsg) {
+        $msg = addslashes($successMsg);
+        echo "<script>document.addEventListener('DOMContentLoaded', function() { if(typeof showToast === 'function') showToast('{$msg}', 'success'); });</script>";
+    }
+    if ($errorMsg) {
+        $msg = addslashes($errorMsg);
+        echo "<script>document.addEventListener('DOMContentLoaded', function() { if(typeof showToast === 'function') showToast('{$msg}', 'error'); });</script>";
+    }
 }

@@ -131,16 +131,7 @@ $allMembers = $db->query(
         </div>
       </div>
       <div class="content">
-        <?php if ($successMsg): ?>
-          <div class="alert alert-success" style="margin-bottom:24px;">
-            <i class="ph ph-check-circle"></i> <?= htmlspecialchars($successMsg) ?>
-          </div>
-        <?php endif; ?>
-        <?php if ($errorMsg): ?>
-          <div class="alert alert-error" style="margin-bottom:24px;">
-            <i class="ph ph-warning-circle"></i> <?= htmlspecialchars($errorMsg) ?>
-          </div>
-        <?php endif; ?>
+        <?php renderToastAlerts($successMsg, $errorMsg); ?>
 
         <div class="grid-4" style="margin-bottom:24px;">
           <div class="stat-card">

@@ -129,9 +129,7 @@ foreach ($rawMinistries as $m) {
         </div>
       </div>
 
-      <?php if ($successMsg): ?>
-      <div class="alert alert-success" style="margin: 20px;"><?= $successMsg ?></div>
-      <?php endif; ?>
+      <?php renderToastAlerts($successMsg, $errorMsg); ?>
 
       <div class="content">
         <div class="grid-3" style="margin-bottom:24px;">

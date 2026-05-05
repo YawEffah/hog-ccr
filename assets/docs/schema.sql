@@ -236,5 +236,20 @@ CREATE TABLE IF NOT EXISTS activity_log (
   module      VARCHAR(50),
   ip_address  VARCHAR(45),
   created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_log_admin FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ─────────────────────────────────────────────
+-- 14. MESSAGE QUEUE (Background SMS & Email)
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS message_queue (
+  id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  type           ENUM('email', 'sms') NOT NULL,
+  recipient      VARCHAR(150) NOT NULL,
+  recipient_name VARCHAR(150),
+  subject        VARCHAR(200),
+  body           TEXT NOT NULL,
+  status         ENUM('pending', 'processing', 'sent', 'failed') DEFAULT 'pending',
+  error_log      TEXT,
+  created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;

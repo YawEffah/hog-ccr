@@ -72,12 +72,7 @@ $users = $stmt->fetchAll();
       </div>
 
       <div class="page-content" style="padding: 24px;">
-        <?php if ($successMsg): ?>
-          <div class="alert alert-success"><i class="ph ph-check-circle"></i> <?= htmlspecialchars($successMsg) ?></div>
-        <?php endif; ?>
-        <?php if ($errorMsg): ?>
-          <div class="alert alert-danger"><i class="ph ph-warning-circle"></i> <?= htmlspecialchars($errorMsg) ?></div>
-        <?php endif; ?>
+        <?php renderToastAlerts($successMsg, $errorMsg); ?>
 
         <div class="card">
           <div class="card-header" style="padding: 20px; border-bottom: 1px solid #EDE8DF;">

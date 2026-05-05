@@ -150,13 +150,7 @@ $transactions = array_map(function($t) use ($typeBadges) {
 
       <div class="content">
         
-        <!-- Alerts -->
-        <?php if($successMsg): ?>
-          <div class="alert alert-success" style="margin-bottom:24px;"><?= htmlspecialchars($successMsg) ?></div>
-        <?php endif; ?>
-        <?php if($errorMsg): ?>
-          <div class="alert alert-danger" style="margin-bottom:24px;"><?= htmlspecialchars($errorMsg) ?></div>
-        <?php endif; ?>
+        <?php renderToastAlerts($successMsg, $errorMsg); ?>
 
         <!-- Filters Card -->
         <div class="card" style="margin-bottom: 24px;">

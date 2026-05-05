@@ -130,3 +130,37 @@ function sendWelfareWelcomeMessage(array $member, float $monthlyAmount): bool
 
     return $emailSent || $smsSent;
 }
+
+/**
+ * Build a branded HTML email body for custom bulk welfare messages.
+ *
+ * @param string $name    Recipient full name
+ * @param string $message The personalised plain-text message body
+ * @return string         HTML email string
+ */
+function buildWelfareBulkEmailHtml(string $name, string $message): string
+{
+    $safeName    = htmlspecialchars($name);
+    $safeMessage = nl2br(htmlspecialchars($message));
+    $year        = date('Y');
+
+    return <<<HTML
+    <div style="font-family:'DM Sans',Arial,sans-serif;max-width:540px;margin:0 auto;border:1px solid #99F6E4;border-radius:12px;overflow:hidden;">
+      <div style="background:#0D9488;padding:28px 32px;text-align:center;">
+        <h1 style="color:#ffffff;font-size:22px;margin:0;">Welfare Message</h1>
+        <p style="color:#CCFBF1;font-size:13px;margin:4px 0 0;">House of Grace CCR</p>
+      </div>
+      <div style="padding:32px;">
+        <p style="color:#475569;font-size:14px;">Dear <strong>{$safeName}</strong>,</p>
+        <p style="color:#475569;font-size:15px;line-height:1.7;">{$safeMessage}</p>
+        <p style="margin-top:28px;font-size:13px;color:#94A3B8;">
+          Blessings,<br>
+          <strong>House of Grace CCR Welfare Team</strong>
+        </p>
+      </div>
+      <div style="background:#F8FAFC;padding:16px 32px;text-align:center;font-size:11px;color:#94A3B8;">
+        &copy; {$year} House of Grace CCR Welfare. All rights reserved.
+      </div>
+    </div>
+    HTML;
+}
