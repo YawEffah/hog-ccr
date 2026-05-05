@@ -148,7 +148,6 @@ $nonWelfareMembers = $db->query(
               <?php endfor; ?>
             </select>
           </div>
-
           <button class="btn btn-outline btn-sm" id="notifBtn" onclick="toggleNotifications()">
             <i class="ph ph-bell"></i>
             <span class="notif-dot"></span>

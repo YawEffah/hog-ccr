@@ -227,7 +227,32 @@ CREATE TABLE IF NOT EXISTS welfare_contributions (
 ) ENGINE=InnoDB;
 
 -- ─────────────────────────────────────────────
--- 13. ACTIVITY LOG
+-- 13. WELFARE LEDGER
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS welfare_accounts (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(20) NOT NULL UNIQUE,
+  name VARCHAR(150) NOT NULL,
+  type ENUM('Asset', 'Liability', 'Equity', 'Revenue', 'Expense') NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS welfare_ledger (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  transaction_date DATE NOT NULL,
+  account_id INT UNSIGNED NOT NULL,
+  description VARCHAR(255),
+  debit DECIMAL(12,2) DEFAULT 0.00,
+  credit DECIMAL(12,2) DEFAULT 0.00,
+  reference_no VARCHAR(100),
+  created_by INT UNSIGNED NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_wl_account FOREIGN KEY (account_id) REFERENCES welfare_accounts(id) ON DELETE CASCADE,
+  CONSTRAINT fk_wl_admin FOREIGN KEY (created_by) REFERENCES admins(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ─────────────────────────────────────────────
+-- 14. ACTIVITY LOG
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS activity_log (
   id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -235,11 +260,11 @@ CREATE TABLE IF NOT EXISTS activity_log (
   action      VARCHAR(500) NOT NULL,
   module      VARCHAR(50),
   ip_address  VARCHAR(45),
-  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 -- ─────────────────────────────────────────────
--- 14. MESSAGE QUEUE (Background SMS & Email)
+-- 15. MESSAGE QUEUE (Background SMS & Email)
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS message_queue (
   id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
