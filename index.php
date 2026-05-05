@@ -23,6 +23,11 @@ $stmt = $db->prepare("SELECT SUM(amount) FROM finance_transactions WHERE transac
 $stmt->execute([$monthStart]);
 $monthFinance = (float)$stmt->fetchColumn();
 
+// Add new welfare contributions to this month's finance total
+$wMonthStmt = $db->prepare("SELECT SUM(amount) FROM welfare_contributions WHERE payment_date >= ?");
+$wMonthStmt->execute([$monthStart]);
+$monthFinance += (float)$wMonthStmt->fetchColumn();
+
 // Welfare fund (total collected ever)
 $welfareFund = (float)$db->query("SELECT SUM(amount) FROM welfare_contributions")->fetchColumn();
 
@@ -43,6 +48,12 @@ $lastMonthEnd   = date('Y-m-t',  strtotime('-1 month'));
 $lmStmt = $db->prepare("SELECT SUM(amount) FROM finance_transactions WHERE transaction_date BETWEEN ? AND ?");
 $lmStmt->execute([$lastMonthStart, $lastMonthEnd]);
 $lastMonthFinance = (float)$lmStmt->fetchColumn();
+
+// Add last month's new welfare contributions
+$wLmStmt = $db->prepare("SELECT SUM(amount) FROM welfare_contributions WHERE payment_date BETWEEN ? AND ?");
+$wLmStmt->execute([$lastMonthStart, $lastMonthEnd]);
+$lastMonthFinance += (float)$wLmStmt->fetchColumn();
+
 $financeGrowth = $lastMonthFinance > 0 ? round((($monthFinance - $lastMonthFinance) / $lastMonthFinance) * 100) : 0;
 
 // Members in any ministry
@@ -80,6 +91,10 @@ for ($i = 5; $i >= 0; $i--) {
     $stmt = $db->prepare("SELECT SUM(amount) FROM finance_transactions WHERE transaction_date >= ? AND transaction_date <= LAST_DAY(?)");
     $stmt->execute([$mDate, $mDate]);
     $amt = (float)$stmt->fetchColumn();
+    
+    $wStmt = $db->prepare("SELECT SUM(amount) FROM welfare_contributions WHERE payment_date >= ? AND payment_date <= LAST_DAY(?)");
+    $wStmt->execute([$mDate, $mDate]);
+    $amt += (float)$wStmt->fetchColumn();
     
     $financeSummary[] = ['month' => $mName, 'amount' => number_format($amt, 2), 'height' => min(100, ($amt / 10000) * 100)];
 }
@@ -232,6 +247,14 @@ foreach ($rawBreakdown as $b) {
     $typeTotals[strtolower($b['type'])] = (float)$b['total'];
     $totalAll += (float)$b['total'];
 }
+
+// Add new welfare contributions to the breakdown
+$welfareMonthStmt = $db->prepare("SELECT SUM(amount) FROM welfare_contributions WHERE payment_date >= ?");
+$welfareMonthStmt->execute([$monthStart]);
+$newWelfareTotal = (float)$welfareMonthStmt->fetchColumn();
+
+$typeTotals['welfare'] = ($typeTotals['welfare'] ?? 0) + $newWelfareTotal;
+$totalAll += $newWelfareTotal;
 
 $targetStmt = $db->prepare("SELECT target_amount FROM finance_targets WHERE DATE_FORMAT(target_month, '%Y-%m') = ?");
 $targetStmt->execute([date('Y-m')]);

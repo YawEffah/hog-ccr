@@ -80,9 +80,41 @@ foreach ($rawMinistries as $m) {
     }, $members);
 
     // Fetch sessions
-    $sessStmt = $db->prepare("SELECT COUNT(*) FROM attendance_sessions s JOIN attendance_records r ON s.id = r.session_id JOIN members mem ON r.member_id = mem.id WHERE mem.ministry_id = ?");
+    $sessStmt = $db->prepare("SELECT COUNT(DISTINCT s.id) FROM attendance_sessions s JOIN attendance_records r ON s.id = r.session_id JOIN members mem ON r.member_id = mem.id WHERE mem.ministry_id = ?");
     $sessStmt->execute([$m['id']]);
     $sessionCount = (int)$sessStmt->fetchColumn();
+
+    // Fetch trend (last 6 sessions)
+    $trendStmt = $db->prepare("
+        SELECT (SUM(CASE WHEN r.status = 'Present' THEN 1 ELSE 0 END) / COUNT(r.id) * 100) as pct
+        FROM attendance_sessions s
+        JOIN attendance_records r ON s.id = r.session_id
+        JOIN members mem ON r.member_id = mem.id
+        WHERE mem.ministry_id = ?
+        GROUP BY s.id
+        ORDER BY s.session_date DESC
+        LIMIT 6
+    ");
+    $trendStmt->execute([$m['id']]);
+    $trendRows = $trendStmt->fetchAll(PDO::FETCH_COLUMN);
+    $chartData = array_reverse(array_map('round', $trendRows));
+
+    // Calculate avg attendance for modal
+    $attStmt = $db->prepare("
+        SELECT AVG(present_count / total_possible * 100) as avg_att
+        FROM (
+            SELECT s.id, 
+                   SUM(CASE WHEN r.status = 'Present' THEN 1 ELSE 0 END) as present_count,
+                   COUNT(r.id) as total_possible
+            FROM attendance_sessions s
+            JOIN attendance_records r ON s.id = r.session_id
+            JOIN members m ON r.member_id = m.id
+            WHERE m.ministry_id = ?
+            GROUP BY s.id
+        ) as session_stats
+    ");
+    $attStmt->execute([$m['id']]);
+    $avgAtt = round((float)$attStmt->fetchColumn() ?: 0);
 
     $ministry_details[$m['id']] = [
         'id'       => $m['id'],
@@ -93,10 +125,11 @@ foreach ($rawMinistries as $m) {
         'head_id'  => $m['head_member_id'],
         'head_name'=> $m['head_name'] ? $m['head_name'] . " (" . $m['head_code'] . ")" : '',
         'count'    => $m['total_count'],
-        'att'      => '0%', // Simplified for now
+        'att'      => $avgAtt . '%',
         'sessions' => $sessionCount,
         'members'  => $formattedMembers,
-        'history'  => [] // Could fetch recent events or sessions here
+        'history'  => [],
+        'chart_data' => $chartData
     ];
 }
 ?>
@@ -194,6 +227,18 @@ foreach ($rawMinistries as $m) {
       document.getElementById('mCount').textContent = m.count;
       document.getElementById('mAttendance').textContent = m.att;
       document.getElementById('mSessions').textContent = m.sessions;
+
+      // Populate Chart
+      const chart = document.getElementById('mChart');
+      if (m.chart_data && m.chart_data.length > 0) {
+        chart.innerHTML = m.chart_data.map((pct, idx) => {
+          const isLast = idx === m.chart_data.length - 1;
+          const bg = isLast ? 'var(--deep)' : 'var(--primary)';
+          return `<div style="flex:1;background:${bg};height:${Math.max(10, pct)}%;border-radius:4px 4px 0 0;" title="${pct}% Attendance"></div>`;
+        }).join('');
+      } else {
+        chart.innerHTML = '<div style="color:var(--muted);font-size:12px;width:100%;text-align:center;padding-bottom:20px;">No attendance data available</div>';
+      }
 
       // Populate Edit Form
       document.getElementById('edit_mId').value = id;

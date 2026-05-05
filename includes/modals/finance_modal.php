@@ -28,7 +28,6 @@
               <option>Donation</option>
               <option>Pledge</option>
               <option>Project Contribution</option>
-              <option>Welfare</option>
             </select>
           </div>
         </div>

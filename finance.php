@@ -225,7 +225,6 @@ $allMembers = $allMembersStmt->fetchAll();
             <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
               <h3>Recent Transactions</h3>
               <div style="display:flex; gap:8px;">
-                <button class="btn btn-outline btn-sm">Export CSV</button>
                 <a href="finance_history.php" class="btn btn-outline btn-sm">View All</a>
               </div>
             </div>

@@ -177,7 +177,6 @@ $transactions = array_map(function($t) use ($typeBadges) {
                   <option value="Donation" <?= $type === 'Donation' ? 'selected' : '' ?>>Donation</option>
                   <option value="Pledge" <?= $type === 'Pledge' ? 'selected' : '' ?>>Pledge</option>
                   <option value="Project Contribution" <?= $type === 'Project Contribution' ? 'selected' : '' ?>>Project Contribution</option>
-                  <option value="Welfare" <?= $type === 'Welfare' ? 'selected' : '' ?>>Welfare</option>
                 </select>
               </div>
 
@@ -220,11 +219,16 @@ $transactions = array_map(function($t) use ($typeBadges) {
         </div>
 
         <div class="card">
-          <div class="card-header">
-            <h3>Transaction Ledger</h3>
-            <div style="font-size:13px; color:var(--muted);">
-              Showing <?= count($transactions) ?> result(s) <?= count($transactions) === $limit ? '(Limit reached)' : '' ?>
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <h3 style="margin:0;">Transaction Ledger</h3>
+              <div style="font-size:13px; color:var(--muted); margin-top:4px;">
+                Showing <?= count($transactions) ?> result(s) <?= count($transactions) === $limit ? '(Limit reached)' : '' ?>
+              </div>
             </div>
+            <button class="btn btn-outline btn-sm">
+              <i class="ph ph-download-simple"></i> Export CSV
+            </button>
           </div>
           <div class="table-responsive">
             <table>
