@@ -23,7 +23,7 @@ if (!$successMsg && !$errorMsg) {
 }
 
 $db = getDB();
-$today = date('Y-m-d');
+$activeDate = $_GET['date'] ?? date('Y-m-d');
 
 // ── Attendance Statistics ────────────────────────────────────────────────────
 $statsStmt = $db->prepare(
@@ -35,7 +35,7 @@ $statsStmt = $db->prepare(
      JOIN attendance_sessions s ON ar.session_id = s.id
      WHERE s.session_date = ?"
 );
-$statsStmt->execute([$today]);
+$statsStmt->execute([$activeDate]);
 $attendance_stats = $statsStmt->fetch();
 $attendance_stats = [
   'present' => (int) ($attendance_stats['present'] ?? 0),
@@ -54,7 +54,7 @@ $regStmt = $db->prepare(
      ORDER BY ar.check_in_time DESC
      LIMIT 7"
 );
-$regStmt->execute([$today]);
+$regStmt->execute([$activeDate]);
 $rawRegister = $regStmt->fetchAll();
 
 $today_register = array_map(function ($r) {
@@ -122,7 +122,9 @@ $allMembers = $db->query(
           <div class="topbar-title">Attendance Tracking</div>
         </div>
         <div class="topbar-actions">
-          <input type="date" class="form-control" value="<?= date('Y-m-d') ?>" style="width:160px;padding:8px 12px;">
+          <form method="GET" action="attendance.php" style="margin:0;">
+            <input type="date" name="date" class="form-control" value="<?= htmlspecialchars($activeDate) ?>" style="width:160px;padding:8px 12px;" onchange="this.form.submit()">
+          </form>
           <button class="btn btn-outline btn-sm" id="notifBtn" onclick="toggleNotifications()">
             <i class="ph ph-bell"></i>
           </button>
@@ -163,7 +165,7 @@ $allMembers = $db->query(
         <div class="grid-2" style="gap:24px;">
           <div class="card">
             <div class="card-header">
-              <h3>Today's Register</h3>
+              <h3>Register for <?= date('M j, Y', strtotime($activeDate)) ?></h3>
               <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
                 <div class="tabs" id="registerTabs">
                   <button class="tab active" onclick="filterRegister('All', this)">All</button>
