@@ -40,12 +40,14 @@ if ($action === 'add_transaction') {
 
     // If an ID was explicitly selected from the dropdown, verify it
     if (!empty($memberIdRaw)) {
-        $mStmt = $db->prepare("SELECT id, CONCAT(first_name,' ',last_name) AS full_name FROM members WHERE id = ?");
+        $mStmt = $db->prepare("SELECT id, CONCAT(first_name,' ',last_name) AS full_name, phone, email FROM members WHERE id = ?");
         $mStmt->execute([$memberIdRaw]);
         $found = $mStmt->fetch();
         if ($found) {
             $memberId   = $found['id'];
             $memberName = $found['full_name'];
+            $phone      = $found['phone'];
+            $email      = $found['email'];
         }
     }
 

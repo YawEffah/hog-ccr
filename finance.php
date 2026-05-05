@@ -341,9 +341,11 @@ $allMembers = $allMembersStmt->fetchAll();
       const q = query.toLowerCase();
       const sugDiv = document.getElementById('financeSuggestions');
       const hiddenId = document.getElementById('financeMemberId');
+      const contactFields = document.getElementById('financeContactFields');
       
       // Clear ID if they keep typing after selection
       hiddenId.value = '';
+      if (contactFields) contactFields.style.display = ''; // show fallback for manual guests (reverts to grid)
 
       if (!q) {
         sugDiv.style.display = 'none';
@@ -377,6 +379,9 @@ $allMembers = $allMembersStmt->fetchAll();
       document.getElementById('financeMemberSearch').value = name;
       document.getElementById('financeMemberId').value = id;
       document.getElementById('financeSuggestions').style.display = 'none';
+      
+      const contactFields = document.getElementById('financeContactFields');
+      if (contactFields) contactFields.style.display = 'none'; // hide fallback, use DB data
     }
 
     function updateFinanceFilter() {

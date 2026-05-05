@@ -53,7 +53,7 @@
             <input class="form-control" name="reference_no" placeholder="e.g. TXN123 or CHQ456">
           </div>
         </div>
-        <div class="grid-2" style="gap:16px;">
+        <div class="grid-2" style="gap:16px;" id="financeContactFields">
           <div class="form-group"><label class="form-label">Phone Number</label><input class="form-control" name="phone"
               placeholder="0244-000-000"></div>
           <div class="form-group"><label class="form-label">Email Address</label><input class="form-control"

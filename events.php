@@ -127,95 +127,124 @@ $announcements = array_map(function($a) {
       <?php renderToastAlerts($successMsg, $errorMsg); ?>
 
       <div class="content">
-        <div class="grid-2" style="gap:24px;">
+        <!-- Tab Navigation -->
+        <div class="tabs" id="eventTabs" style="margin-bottom:20px;background:white;border:1px solid #EDE8DF;border-radius:10px;padding:4px;display:inline-flex;">
+          <button class="tab active" id="tabEventsBtn" onclick="switchEventTab('events')" style="padding:7px 20px;font-size:13px;">
+            <i class="ph ph-calendar"></i> Upcoming Events
+          </button>
+          <button class="tab" id="tabAnnounceBtn" onclick="switchEventTab('announcements')" style="padding:7px 20px;font-size:13px;">
+            <i class="ph ph-megaphone"></i> Announcements
+          </button>
+        </div>
 
-          <!-- ── EVENTS COLUMN ── -->
-          <div>
-            <div style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--muted);margin-bottom:14px;letter-spacing:1px;text-transform:uppercase;">
-              Upcoming Events</div>
-
-            <?php if (empty($upcoming_events)): ?>
-              <div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;">
-                <i class="ph ph-calendar-blank" style="font-size:32px;display:block;margin-bottom:10px;"></i>
-                No upcoming events scheduled.
-              </div>
-            <?php endif; ?>
-
-            <div style="display:flex;flex-direction:column;gap:12px;">
-              <?php foreach ($upcoming_events as $event): ?>
-              <div class="event-card">
-                <div class="event-date">
-                  <div class="day"><?= $event['day'] ?></div>
-                  <div class="month"><?= $event['month'] ?></div>
-                </div>
-                <div style="flex:1;">
-                  <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                    <div style="font-size:14px;font-weight:600;color:var(--deep2);"><?= htmlspecialchars($event['title']) ?></div>
-                    <span class="badge <?= $event['badge_class'] ?>"><?= htmlspecialchars($event['badge_label']) ?></span>
-                  </div>
-                  <div style="font-size:12px;color:var(--muted);margin-top:3px;"><?= $event['time'] ?> · <?= htmlspecialchars($event['venue']) ?></div>
-                  <?php if ($event['description']): ?>
-                  <div style="font-size:12px;color:var(--mid);margin-top:6px;"><?= htmlspecialchars($event['description']) ?></div>
+        <!-- ── EVENTS TAB ── -->
+        <div id="eventsTab">
+          <div class="table-wrap">
+            <div style="padding:16px 20px;border-bottom:1px solid #EDE8DF;display:flex;align-items:center;justify-content:space-between;">
+              <h3 style="font-size:15px;margin:0;">Upcoming Events</h3>
+            </div>
+            <div class="table-responsive">
+              <table id="eventsTable">
+                <thead>
+                  <tr>
+                    <th>Date & Time</th>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Target Group</th>
+                    <th>Venue</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php if (empty($upcoming_events)): ?>
+                  <tr>
+                    <td colspan="6" style="text-align:center;padding:30px;color:var(--muted);">No upcoming events scheduled.</td>
+                  </tr>
                   <?php endif; ?>
-                  <div style="display:flex;gap:8px;margin-top:10px;">
-                    <button class="btn btn-outline btn-sm"
-                      onclick="openEditEvent(<?= htmlspecialchars(json_encode($event)) ?>)"
-                      style="font-size:11px;padding:4px 10px;">
-                      <i class="ph ph-pencil"></i> Edit
-                    </button>
-                    <button class="btn btn-sm" style="font-size:11px;padding:4px 10px;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;"
-                      onclick="confirmDeleteEvent(<?= $event['id'] ?>, '<?= htmlspecialchars(addslashes($event['title'])) ?>')">
-                      <i class="ph ph-trash"></i> Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <?php endforeach; ?>
+                  <?php foreach ($upcoming_events as $event): ?>
+                  <tr>
+                    <td>
+                      <div style="font-weight:600;color:var(--deep2);"><?= date('M j, Y', strtotime($event['date_val'])) ?></div>
+                      <div style="font-size:11px;color:var(--muted);"><?= $event['time'] ?></div>
+                    </td>
+                    <td style="font-weight:500;"><?= htmlspecialchars($event['title']) ?></td>
+                    <td><span class="badge <?= $event['badge_class'] ?>"><?= htmlspecialchars($event['badge_label']) ?></span></td>
+                    <td style="font-size:13px;color:var(--mid);"><?= htmlspecialchars($event['target_group']) ?></td>
+                    <td style="font-size:13px;"><?= htmlspecialchars($event['venue']) ?></td>
+                    <td>
+                      <div style="display:flex;gap:6px;">
+                        <button class="btn-icon" onclick='viewEventDetails(<?= htmlspecialchars(json_encode($event), ENT_QUOTES, "UTF-8") ?>)' title="View Details">
+                          <i class="ph ph-eye"></i>
+                        </button>
+                        <button class="btn-icon" onclick='openEditEvent(<?= htmlspecialchars(json_encode($event), ENT_QUOTES, "UTF-8") ?>)' title="Edit Event" style="background:var(--gold-pale);color:var(--gold);">
+                          <i class="ph ph-pencil"></i>
+                        </button>
+                        <button class="btn-icon" onclick="confirmDeleteEvent(<?= $event['id'] ?>, '<?= htmlspecialchars(addslashes($event['title'])) ?>')" title="Delete Event" style="background:#FEF2F2;color:#DC2626;">
+                          <i class="ph ph-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
             </div>
           </div>
+        </div>
 
-          <!-- ── ANNOUNCEMENTS COLUMN ── -->
-          <div>
-            <div style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--muted);margin-bottom:14px;letter-spacing:1px;text-transform:uppercase;">
-              Announcements</div>
-
-            <?php if (empty($announcements)): ?>
-              <div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;">
-                <i class="ph ph-megaphone" style="font-size:32px;display:block;margin-bottom:10px;"></i>
-                No announcements yet.
-              </div>
-            <?php endif; ?>
-
-            <div style="display:flex;flex-direction:column;gap:12px;">
-              <?php foreach ($announcements as $announce): ?>
-              <div style="background:white;border-radius:12px;border:1px solid #EDE8DF;padding:16px;">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-                  <div style="font-size:14px;font-weight:600;color:var(--deep2);"><?= htmlspecialchars($announce['title']) ?></div>
-                  <span class="badge <?= $announce['pinned'] ? 'badge-red' : 'badge-purple' ?>"><?= htmlspecialchars($announce['badge_label']) ?></span>
-                </div>
-                <div style="font-size:13px;color:var(--mid);line-height:1.6;"><?= htmlspecialchars($announce['description']) ?></div>
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
-                  <div style="font-size:11px;color:var(--muted);">Posted by <?= htmlspecialchars($announce['posted_by']) ?> · <?= htmlspecialchars($announce['date']) ?></div>
-                  <div style="display:flex;gap:8px;">
-                    <button class="btn btn-outline btn-sm" style="font-size:11px;padding:4px 10px;"
-                      onclick="openEditAnnouncement(<?= htmlspecialchars(json_encode($announce)) ?>)">
-                      <i class="ph ph-pencil"></i> Edit
-                    </button>
-                    <form method="POST" action="handlers/event_handler.php" style="margin:0;" id="deleteAnnounceForm_<?= $announce['id'] ?>">
-                      <?= csrfField() ?>
-                      <input type="hidden" name="action" value="delete_announcement">
-                      <input type="hidden" name="announcement_id" value="<?= $announce['id'] ?>">
-                      <button type="button" class="btn btn-sm" style="font-size:11px;padding:4px 10px;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;" onclick="confirmDeleteAnnounce(<?= $announce['id'] ?>)">
-                        <i class="ph ph-trash"></i> Delete
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              </div>
-              <?php endforeach; ?>
+        <!-- ── ANNOUNCEMENTS TAB ── -->
+        <div id="announcementsTab" style="display:none;">
+          <div class="table-wrap">
+            <div style="padding:16px 20px;border-bottom:1px solid #EDE8DF;display:flex;align-items:center;justify-content:space-between;">
+              <h3 style="font-size:15px;margin:0;">Announcements</h3>
+            </div>
+            <div class="table-responsive">
+              <table id="announcementsTable">
+                <thead>
+                  <tr>
+                    <th>Date Posted</th>
+                    <th>Title</th>
+                    <th>Posted By</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php if (empty($announcements)): ?>
+                  <tr>
+                    <td colspan="5" style="text-align:center;padding:30px;color:var(--muted);">No announcements yet.</td>
+                  </tr>
+                  <?php endif; ?>
+                  <?php foreach ($announcements as $announce): ?>
+                  <tr>
+                    <td style="font-size:13px;color:var(--muted);"><?= htmlspecialchars($announce['date']) ?></td>
+                    <td style="font-weight:500;"><?= htmlspecialchars($announce['title']) ?></td>
+                    <td style="font-size:13px;"><?= htmlspecialchars($announce['posted_by']) ?></td>
+                    <td><span class="badge <?= $announce['pinned'] ? 'badge-red' : 'badge-purple' ?>"><?= htmlspecialchars($announce['badge_label']) ?></span></td>
+                    <td>
+                      <div style="display:flex;gap:6px;">
+                        <button class="btn-icon" onclick='viewAnnounceDetails(<?= htmlspecialchars(json_encode($announce), ENT_QUOTES, "UTF-8") ?>)' title="View Announcement">
+                          <i class="ph ph-eye"></i>
+                        </button>
+                        <button class="btn-icon" onclick='openEditAnnouncement(<?= htmlspecialchars(json_encode($announce), ENT_QUOTES, "UTF-8") ?>)' title="Edit Announcement" style="background:var(--gold-pale);color:var(--gold);">
+                          <i class="ph ph-pencil"></i>
+                        </button>
+                        <form method="POST" action="handlers/event_handler.php" style="margin:0;display:inline-block;" id="deleteAnnounceForm_<?= $announce['id'] ?>">
+                          <?= csrfField() ?>
+                          <input type="hidden" name="action" value="delete_announcement">
+                          <input type="hidden" name="announcement_id" value="<?= $announce['id'] ?>">
+                          <button type="button" class="btn-icon" style="background:#FEF2F2;color:#DC2626;" onclick="confirmDeleteAnnounce(<?= $announce['id'] ?>)" title="Delete Announcement">
+                            <i class="ph ph-trash"></i>
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
             </div>
           </div>
-
         </div>
       </div>
     </div>
@@ -288,6 +317,35 @@ $announcements = array_map(function($a) {
         },
         'danger'
       );
+    }
+
+    function switchEventTab(tab) {
+      document.getElementById('eventsTab').style.display = tab === 'events' ? 'block' : 'none';
+      document.getElementById('announcementsTab').style.display = tab === 'announcements' ? 'block' : 'none';
+      
+      document.getElementById('tabEventsBtn').classList.toggle('active', tab === 'events');
+      document.getElementById('tabAnnounceBtn').classList.toggle('active', tab === 'announcements');
+    }
+
+    function viewEventDetails(event) {
+      document.getElementById('viewEventTitle').textContent    = event.title;
+      document.getElementById('viewEventDateTime').textContent = `${new Date(event.date_val).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'})} · ${event.time}`;
+      document.getElementById('viewEventVenue').textContent    = event.venue || 'TBA';
+      document.getElementById('viewEventType').innerHTML       = `<span class="badge ${event.badge_class}">${event.badge_label}</span>`;
+      document.getElementById('viewEventTarget').textContent   = event.target_group;
+      document.getElementById('viewEventDesc').textContent     = event.description || 'No description provided.';
+      openModal('viewEventModal');
+    }
+
+    function viewAnnounceDetails(announce) {
+      document.getElementById('viewAnnounceTitle').textContent = announce.title;
+      document.getElementById('viewAnnounceMeta').textContent  = `Posted by ${announce.posted_by} on ${announce.date}`;
+      
+      const badgeClass = parseInt(announce.pinned) === 1 ? 'badge-red' : 'badge-purple';
+      document.getElementById('viewAnnounceStatus').innerHTML  = `<span class="badge ${badgeClass}">${announce.badge_label}</span>`;
+      
+      document.getElementById('viewAnnounceDesc').textContent  = announce.description || 'No content provided.';
+      openModal('viewAnnounceModal');
     }
   </script>
 </body>

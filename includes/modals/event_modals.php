@@ -243,3 +243,66 @@
     </form>
   </div>
 </div>
+
+<!-- ── VIEW EVENT MODAL ───────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="viewEventModal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <h3 id="viewEventTitle" style="color:var(--deep);font-size:20px;line-height:1.3;">Event Title</h3>
+      <button class="close-btn" onclick="closeModal('viewEventModal')"><i class="ph ph-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:16px;margin-bottom:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Date & Time</div>
+          <div style="font-size:14px;font-weight:500;color:var(--deep2);" id="viewEventDateTime">Jan 01, 2026 · 10:00 AM</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Venue</div>
+          <div style="font-size:14px;font-weight:500;color:var(--deep2);" id="viewEventVenue">Main Auditorium</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Type</div>
+          <div id="viewEventType"><span class="badge badge-blue">Service</span></div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Target Group</div>
+          <div style="font-size:14px;font-weight:500;color:var(--deep2);" id="viewEventTarget">All Members</div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">Description</div>
+        <div id="viewEventDesc" style="font-size:14px;line-height:1.6;color:#334155;white-space:pre-wrap;background:#fff;padding:12px;border:1px solid #E2E8F0;border-radius:8px;min-height:80px;">
+          No description provided.
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" style="width:100%;" onclick="closeModal('viewEventModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── VIEW ANNOUNCEMENT MODAL ────────────────────────────────────────────── -->
+<div class="modal-overlay" id="viewAnnounceModal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <div style="flex:1;">
+        <h3 id="viewAnnounceTitle" style="color:var(--deep);font-size:20px;line-height:1.3;margin-bottom:4px;">Announcement Title</h3>
+        <div id="viewAnnounceMeta" style="font-size:12px;color:var(--muted);">Posted by Admin on Jan 01, 2026</div>
+      </div>
+      <button class="close-btn" onclick="closeModal('viewAnnounceModal')"><i class="ph ph-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:16px;" id="viewAnnounceStatus"></div>
+      <div>
+        <div id="viewAnnounceDesc" style="font-size:14.5px;line-height:1.7;color:#334155;white-space:pre-wrap;background:#F8FAFC;padding:20px;border:1px solid #E2E8F0;border-radius:8px;min-height:120px;">
+          Announcement content goes here.
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" style="width:100%;" onclick="closeModal('viewAnnounceModal')">Close</button>
+    </div>
+  </div>
+</div>
