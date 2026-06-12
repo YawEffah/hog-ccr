@@ -5,35 +5,42 @@
       <h3>Record Transaction</h3>
       <button class="close-btn" onclick="closeModal('addFinanceModal')"><i class="ph ph-x"></i></button>
     </div>
-    <form action="" method="POST" id="addFinanceForm">
+    <form action="handlers/finance_handler.php" method="POST" id="addFinanceForm">
+      <?= csrfField() ?>
+      <input type="hidden" name="action" value="add_transaction">
       <div class="modal-body">
         <div class="grid-2" style="gap:16px;">
-          <div class="form-group">
+          <div class="form-group" style="position: relative;">
             <label class="form-label">Member (Search by Name or ID)</label>
-            <input class="form-control" name="member_search" placeholder="Enter name or member ID…">
+            <input class="form-control" id="financeMemberSearch" name="member_display"
+              placeholder="Enter name or member ID…" oninput="filterFinanceMember(this.value)" autocomplete="off"
+              required>
+            <input type="hidden" name="member_id" id="financeMemberId">
+            <div id="financeSuggestions"
+              style="position:absolute; top:100%; left:0; right:0; z-index:100; background:#fff; border:1px solid #EDE8DF; border-radius:8px; max-height:200px; overflow-y:auto; display:none; box-shadow:0 4px 12px rgba(0,0,0,0.1); margin-top:4px;">
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">Transaction Type</label>
-            <select class="form-control" name="transaction_type">
+            <select class="form-control" name="transaction_type" required>
               <option>Tithe</option>
               <option>Offering</option>
               <option>Donation</option>
               <option>Pledge</option>
               <option>Project Contribution</option>
-              <option>Welfare</option>
             </select>
           </div>
         </div>
         <div class="grid-2" style="gap:16px;">
           <div class="form-group"><label class="form-label">Amount (GH₵)</label><input type="number" step="0.01"
-              class="form-control" name="amount" placeholder="0.00"></div>
+              class="form-control" name="amount" placeholder="0.00" required></div>
           <div class="form-group">
             <label class="form-label">Payment Method</label>
             <select class="form-control" name="payment_method" id="paymentMethodSelect">
-              <option>Cash</option>
-              <option>MoMo</option>
-              <option>Bank Transfer</option>
-              <option>Cheque</option>
+              <option value="Cash">Cash</option>
+              <option value="MoMo">MoMo</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+              <option value="Cheque">Cheque</option>
             </select>
           </div>
         </div>
@@ -45,7 +52,7 @@
             <input class="form-control" name="reference_no" placeholder="e.g. TXN123 or CHQ456">
           </div>
         </div>
-        <div class="grid-2" style="gap:16px;">
+        <div class="grid-2" style="gap:16px;" id="financeContactFields">
           <div class="form-group"><label class="form-label">Phone Number</label><input class="form-control" name="phone"
               placeholder="0244-000-000"></div>
           <div class="form-group"><label class="form-label">Email Address</label><input class="form-control"
@@ -59,7 +66,7 @@
           <div>
             <label for="genReceipt"
               style="font-size:13px;font-weight:600;cursor:pointer;color:var(--deep2);display:block;">Send
-              receipt automatically via email or SMS</label>
+              receipt automatically via SMS & email</label>
           </div>
         </div>
       </div>
@@ -78,16 +85,18 @@
       <h3>Set Monthly Target</h3>
       <button class="close-btn" onclick="closeModal('setTargetModal')"><i class="ph ph-x"></i></button>
     </div>
-    <form action="" method="POST">
+    <form action="handlers/finance_handler.php" method="POST">
+      <?= csrfField() ?>
+      <input type="hidden" name="action" value="set_target">
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label">Target Amount (GH₵)</label>
           <input type="number" step="0.01" class="form-control" name="monthly_target" placeholder="e.g. 30000"
-            value="30000">
+            value="30000" required>
         </div>
         <div class="form-group">
           <label class="form-label">Month</label>
-          <input type="month" class="form-control" name="target_month" value="<?= date('Y-m') ?>">
+          <input type="month" class="form-control" name="target_month" value="<?= date('Y-m') ?>" required>
         </div>
         <div class="form-group">
           <label class="form-label">Notes (Optional)</label>

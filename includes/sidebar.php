@@ -38,6 +38,10 @@ $currentUser = $currentUser ?? [
       <i class="ph ph-heart"></i>
       Ministries
     </a>
+    <a href="welfare.php" class="nav-item <?= $activePage === 'welfare' ? 'active' : '' ?>">
+      <i class="ph ph-hand-heart"></i>
+      Welfare
+    </a>
     <a href="attendance.php" class="nav-item <?= $activePage === 'attendance' ? 'active' : '' ?>">
       <i class="ph ph-clipboard-text"></i>
       Attendance
@@ -58,6 +62,10 @@ $currentUser = $currentUser ?? [
     </a>
 
     <div class="nav-section-label">System</div>
+    <a href="users.php" class="nav-item <?= $activePage === 'users' ? 'active' : '' ?>">
+      <i class="ph ph-shield-check"></i>
+      User Management
+    </a>
     <a href="logout.php" class="nav-item">
       <i class="ph ph-sign-out"></i>
       Logout
@@ -82,3 +90,5 @@ $currentUser = $currentUser ?? [
     </div>
   </div>
 </aside>
+
+<?php require_once __DIR__ . '/modals/confirm_modal.php'; ?>

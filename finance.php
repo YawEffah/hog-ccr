@@ -1,41 +1,139 @@
 <?php
 /**
  * Finance Management Page
- * 
- * BACKEND CONTRACT:
- * Expected variables:
- * @var array $finance_stats { tithes, offerings, donations, total, target_percent }
- * @var array $transactions [{ member, type, type_badge, amount, date }]
- * @var array $income_breakdown [{ label, amount, percent, bar_class }]
  */
+require_once 'includes/auth.php';
+requireAuth();
+require_once 'includes/db.php';
+require_once 'includes/helpers.php';
 
-$pageTitle = 'Finance';
+$pageTitle  = 'Finance';
 $activePage = 'finance';
 
-// Mock data for initial refactor (Backend team will replace these)
-$finance_stats = $finance_stats ?? [
-    'tithes' => '14,820',
-    'offerings' => '5,450',
-    'donations' => '2,300',
-    'total' => '24,550',
-    'monthly_target' => '30,000',
-    'target_percent' => 82
+// Flash messages
+$successMsg = flash('success');
+$errorMsg   = flash('error');
+if (!$successMsg && !$errorMsg) {
+    $successLabels = [
+        'transaction_added' => 'Transaction recorded successfully.',
+        'transaction_deleted'=> 'Transaction deleted.',
+        'target_set'        => 'Monthly target updated.',
+        'receipt_resent'    => 'Receipt resent successfully.',
+    ];
+    $errorLabels = [
+        'invalid_data'   => 'Invalid data. Please check the form and try again.',
+        'db_error'       => 'A database error occurred.',
+        'send_failed'    => 'Failed to send receipt.',
+        'not_found'      => 'Transaction not found.',
+    ];
+    $successMsg = $successLabels[$_GET['success'] ?? ''] ?? '';
+    $errorMsg   = $errorLabels[$_GET['error']   ?? ''] ?? '';
+}
+
+$db = getDB();
+$filterMonth = $_GET['month'] ?? date('Y-m');
+// Ensure format is valid (YYYY-MM), else fallback
+if (!preg_match('/^\d{4}-\d{2}$/', $filterMonth)) {
+    $filterMonth = date('Y-m');
+}
+
+// ── Finance Statistics ───────────────────────────────────────────────────────
+$statsStmt = $db->prepare(
+    "SELECT 
+        SUM(CASE WHEN type='Tithe' THEN amount ELSE 0 END) as tithes,
+        SUM(CASE WHEN type='Offering' THEN amount ELSE 0 END) as offerings,
+        SUM(CASE WHEN type='Donation' THEN amount ELSE 0 END) as donations,
+        SUM(amount) as total
+     FROM finance_transactions 
+     WHERE DATE_FORMAT(transaction_date, '%Y-%m') = ?"
+);
+$statsStmt->execute([$filterMonth]);
+$rawStats = $statsStmt->fetch();
+
+$targetStmt = $db->prepare("SELECT target_amount FROM finance_targets WHERE DATE_FORMAT(target_month, '%Y-%m') = ?");
+$targetStmt->execute([$filterMonth]);
+$monthlyTarget = (float)$targetStmt->fetchColumn() ?: 10000;
+
+$totalIncome = (float)($rawStats['total'] ?? 0);
+$finance_stats = [
+    'tithes'         => number_format((float)($rawStats['tithes'] ?? 0), 2),
+    'offerings'      => number_format((float)($rawStats['offerings'] ?? 0), 2),
+    'donations'      => number_format((float)($rawStats['donations'] ?? 0), 2),
+    'total'          => number_format($totalIncome, 2),
+    'monthly_target' => number_format($monthlyTarget, 0),
+    'target_percent' => $monthlyTarget > 0 ? round(($totalIncome / $monthlyTarget) * 100) : 0
 ];
 
-$transactions = $transactions ?? [
-    ['member' => 'Abena Kusi', 'type' => 'Tithe', 'type_badge' => 'badge-yellow', 'amount' => '350', 'date' => 'Apr 6'],
-    ['member' => 'Kwame Ofori', 'type' => 'Offering', 'type_badge' => 'badge-blue', 'amount' => '50', 'date' => 'Apr 6'],
-    ['member' => 'Michael Boateng', 'type' => 'Donation', 'type_badge' => 'badge-green', 'amount' => '500', 'date' => 'Apr 5'],
-    ['member' => 'Pastor Adu', 'type' => 'Pledge', 'type_badge' => 'badge-purple', 'amount' => '1,000', 'date' => 'Apr 3'],
-    ['member' => 'Efua Asare', 'type' => 'Tithe', 'type_badge' => 'badge-yellow', 'amount' => '280', 'date' => 'Mar 30']
+// ── Recent Transactions ──────────────────────────────────────────────────────
+$txnStmt = $db->prepare(
+    "SELECT t.*, m.first_name, m.last_name 
+     FROM finance_transactions t
+     LEFT JOIN members m ON t.member_id = m.id
+     WHERE DATE_FORMAT(t.transaction_date, '%Y-%m') = ?
+     ORDER BY t.transaction_date DESC, t.created_at DESC
+     LIMIT 100"
+);
+$txnStmt->execute([$filterMonth]);
+$rawTxns = $txnStmt->fetchAll();
+
+$typeBadges = [
+    'Tithe'     => 'badge-yellow',
+    'Offering'  => 'badge-green',
+    'Donation'  => 'badge-blue',
+    'Welfare'   => 'badge-purple',
+    'Pledge'    => 'badge-gray'
 ];
 
-$income_breakdown = $income_breakdown ?? [
-    ['label' => 'Tithes', 'amount' => '14,820', 'percent' => 60, 'bar_class' => 'var(--gold)'],
-    ['label' => 'Offerings', 'amount' => '5,450', 'percent' => 22, 'bar_class' => 'var(--deep)'],
-    ['label' => 'Donations', 'amount' => '2,300', 'percent' => 9, 'bar_class' => '#2E7D57'],
-    ['label' => 'Pledges', 'amount' => '1,980', 'percent' => 8, 'bar_class' => 'var(--deep3)']
+$transactions = array_map(function($t) use ($typeBadges) {
+    $memberName = $t['first_name'] ? ($t['first_name'] . ' ' . $t['last_name']) : ($t['member_name'] ?: 'Guest');
+    return [
+        'id'         => $t['id'],
+        'member'     => $memberName,
+        'type'       => $t['type'],
+        'type_badge' => $typeBadges[$t['type']] ?? 'badge-gray',
+        'amount'     => number_format($t['amount'], 2),
+        'method'     => $t['payment_method'],
+        'reference'  => $t['reference_no'] ?: 'N/A',
+        'date'       => date('M j', strtotime($t['transaction_date']))
+    ];
+}, $rawTxns);
+
+// ── Income Breakdown ─────────────────────────────────────────────────────────
+$breakdownStmt = $db->prepare(
+    "SELECT type, SUM(amount) as total 
+     FROM finance_transactions 
+     WHERE DATE_FORMAT(transaction_date, '%Y-%m') = ?
+     GROUP BY type"
+);
+$breakdownStmt->execute([$filterMonth]);
+$rawBreakdown = $breakdownStmt->fetchAll();
+
+$breakdownColors = [
+    'Tithe'    => 'var(--gold)',
+    'Offering' => 'var(--deep)',
+    'Donation' => '#2E7D57',
+    'Welfare'  => 'var(--deep3)',
+    'Pledge'   => '#7C3AED'
 ];
+
+$income_breakdown = array_map(function($b) use ($totalIncome, $breakdownColors) {
+    return [
+        'label'     => $b['type'],
+        'amount'    => number_format($b['total'], 0),
+        'percent'   => $totalIncome > 0 ? round(($b['total'] / $totalIncome) * 100) : 0,
+        'bar_class' => $breakdownColors[$b['type']] ?? 'var(--gold)'
+    ];
+}, $rawBreakdown);
+
+// ── All Members (for Finance Search) ─────────────────────────────────────────
+$allMembersStmt = $db->query(
+    "SELECT id, first_name, last_name, member_code 
+     FROM members 
+     WHERE status = 'Active' 
+     ORDER BY last_name ASC"
+);
+$allMembers = $allMembersStmt->fetchAll();
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -58,21 +156,37 @@ $income_breakdown = $income_breakdown ?? [
           <div class="topbar-title">Finance</div>
         </div>
         <div class="topbar-actions">
-          <select class="form-control" style="width:140px;padding:8px 12px;">
-            <option><?= date('F Y') ?></option>
-            <option><?= date('F Y', strtotime('-1 month')) ?></option>
-            <option><?= date('F Y', strtotime('-2 months')) ?></option>
-          </select>
-          <button class="btn btn-outline btn-sm" id="notifBtn" onclick="toggleNotifications()">
-            <i class="ph ph-bell"></i>
-          </button>
-          <?php include 'includes/notifications.php'; ?>
+          <?php
+            $currentY = explode('-', $filterMonth)[0];
+            $currentM = explode('-', $filterMonth)[1];
+            $monthsList = [
+                '01' => 'January', '02' => 'February', '03' => 'March', '04' => 'April',
+                '05' => 'May', '06' => 'June', '07' => 'July', '08' => 'August',
+                '09' => 'September', '10' => 'October', '11' => 'November', '12' => 'December'
+            ];
+            $thisYear = date('Y');
+          ?>
+          <div style="display:flex;gap:8px;">
+            <select class="form-control" style="width:120px;padding:8px 12px;" id="financeMonthSelect" onchange="updateFinanceFilter()">
+              <?php foreach($monthsList as $num => $name): ?>
+                <option value="<?= $num ?>" <?= $currentM === $num ? 'selected' : '' ?>><?= $name ?></option>
+              <?php endforeach; ?>
+            </select>
+            <select class="form-control" style="width:90px;padding:8px 12px;" id="financeYearSelect" onchange="updateFinanceFilter()">
+              <?php for($y = $thisYear; $y >= $thisYear - 5; $y--): ?>
+                <option value="<?= $y ?>" <?= (string)$currentY === (string)$y ? 'selected' : '' ?>><?= $y ?></option>
+              <?php endfor; ?>
+            </select>
+          </div>
+
           <button class="btn btn-outline btn-sm" onclick="openModal('setTargetModal')">
             <i class="ph ph-target"></i> Set Target
           </button>
           <button class="btn btn-primary btn-sm" onclick="openModal('addFinanceModal')">+ Record Transaction</button>
         </div>
       </div>
+
+      <?php renderToastAlerts($successMsg, $errorMsg); ?>
       <div class="content">
         <div class="grid-4" style="margin-bottom:24px;">
           <div class="stat-card">
@@ -105,11 +219,10 @@ $income_breakdown = $income_breakdown ?? [
 
         <div class="grid-2" style="gap:24px;">
           <div class="card">
-            <div class="card-header">
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
               <h3>Recent Transactions</h3>
-              <div>
-                <button class="btn btn-outline btn-sm">Export CSV</button>
-                <button class="btn btn-outline btn-sm">View All</button>
+              <div style="display:flex; gap:8px;">
+                <a href="finance_history.php" class="btn btn-outline btn-sm">View All</a>
               </div>
             </div>
             <div class="table-responsive">
@@ -130,7 +243,16 @@ $income_breakdown = $income_breakdown ?? [
                     <td><span class="badge <?= $tx['type_badge'] ?>"><?= $tx['type'] ?></span></td>
                     <td style="font-weight:600;color:var(--success);">GH₵ <?= $tx['amount'] ?></td>
                     <td style="font-size:12px;color:var(--muted);"><?= $tx['date'] ?></td>
-                    <td><button class="btn btn-outline btn-sm" title="View Receipt"><i class="ph ph-receipt"></i></button></td>
+                    <td>
+                      <div style="display:flex;gap:4px;">
+                        <button class="btn btn-outline btn-sm" title="View Receipt" onclick='openReceiptModal(<?= json_encode($tx) ?>)'><i class="ph ph-receipt"></i></button>
+                        <button class="btn btn-sm" title="Delete"
+                          style="background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;"
+                          onclick="confirmDeleteTxn(<?= $tx['id'] ?>)">
+                          <i class="ph ph-trash"></i>
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                   <?php endforeach; ?>
                 </tbody>
@@ -170,9 +292,100 @@ $income_breakdown = $income_breakdown ?? [
 
   </main>
 
-  <?php require_once 'includes/modals/finance_modal.php'; ?>
+  <?php include 'includes/modals/finance_modal.php'; ?>
+  <?php include 'includes/modals/receipt_modal.php'; ?>
+
+  <!-- Hidden delete-transaction form -->
+  <form method="POST" action="handlers/finance_handler.php" id="deleteTxnForm" style="display:none;">
+    <?= csrfField() ?>
+    <input type="hidden" name="action" value="delete_transaction">
+    <input type="hidden" name="txn_id" id="deleteTxnId">
+  </form>
 
   <script src="assets/js/main.js"></script>
+  <script>
+    function confirmDeleteTxn(id) {
+      showConfirmModal(
+        'Delete Transaction',
+        'Are you sure you want to delete this transaction?',
+        'Delete',
+        function() {
+          document.getElementById('deleteTxnId').value = id;
+          document.getElementById('deleteTxnForm').submit();
+        },
+        'danger'
+      );
+    }
+
+    function openReceiptModal(tx) {
+      document.getElementById('receiptId').textContent     = '#' + tx.id;
+      document.getElementById('receiptDate').textContent   = tx.date;
+      document.getElementById('receiptMember').textContent = tx.member;
+      document.getElementById('receiptType').textContent   = tx.type;
+      document.getElementById('receiptAmount').textContent = tx.amount;
+      document.getElementById('receiptMethod').textContent = tx.method;
+      document.getElementById('receiptRef').textContent    = tx.reference && tx.reference !== 'N/A' ? `(Ref: ${tx.reference})` : '';
+      
+      document.getElementById('resendTxnId').value = tx.id;
+      
+      openModal('viewReceiptModal');
+    }
+
+    const allFinanceMembers = <?= json_encode($allMembers) ?>;
+
+    function filterFinanceMember(query) {
+      const q = query.toLowerCase();
+      const sugDiv = document.getElementById('financeSuggestions');
+      const hiddenId = document.getElementById('financeMemberId');
+      const contactFields = document.getElementById('financeContactFields');
+      
+      // Clear ID if they keep typing after selection
+      hiddenId.value = '';
+      if (contactFields) contactFields.style.display = ''; // show fallback for manual guests (reverts to grid)
+
+      if (!q) {
+        sugDiv.style.display = 'none';
+        return;
+      }
+      
+      const matches = allFinanceMembers.filter(m => {
+        const full = (m.first_name + ' ' + m.last_name).toLowerCase();
+        return full.includes(q) || m.member_code.toLowerCase().includes(q);
+      });
+      
+      if (matches.length > 0) {
+        sugDiv.innerHTML = '';
+        matches.forEach(m => {
+          const div = document.createElement('div');
+          div.style.padding = '10px 14px';
+          div.style.cursor = 'pointer';
+          div.style.borderBottom = '1px solid #EDE8DF';
+          div.style.fontSize = '13px';
+          div.innerHTML = `<strong>${m.first_name} ${m.last_name}</strong> <span style="color:var(--muted);font-size:11px;margin-left:6px;">${m.member_code}</span>`;
+          div.onclick = () => selectFinanceMember(m.id, `${m.first_name} ${m.last_name}`);
+          sugDiv.appendChild(div);
+        });
+        sugDiv.style.display = 'block';
+      } else {
+        sugDiv.style.display = 'none';
+      }
+    }
+
+    function selectFinanceMember(id, name) {
+      document.getElementById('financeMemberSearch').value = name;
+      document.getElementById('financeMemberId').value = id;
+      document.getElementById('financeSuggestions').style.display = 'none';
+      
+      const contactFields = document.getElementById('financeContactFields');
+      if (contactFields) contactFields.style.display = 'none'; // hide fallback, use DB data
+    }
+
+    function updateFinanceFilter() {
+      const y = document.getElementById('financeYearSelect').value;
+      const m = document.getElementById('financeMonthSelect').value;
+      window.location.href = `finance.php?month=${y}-${m}`;
+    }
+  </script>
 </body>
 
 </html>
