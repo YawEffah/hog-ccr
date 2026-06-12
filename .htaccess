@@ -1,0 +1,23 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Optional: Force HTTPS (Uncomment to use)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    
+    # Prevent direct access to sensitive directories
+    RewriteRule ^includes/ - [F,L]
+    RewriteRule ^\.git/ - [F,L]
+</IfModule>
+
+# Block access to sensitive file types
+<FilesMatch "(?i)\.(env|log|md|gitignore|lock)$">
+    Require all denied
+</FilesMatch>
+
+# Specifically block the error log file
+<Files "error.log">
+    Require all denied
+</Files>

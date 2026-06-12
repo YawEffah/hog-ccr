@@ -10,7 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_set_cookie_params([
         'lifetime' => 0,           // session cookie (expires when browser closes)
         'path'     => '/',
-        'secure'   => false,       // set true when on HTTPS
+        'secure'   => (APP_ENV === 'production'), // set true when on HTTPS
         'httponly' => true,        // prevent JS access to cookie
         'samesite' => 'Strict',
     ]);
