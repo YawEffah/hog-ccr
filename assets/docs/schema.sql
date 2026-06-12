@@ -70,15 +70,23 @@ CREATE TABLE IF NOT EXISTS members (
   email        VARCHAR(150),
   dob          DATE,
   address      TEXT,
-  ministry_id  INT UNSIGNED  NULL,
-  status       ENUM('Active','Inactive','Visitor') DEFAULT 'Active',
+  status       ENUM('Active','Inactive','Visitor','Affiliate Community Member') DEFAULT 'Active',
   photo_path   VARCHAR(255),                    -- e.g. assets/images/members/CCR-001.jpg
   joined_date  DATE,
   notes        TEXT,
   created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT fk_member_ministry FOREIGN KEY (ministry_id)
-    REFERENCES ministries(id) ON DELETE SET NULL ON UPDATE CASCADE
+  updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- ─────────────────────────────────────────────
+-- 3b. MEMBER MINISTRIES
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS member_ministries (
+  member_id    INT UNSIGNED NOT NULL,
+  ministry_id  INT UNSIGNED NOT NULL,
+  PRIMARY KEY (member_id, ministry_id),
+  CONSTRAINT fk_mm_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE,
+  CONSTRAINT fk_mm_ministry FOREIGN KEY (ministry_id) REFERENCES ministries(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- ─────────────────────────────────────────────
@@ -149,7 +157,7 @@ CREATE TABLE IF NOT EXISTS attendance_records (
   id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   session_id     INT UNSIGNED NOT NULL,
   member_id      INT UNSIGNED NOT NULL,
-  status         ENUM('Present','Absent','Visitor') DEFAULT 'Present',
+  status         ENUM('Present','Absent','Affiliate Community Member') DEFAULT 'Present',
   check_in_time  TIME,
   UNIQUE KEY uniq_record (session_id, member_id),
   CONSTRAINT fk_rec_session FOREIGN KEY (session_id)

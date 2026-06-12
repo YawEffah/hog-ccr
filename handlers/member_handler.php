@@ -23,7 +23,7 @@ if ($action === 'add_member') {
     $email      = trim($_POST['email']  ?? '');
     $dob        = $_POST['dob']         ?? null;
     $address    = trim($_POST['address'] ?? '');
-    $ministryId = !empty($_POST['ministry_id']) ? (int)$_POST['ministry_id'] : null;
+    $ministries = $_POST['ministries'] ?? [];
     $status     = $_POST['status']      ?? 'Active';
     $joined     = $_POST['joined_date'] ?? date('Y-m-d');
     $notes      = trim($_POST['notes']  ?? '');
@@ -45,15 +45,25 @@ if ($action === 'add_member') {
         $stmt = $db->prepare(
             "INSERT INTO members
              (member_code, first_name, last_name, gender, phone, email, dob, address,
-              ministry_id, status, photo_path, joined_date, notes)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+              status, photo_path, joined_date, notes)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
         $stmt->execute([
             $code, $firstName, $lastName, $gender, $phone, $email ?: null,
-            $dob ?: null, $address, $ministryId, $status, $photoPath, $joined, $notes ?: null
+            $dob ?: null, $address, $status, $photoPath, $joined, $notes ?: null
         ]);
 
         $memberId = (int)$db->lastInsertId();
+
+        // Insert ministries
+        if (!empty($ministries)) {
+            $minStmt = $db->prepare("INSERT IGNORE INTO member_ministries (member_id, ministry_id) VALUES (?, ?)");
+            foreach ($ministries as $mId) {
+                if ((int)$mId > 0) {
+                    $minStmt->execute([$memberId, (int)$mId]);
+                }
+            }
+        }
 
         // Insert sacraments
         if (!empty($sacraments)) {
@@ -97,7 +107,7 @@ if ($action === 'edit_member') {
     $email      = trim($_POST['email']  ?? '');
     $dob        = $_POST['dob']         ?? null;
     $address    = trim($_POST['address'] ?? '');
-    $ministryId = !empty($_POST['ministry_id']) ? (int)$_POST['ministry_id'] : null;
+    $ministries = $_POST['ministries'] ?? [];
     $status     = $_POST['status']      ?? 'Active';
     $notes      = trim($_POST['notes']  ?? '');
     $sacraments = $_POST['sacraments']  ?? [];
@@ -125,23 +135,34 @@ if ($action === 'edit_member') {
         if ($photoPath) {
             $stmt = $db->prepare(
                 "UPDATE members SET first_name=?, last_name=?, gender=?, phone=?, email=?,
-                 dob=?, address=?, ministry_id=?, status=?, notes=?, photo_path=?
+                 dob=?, address=?, status=?, notes=?, photo_path=?
                  WHERE id=?"
             );
             $stmt->execute([
                 $firstName, $lastName, $gender, $phone, $email ?: null,
-                $dob ?: null, $address, $ministryId, $status, $notes ?: null, $photoPath, $memberId
+                $dob ?: null, $address, $status, $notes ?: null, $photoPath, $memberId
             ]);
         } else {
             $stmt = $db->prepare(
                 "UPDATE members SET first_name=?, last_name=?, gender=?, phone=?, email=?,
-                 dob=?, address=?, ministry_id=?, status=?, notes=?
+                 dob=?, address=?, status=?, notes=?
                  WHERE id=?"
             );
             $stmt->execute([
                 $firstName, $lastName, $gender, $phone, $email ?: null,
-                $dob ?: null, $address, $ministryId, $status, $notes ?: null, $memberId
+                $dob ?: null, $address, $status, $notes ?: null, $memberId
             ]);
+        }
+
+        // Sync ministries
+        $db->prepare("DELETE FROM member_ministries WHERE member_id = ?")->execute([$memberId]);
+        if (!empty($ministries)) {
+            $minStmt = $db->prepare("INSERT IGNORE INTO member_ministries (member_id, ministry_id) VALUES (?, ?)");
+            foreach ($ministries as $mId) {
+                if ((int)$mId > 0) {
+                    $minStmt->execute([$memberId, (int)$mId]);
+                }
+            }
         }
 
         // Sync sacraments — delete all then re-insert

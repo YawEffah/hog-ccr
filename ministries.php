@@ -21,8 +21,8 @@ $minStmt = $db->query(
             h.id as head_member_id,
             CONCAT(h.first_name, ' ', h.last_name) as head_name,
             h.member_code as head_code,
-            (SELECT COUNT(*) FROM members WHERE ministry_id = min.id) as total_count,
-            (SELECT COUNT(*) FROM members WHERE ministry_id = min.id AND status='Active') as active_count
+            (SELECT COUNT(*) FROM member_ministries WHERE ministry_id = min.id) as total_count,
+            (SELECT COUNT(*) FROM member_ministries mm JOIN members m ON mm.member_id = m.id WHERE mm.ministry_id = min.id AND m.status='Active') as active_count
      FROM ministries min
      LEFT JOIN members h ON min.head_id = h.id
      ORDER BY min.name ASC"
@@ -43,7 +43,8 @@ $ministries = array_map(function($m) use ($db) {
             FROM attendance_sessions s
             JOIN attendance_records r ON s.id = r.session_id
             JOIN members m ON r.member_id = m.id
-            WHERE m.ministry_id = ?
+            JOIN member_ministries mm ON m.id = mm.member_id
+            WHERE mm.ministry_id = ?
             GROUP BY s.id
         ) as session_stats
     ");
@@ -67,7 +68,7 @@ $ministries = array_map(function($m) use ($db) {
 $ministry_details = [];
 foreach ($rawMinistries as $m) {
     // Fetch members
-    $memStmt = $db->prepare("SELECT first_name, last_name, joined_date, status FROM members WHERE ministry_id = ? ORDER BY joined_date DESC LIMIT 20");
+    $memStmt = $db->prepare("SELECT first_name, last_name, joined_date, status FROM members m JOIN member_ministries mm ON m.id = mm.member_id WHERE mm.ministry_id = ? ORDER BY joined_date DESC LIMIT 20");
     $memStmt->execute([$m['id']]);
     $members = $memStmt->fetchAll();
 
@@ -80,7 +81,7 @@ foreach ($rawMinistries as $m) {
     }, $members);
 
     // Fetch sessions
-    $sessStmt = $db->prepare("SELECT COUNT(DISTINCT s.id) FROM attendance_sessions s JOIN attendance_records r ON s.id = r.session_id JOIN members mem ON r.member_id = mem.id WHERE mem.ministry_id = ?");
+    $sessStmt = $db->prepare("SELECT COUNT(DISTINCT s.id) FROM attendance_sessions s JOIN attendance_records r ON s.id = r.session_id JOIN member_ministries mm ON r.member_id = mm.member_id WHERE mm.ministry_id = ?");
     $sessStmt->execute([$m['id']]);
     $sessionCount = (int)$sessStmt->fetchColumn();
 
@@ -89,8 +90,8 @@ foreach ($rawMinistries as $m) {
         SELECT (SUM(CASE WHEN r.status = 'Present' THEN 1 ELSE 0 END) / COUNT(r.id) * 100) as pct
         FROM attendance_sessions s
         JOIN attendance_records r ON s.id = r.session_id
-        JOIN members mem ON r.member_id = mem.id
-        WHERE mem.ministry_id = ?
+        JOIN member_ministries mm ON r.member_id = mm.member_id
+        WHERE mm.ministry_id = ?
         GROUP BY s.id
         ORDER BY s.session_date DESC
         LIMIT 6
@@ -109,7 +110,8 @@ foreach ($rawMinistries as $m) {
             FROM attendance_sessions s
             JOIN attendance_records r ON s.id = r.session_id
             JOIN members m ON r.member_id = m.id
-            WHERE m.ministry_id = ?
+            JOIN member_ministries mm ON m.id = mm.member_id
+            WHERE mm.ministry_id = ?
             GROUP BY s.id
         ) as session_stats
     ");

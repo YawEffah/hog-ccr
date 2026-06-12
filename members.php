@@ -49,23 +49,27 @@ if ($search) {
     $s = "%{$search}%";
     $params = array_merge($params, [$s, $s, $s, $s, $s]);
 }
-if ($statusFilter && in_array($statusFilter, ['Active','Inactive','Visitor'], true)) {
+if ($statusFilter && in_array($statusFilter, ['Active','Inactive','Affiliate Community Member'], true)) {
     $where    .= " AND m.status = ?";
     $params[]  = $statusFilter;
 }
 
 // Total count
-$countStmt = $db->prepare("SELECT COUNT(*) FROM members m LEFT JOIN ministries min ON m.ministry_id = min.id {$where}");
+$countStmt = $db->prepare("SELECT COUNT(DISTINCT m.id) FROM members m LEFT JOIN member_ministries mm ON m.id = mm.member_id LEFT JOIN ministries min ON mm.ministry_id = min.id {$where}");
 $countStmt->execute($params);
 $total_members = (int)$countStmt->fetchColumn();
 
 // Paged members - including sacraments group_concat
 $stmt = $db->prepare(
-    "SELECT m.*, min.name AS ministry_name,
+    "SELECT m.*,
+            (SELECT GROUP_CONCAT(min.name SEPARATOR ', ') FROM member_ministries mm JOIN ministries min ON mm.ministry_id = min.id WHERE mm.member_id = m.id) AS ministry_name,
+            (SELECT GROUP_CONCAT(ministry_id) FROM member_ministries WHERE member_id = m.id) as ministry_ids,
             (SELECT GROUP_CONCAT(sacrament) FROM member_sacraments WHERE member_id = m.id) as sacraments
      FROM members m
-     LEFT JOIN ministries min ON m.ministry_id = min.id
+     LEFT JOIN member_ministries mm2 ON m.id = mm2.member_id
+     LEFT JOIN ministries min ON mm2.ministry_id = min.id
      {$where}
+     GROUP BY m.id
      ORDER BY m.created_at DESC
      LIMIT {$perPage} OFFSET {$offset}"
 );
@@ -79,13 +83,13 @@ $avatarPalette = [
     ['bg' => '#ECFDF5',          'color' => '#2E7D57'],
     ['bg' => '#F5F3FF',          'color' => 'var(--deep3)'],
 ];
-$statusBadge   = ['Active' => 'badge-green', 'Inactive' => 'badge-red', 'Visitor' => 'badge-yellow'];
+$statusBadge   = ['Active' => 'badge-green', 'Inactive' => 'badge-red', 'Affiliate Community Member' => 'badge-blue'];
 $ministryBadge = ['Music Ministry'=>'badge-purple','Youth Wing'=>'badge-blue','Evangelism'=>'badge-green',
                   'Intercessory'=>'badge-yellow','Prayer Group'=>'badge-gray','Executives'=>'badge-purple'];
 
 $members = array_map(function($m, $i) use ($avatarPalette, $statusBadge, $ministryBadge) {
     $pal      = $avatarPalette[$i % count($avatarPalette)];
-    $ministry = $m['ministry_name'] ?? 'None';
+    $ministries = $m['ministry_name'] ? explode(', ', $m['ministry_name']) : [];
     return [
         'id'            => $m['member_code'],
         'db_id'         => $m['id'],
@@ -95,11 +99,10 @@ $members = array_map(function($m, $i) use ($avatarPalette, $statusBadge, $minist
         'initials'      => strtoupper(substr($m['first_name'],0,1) . substr($m['last_name'],0,1)),
         'phone'         => $m['phone'] ?? '—',
         'email'         => $m['email'] ?? '—',
-        'ministry'      => $ministry,
-        'ministry_id'   => $m['ministry_id'],
+        'ministries'    => $ministries,
+        'ministry_ids'  => $m['ministry_ids'] ? explode(',', $m['ministry_ids']) : [],
         'status'        => $m['status'],
         'status_class'  => $statusBadge[$m['status']] ?? 'badge-gray',
-        'ministry_class'=> $ministryBadge[$ministry]  ?? 'badge-gray',
         'joined'        => $m['joined_date'] ? date('M Y', strtotime($m['joined_date'])) : '—',
         'joined_raw'    => $m['joined_date'],
         'dob'           => $m['dob'],
@@ -202,7 +205,7 @@ $ministries = $db->query("SELECT id, name FROM ministries ORDER BY name")->fetch
                 <option value="">All Status</option>
                 <option value="Active" <?= $statusFilter === 'Active' ? 'selected' : '' ?>>Active</option>
                 <option value="Inactive" <?= $statusFilter === 'Inactive' ? 'selected' : '' ?>>Inactive</option>
-                <option value="Visitor" <?= $statusFilter === 'Visitor' ? 'selected' : '' ?>>Visitor</option>
+                <option value="Affiliate Community Member" <?= $statusFilter === 'Affiliate Community Member' ? 'selected' : '' ?>>Affiliate Community Member</option>
               </select>
             </form>
             <div style="font-size: 13px; color: var(--muted);">
@@ -243,7 +246,17 @@ $ministries = $db->query("SELECT id, name FROM ministries ORDER BY name")->fetch
                   <div style="font-size:13px;"><?= $m['phone'] ?></div>
                   <div style="font-size:11px;color:var(--muted);"><?= htmlspecialchars($m['email']) ?></div>
                 </td>
-                <td><span class="badge <?= $m['ministry_class'] ?>"><?= htmlspecialchars($m['ministry']) ?></span></td>
+                <td>
+                  <?php if (empty($m['ministries'])): ?>
+                    <span class="badge badge-gray">None</span>
+                  <?php else: ?>
+                    <div style="display:flex; flex-wrap:wrap; gap:4px;">
+                      <?php foreach ($m['ministries'] as $minName): ?>
+                        <span class="badge <?= $ministryBadge[$minName] ?? 'badge-gray' ?>"><?= htmlspecialchars($minName) ?></span>
+                      <?php endforeach; ?>
+                    </div>
+                  <?php endif; ?>
+                </td>
                 <td><span class="badge <?= $m['status_class'] ?>"><?= $m['status'] ?></span></td>
                 <td style="font-size:12px;color:var(--muted);"><?= $m['joined'] ?></td>
                 <td>
@@ -336,7 +349,10 @@ $ministries = $db->query("SELECT id, name FROM ministries ORDER BY name")->fetch
       document.getElementById('editPhone').value = m.phone !== '—' ? m.phone : '';
       document.getElementById('editEmail').value = m.email !== '—' ? m.email : '';
       document.getElementById('editDob').value = m.dob || '';
-      document.getElementById('editMinistry').value = m.ministry_id || '';
+      const minCbs = document.querySelectorAll('.edit-ministry-cb');
+      minCbs.forEach(cb => {
+        cb.checked = m.ministry_ids.includes(cb.value);
+      });
       document.getElementById('editStatus').value = m.status;
       document.getElementById('editAddress').value = m.address || '';
       document.getElementById('editNotes').value   = m.notes  || '';

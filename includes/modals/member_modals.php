@@ -45,17 +45,21 @@
               type="email" name="email" placeholder="member@email.com"></div>
         </div>
         <div class="grid-2" style="gap:16px;">
-          <div class="form-group"><label class="form-label">Ministry</label><select class="form-control"
-              name="ministry_id">
-              <option value="">— Select —</option>
+          <div class="form-group">
+            <label class="form-label">Ministries</label>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;">
               <?php foreach ($ministries as $m): ?>
-                <option value="<?= $m['id'] ?>"><?= htmlspecialchars($m['name']) ?></option>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                  <input type="checkbox" name="ministries[]" value="<?= $m['id'] ?>">
+                  <?= htmlspecialchars($m['name']) ?>
+                </label>
               <?php endforeach; ?>
-            </select></div>
+            </div>
+          </div>
           <div class="form-group"><label class="form-label">Status</label><select class="form-control" name="status">
               <option value="Active">Active</option>
               <option value="Inactive">Inactive</option>
-              <option value="Visitor">Visitor</option>
+              <option value="Affiliate Community Member">Affiliate Community Member</option>
             </select></div>
         </div>
         <div class="form-group"><label class="form-label">Home Address</label><input class="form-control" name="address"
@@ -146,18 +150,22 @@
               type="email" name="email" id="editEmail"></div>
         </div>
         <div class="grid-2" style="gap:16px;">
-          <div class="form-group"><label class="form-label">Ministry</label><select class="form-control"
-              name="ministry_id" id="editMinistry">
-              <option value="">— Select —</option>
+          <div class="form-group">
+            <label class="form-label">Ministries</label>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;" id="editMinistriesWrap">
               <?php foreach ($ministries as $m): ?>
-                <option value="<?= $m['id'] ?>"><?= htmlspecialchars($m['name']) ?></option>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                  <input type="checkbox" name="ministries[]" value="<?= $m['id'] ?>" class="edit-ministry-cb">
+                  <?= htmlspecialchars($m['name']) ?>
+                </label>
               <?php endforeach; ?>
-            </select></div>
+            </div>
+          </div>
           <div class="form-group"><label class="form-label">Status</label><select class="form-control" name="status"
               id="editStatus">
               <option value="Active">Active</option>
               <option value="Inactive">Inactive</option>
-              <option value="Visitor">Visitor</option>
+              <option value="Affiliate Community Member">Affiliate Community Member</option>
             </select></div>
         </div>
         <div class="form-group"><label class="form-label">Home Address</label><input class="form-control" name="address"

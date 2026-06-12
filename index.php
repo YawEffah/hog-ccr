@@ -57,7 +57,7 @@ $lastMonthFinance += (float)$wLmStmt->fetchColumn();
 $financeGrowth = $lastMonthFinance > 0 ? round((($monthFinance - $lastMonthFinance) / $lastMonthFinance) * 100) : 0;
 
 // Members in any ministry
-$enrolledInMinistry = (int)$db->query("SELECT COUNT(*) FROM members WHERE ministry_id IS NOT NULL")->fetchColumn();
+$enrolledInMinistry = (int)$db->query("SELECT COUNT(DISTINCT member_id) FROM member_ministries")->fetchColumn();
 
 $stats = [
     'total_members'      => number_format($total_members),
@@ -204,9 +204,10 @@ unset($at);
 
 // ── Recent Members ───────────────────────────────────────────────────────────
 $memStmt = $db->query(
-    "SELECT m.*, min.name as ministry_name, min.bg_color, min.icon
+    "SELECT m.*, 
+            (SELECT GROUP_CONCAT(min.name SEPARATOR ', ') FROM member_ministries mm JOIN ministries min ON mm.ministry_id = min.id WHERE mm.member_id = m.id) AS ministry_name,
+            (SELECT min.bg_color FROM member_ministries mm JOIN ministries min ON mm.ministry_id = min.id WHERE mm.member_id = m.id LIMIT 1) AS bg_color
      FROM members m
-     LEFT JOIN ministries min ON m.ministry_id = min.id
      ORDER BY m.created_at DESC 
      LIMIT 4"
 );
@@ -217,7 +218,7 @@ $recent_members = array_map(function($m) {
     $statusBadges = [
         'Active'   => 'badge-green',
         'Inactive' => 'badge-gray',
-        'Visitor'  => 'badge-yellow'
+        'Affiliate Community Member' => 'badge-blue'
     ];
     return [
         'initials'     => $initials,

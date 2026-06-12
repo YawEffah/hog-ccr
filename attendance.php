@@ -30,7 +30,7 @@ $statsStmt = $db->prepare(
   "SELECT 
         SUM(CASE WHEN ar.status='Present' THEN 1 ELSE 0 END) AS present,
         SUM(CASE WHEN ar.status='Absent' THEN 1 ELSE 0 END) AS absent,
-        SUM(CASE WHEN ar.status='Visitor' THEN 1 ELSE 0 END) AS visitors
+        SUM(CASE WHEN ar.status='Affiliate Community Member' THEN 1 ELSE 0 END) AS affiliates
      FROM attendance_records ar
      JOIN attendance_sessions s ON ar.session_id = s.id
      WHERE s.session_date = ?"
@@ -40,7 +40,7 @@ $attendance_stats = $statsStmt->fetch();
 $attendance_stats = [
   'present' => (int) ($attendance_stats['present'] ?? 0),
   'absent' => (int) ($attendance_stats['absent'] ?? 0),
-  'visitors' => (int) ($attendance_stats['visitors'] ?? 0),
+  'affiliates' => (int) ($attendance_stats['affiliates'] ?? 0),
   'avg_month' => (int) $db->query("SELECT AVG(present_count) FROM (SELECT session_id, COUNT(*) as present_count FROM attendance_records WHERE status='Present' GROUP BY session_id) as daily_counts")->fetchColumn()
 ];
 
@@ -62,7 +62,7 @@ $today_register = array_map(function ($r) {
     'name' => $r['first_name'] . ' ' . $r['last_name'],
     'session' => $r['session_type'],
     'session_badge' => 'badge-gray',
-    'status' => ($r['status'] === 'Present' ? '✓ Present' : ($r['status'] === 'Absent' ? '✗ Absent' : 'Visitor')),
+    'status' => ($r['status'] === 'Present' ? '✓ Present' : ($r['status'] === 'Absent' ? '✗ Absent' : 'Affiliate Community Member')),
     'status_badge' => ($r['status'] === 'Present' ? 'badge-green' : ($r['status'] === 'Absent' ? 'badge-red' : 'badge-yellow')),
     'time' => $r['check_in_time'] ? date('g:ia', strtotime($r['check_in_time'])) : '—'
   ];
@@ -147,8 +147,8 @@ $allMembers = $db->query(
           </div>
           <div class="stat-card">
             <div class="accent-bar" style="background:#2E7D57;"></div>
-            <div class="label">New Visitors</div>
-            <div class="value"><?= $attendance_stats['visitors'] ?></div>
+            <div class="label">Affiliates</div>
+            <div class="value"><?= $attendance_stats['affiliates'] ?></div>
             <div class="change" style="color:var(--success);">+3 vs last week</div>
           </div>
           <div class="stat-card">

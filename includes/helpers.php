@@ -667,7 +667,7 @@ function broadcastMinistryMessage(int $ministryId, string $subject, string $mess
     $mNameStmt->execute([$ministryId]);
     $ministryName = $mNameStmt->fetchColumn() ?: 'Ministry';
 
-    $stmt = $db->prepare("SELECT first_name, last_name, email, phone FROM members WHERE ministry_id = ? AND status = 'Active'");
+    $stmt = $db->prepare("SELECT m.first_name, m.last_name, m.email, m.phone FROM members m JOIN member_ministries mm ON m.id = mm.member_id WHERE mm.ministry_id = ? AND m.status = 'Active'");
     $stmt->execute([$ministryId]);
     $members = $stmt->fetchAll();
 
