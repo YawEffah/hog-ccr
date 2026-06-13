@@ -62,21 +62,33 @@ ON DUPLICATE KEY UPDATE id = id;
 -- 3. MEMBERS
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS members (
-  id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  member_code  VARCHAR(20)   NOT NULL UNIQUE,   -- e.g. CCR-001
-  first_name   VARCHAR(100)  NOT NULL,
-  last_name    VARCHAR(100)  NOT NULL,
-  gender       ENUM('Male','Female') NOT NULL,
-  phone        VARCHAR(20),
-  email        VARCHAR(150),
-  dob          DATE,
-  address      TEXT,
-  status       ENUM('Active','Inactive','Visitor','Affiliate Community Member') DEFAULT 'Active',
-  photo_path   VARCHAR(255),                    -- e.g. assets/images/members/CCR-001.jpg
-  joined_date  DATE,
-  notes        TEXT,
-  created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  member_code     VARCHAR(20)   NOT NULL UNIQUE,
+  first_name      VARCHAR(100)  NOT NULL,
+  last_name       VARCHAR(100)  NOT NULL,
+  gender          ENUM('Male','Female') NOT NULL,
+  phone           VARCHAR(20),
+  phone2          VARCHAR(20),
+  email           VARCHAR(150),
+  dob             DATE,
+  address         TEXT,
+  home_town       VARCHAR(150),
+  occupation      VARCHAR(150),
+  marital_status  ENUM('Single','Married','Widowed','Divorced'),
+  children_count  TINYINT UNSIGNED DEFAULT 0,
+  is_baptised     TINYINT(1) DEFAULT 0,
+  is_communicant  TINYINT(1) DEFAULT 0,
+  group_memberships TEXT,
+  next_of_kin_name      VARCHAR(150),
+  next_of_kin_relation  VARCHAR(100),
+  next_of_kin_address   TEXT,
+  next_of_kin_phone     VARCHAR(20),
+  status          ENUM('Active','Inactive','Visitor','Affiliate Community Member') DEFAULT 'Active',
+  photo_path      VARCHAR(255),
+  joined_date     DATE,
+  notes           TEXT,
+  created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 -- ─────────────────────────────────────────────
@@ -91,7 +103,7 @@ CREATE TABLE IF NOT EXISTS member_ministries (
 ) ENGINE=InnoDB;
 
 -- ─────────────────────────────────────────────
--- 4. MEMBER SACRAMENTS
+-- 3c. MEMBER SACRAMENTS (received)
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS member_sacraments (
   id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -101,6 +113,26 @@ CREATE TABLE IF NOT EXISTS member_sacraments (
   UNIQUE KEY uniq_member_sacrament (member_id, sacrament),
   CONSTRAINT fk_sacr_member FOREIGN KEY (member_id)
     REFERENCES members(id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- ─────────────────────────────────────────────
+-- 3d. MEMBER SACRAMENTS NEEDED (Q13)
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS member_sacraments_needed (
+  member_id  INT UNSIGNED NOT NULL,
+  sacrament  ENUM('First Communion','Confirmation','Holy Matrimony','Holy Orders') NOT NULL,
+  PRIMARY KEY (member_id, sacrament),
+  CONSTRAINT fk_sacn_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ─────────────────────────────────────────────
+-- 3e. MEMBER PROGRAMMES ATTENDED (Q14)
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS member_programmes (
+  member_id  INT UNSIGNED NOT NULL,
+  programme  ENUM('Life in the Spirit Seminar','Growth in the Spirit Seminar','Charisms Session','Catholic Alpha') NOT NULL,
+  PRIMARY KEY (member_id, programme),
+  CONSTRAINT fk_prog_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- ─────────────────────────────────────────────

@@ -64,7 +64,9 @@ $stmt = $db->prepare(
     "SELECT m.*,
             (SELECT GROUP_CONCAT(min.name SEPARATOR ', ') FROM member_ministries mm JOIN ministries min ON mm.ministry_id = min.id WHERE mm.member_id = m.id) AS ministry_name,
             (SELECT GROUP_CONCAT(ministry_id) FROM member_ministries WHERE member_id = m.id) as ministry_ids,
-            (SELECT GROUP_CONCAT(sacrament) FROM member_sacraments WHERE member_id = m.id) as sacraments
+            (SELECT GROUP_CONCAT(sacrament) FROM member_sacraments WHERE member_id = m.id) as sacraments,
+            (SELECT GROUP_CONCAT(sacrament) FROM member_sacraments_needed WHERE member_id = m.id) as sacraments_needed,
+            (SELECT GROUP_CONCAT(programme) FROM member_programmes WHERE member_id = m.id) as programmes
      FROM members m
      LEFT JOIN member_ministries mm2 ON m.id = mm2.member_id
      LEFT JOIN ministries min ON mm2.ministry_id = min.id
@@ -88,30 +90,44 @@ $ministryBadge = ['Music Ministry'=>'badge-purple','Youth Wing'=>'badge-blue','E
                   'Intercessory'=>'badge-yellow','Prayer Group'=>'badge-gray','Executives'=>'badge-purple'];
 
 $members = array_map(function($m, $i) use ($avatarPalette, $statusBadge, $ministryBadge) {
-    $pal      = $avatarPalette[$i % count($avatarPalette)];
+    $pal = $avatarPalette[$i % count($avatarPalette)];
     $ministries = $m['ministry_name'] ? explode(', ', $m['ministry_name']) : [];
     return [
-        'id'            => $m['member_code'],
-        'db_id'         => $m['id'],
-        'first_name'    => $m['first_name'],
-        'last_name'     => $m['last_name'],
-        'gender'        => $m['gender'] ?? 'Male',
-        'initials'      => strtoupper(substr($m['first_name'],0,1) . substr($m['last_name'],0,1)),
-        'phone'         => $m['phone'] ?? '—',
-        'email'         => $m['email'] ?? '—',
-        'ministries'    => $ministries,
-        'ministry_ids'  => $m['ministry_ids'] ? explode(',', $m['ministry_ids']) : [],
-        'status'        => $m['status'],
-        'status_class'  => $statusBadge[$m['status']] ?? 'badge-gray',
-        'joined'        => $m['joined_date'] ? date('M Y', strtotime($m['joined_date'])) : '—',
-        'joined_raw'    => $m['joined_date'],
-        'dob'           => $m['dob'],
-        'address'       => $m['address'],
-        'avatar_bg'     => $pal['bg'],
-        'avatar_color'  => $pal['color'],
-        'photo_path'    => $m['photo_path'],
-        'sacraments'    => $m['sacraments'] ? explode(',', $m['sacraments']) : [],
-        'notes'         => $m['notes'] ?? '',
+        'id'                   => $m['member_code'],
+        'db_id'                => $m['id'],
+        'first_name'           => $m['first_name'],
+        'last_name'            => $m['last_name'],
+        'gender'               => $m['gender'] ?? 'Male',
+        'initials'             => strtoupper(substr($m['first_name'],0,1) . substr($m['last_name'],0,1)),
+        'phone'                => $m['phone'] ?? '—',
+        'phone2'               => $m['phone2'] ?? '',
+        'email'                => $m['email'] ?? '—',
+        'dob'                  => $m['dob'],
+        'address'              => $m['address'] ?? '',
+        'home_town'            => $m['home_town'] ?? '',
+        'occupation'           => $m['occupation'] ?? '',
+        'marital_status'       => $m['marital_status'] ?? '',
+        'children_count'       => $m['children_count'] ?? 0,
+        'is_baptised'          => (int)($m['is_baptised'] ?? 0),
+        'is_communicant'       => (int)($m['is_communicant'] ?? 0),
+        'group_memberships'    => $m['group_memberships'] ?? '',
+        'next_of_kin_name'     => $m['next_of_kin_name'] ?? '',
+        'next_of_kin_relation' => $m['next_of_kin_relation'] ?? '',
+        'next_of_kin_address'  => $m['next_of_kin_address'] ?? '',
+        'next_of_kin_phone'    => $m['next_of_kin_phone'] ?? '',
+        'ministries'           => $ministries,
+        'ministry_ids'         => $m['ministry_ids'] ? array_map('intval', explode(',', $m['ministry_ids'])) : [],
+        'status'               => $m['status'],
+        'status_class'         => $statusBadge[$m['status']] ?? 'badge-gray',
+        'joined'               => $m['joined_date'] ? date('M Y', strtotime($m['joined_date'])) : '—',
+        'joined_raw'           => $m['joined_date'],
+        'avatar_bg'            => $pal['bg'],
+        'avatar_color'         => $pal['color'],
+        'photo_path'           => $m['photo_path'],
+        'sacraments'           => $m['sacraments'] ? explode(',', $m['sacraments']) : [],
+        'sacraments_needed'    => $m['sacraments_needed'] ? explode(',', $m['sacraments_needed']) : [],
+        'programmes'           => $m['programmes'] ? explode(',', $m['programmes']) : [],
+        'notes'                => $m['notes'] ?? '',
     ];
 }, $rawMembers, array_keys($rawMembers));
 
@@ -331,48 +347,35 @@ $ministries = $db->query("SELECT id, name FROM ministries ORDER BY name")->fetch
     function editMember(id) {
       const m = membersData[id];
       if (!m) return;
-
-      const editPreview = document.getElementById('editPhotoPreview');
-      if (m.photo_path) {
-        editPreview.src = m.photo_path;
-        editPreview.style.display = 'block';
-        document.getElementById('editPhotoPlaceholder').style.opacity = '0';
-      } else {
-        editPreview.style.display = 'none';
-        document.getElementById('editPhotoPlaceholder').style.opacity = '1';
-      }
-
-      document.getElementById('editMemberId').value = m.db_id;
-      document.getElementById('editFirstName').value = m.first_name;
-      document.getElementById('editLastName').value = m.last_name;
-      document.getElementById('editGender').value = m.gender;
-      document.getElementById('editPhone').value = m.phone !== '—' ? m.phone : '';
-      document.getElementById('editEmail').value = m.email !== '—' ? m.email : '';
-      document.getElementById('editDob').value = m.dob || '';
-      const minCbs = document.querySelectorAll('.edit-ministry-cb');
-      minCbs.forEach(cb => {
-        cb.checked = m.ministry_ids.includes(cb.value);
+      // openEditModal is defined in member_modals.php
+      openEditModal({
+        id:                   m.db_id,
+        first_name:           m.first_name,
+        last_name:            m.last_name,
+        gender:               m.gender,
+        dob:                  m.dob || '',
+        phone:                m.phone !== '—' ? m.phone : '',
+        phone2:               m.phone2 || '',
+        email:                m.email !== '—' ? m.email : '',
+        address:              m.address || '',
+        home_town:            m.home_town || '',
+        occupation:           m.occupation || '',
+        marital_status:       m.marital_status || '',
+        children_count:       m.children_count || 0,
+        is_baptised:          m.is_baptised,
+        is_communicant:       m.is_communicant,
+        group_memberships:    m.group_memberships || '',
+        next_of_kin_name:     m.next_of_kin_name || '',
+        next_of_kin_relation: m.next_of_kin_relation || '',
+        next_of_kin_address:  m.next_of_kin_address || '',
+        next_of_kin_phone:    m.next_of_kin_phone || '',
+        status:               m.status,
+        photo_path:           m.photo_path || '',
+        ministries:           m.ministry_ids,
+        sacraments_needed:    m.sacraments_needed,
+        programmes:           m.programmes,
+        notes:                m.notes || ''
       });
-      document.getElementById('editStatus').value = m.status;
-      document.getElementById('editAddress').value = m.address || '';
-      document.getElementById('editNotes').value   = m.notes  || '';
-
-      // Checkboxes
-      const sacs = ['baptised', 'confirmed', 'communion', 'matrimony', 'orders'];
-      const sacMap = {
-        'baptised': 'Baptised',
-        'confirmed': 'Confirmed',
-        'communion': 'First Communion',
-        'matrimony': 'Matrimony',
-        'orders': 'Orders'
-      };
-      
-      sacs.forEach(s => {
-        const el = document.getElementById('sac_' + s);
-        if (el) el.checked = m.sacraments.includes(sacMap[s]);
-      });
-
-      openModal('editMemberModal');
     }
 
     function confirmDeleteMember(id, name) {
