@@ -205,6 +205,7 @@ CREATE TABLE IF NOT EXISTS welfare_members (
   id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   member_id      INT UNSIGNED NOT NULL UNIQUE,
   enrol_date     DATE         NOT NULL,
+  family_group   ENUM('Prudence','Temperance','Fortitude','Justice') NULL,
   monthly_amount DECIMAL(10,2) DEFAULT 0.00,
   notes          TEXT,
   enrolled_by    INT UNSIGNED NULL,

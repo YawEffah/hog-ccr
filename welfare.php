@@ -54,18 +54,35 @@ $membersStmt->execute([$filterMonth]);
 $rawWelfareMembers = $membersStmt->fetchAll();
 
 // Map for display
-$welfare_members = array_map(function($wm) {
-    $status = ((int)$wm['paid_in_filter_month'] > 0) ? 'Active' : 'Arrears';
+$welfare_members = array_map(function($wm) use ($db) {
+    $status = ((int)$wm['paid_in_filter_month'] > 0) ? 'Up to date' : 'Arrears';
+    
+    // Fetch recent history
+    $hStmt = $db->prepare("SELECT payment_date, amount, payment_method, reference_no, notif_sent FROM welfare_contributions WHERE welfare_id = ? ORDER BY payment_date DESC LIMIT 5");
+    $hStmt->execute([$wm['id']]);
+    $history = array_map(function($h) {
+        return [
+            'date'   => date('M j, Y', strtotime($h['payment_date'])),
+            'amount' => number_format($h['amount'], 2),
+            'method' => $h['payment_method'],
+            'ref'    => $h['reference_no'],
+            'notif'  => (bool)$h['notif_sent']
+        ];
+    }, $hStmt->fetchAll());
+
     return [
         'id'            => $wm['id'],
         'member_id'     => $wm['member_code'],
         'name'          => $wm['first_name'] . ' ' . $wm['last_name'],
         'initials'      => strtoupper(substr($wm['first_name'],0,1) . substr($wm['last_name'],0,1)),
         'phone'         => $wm['phone'] ?? '—',
+        'email'         => $wm['email'] ?? '—',
         'enrolled'      => date('M Y', strtotime($wm['enrol_date'])),
+        'family_group'  => $wm['family_group'] ?? '—',
         'last_pay'      => $wm['last_payment_date'] ? date('M j, Y', strtotime($wm['last_payment_date'])) : 'Never',
         'total'         => number_format((float)$wm['total_paid'], 2),
         'status'        => $status,
+        'history'       => $history,
         'avatar_bg'     => 'var(--gold-pale)',
         'avatar_color'  => 'var(--gold)'
     ];
@@ -73,7 +90,7 @@ $welfare_members = array_map(function($wm) {
 
 // ── Contribution Log ─────────────────────────────────────────────────────────
 $contribStmt = $db->prepare(
-    "SELECT wc.*, m.first_name, m.last_name, m.member_code
+    "SELECT wc.*, m.first_name, m.last_name, m.member_code, wm.family_group
      FROM welfare_contributions wc
      JOIN welfare_members wm ON wc.welfare_id = wm.id
      JOIN members m ON wm.member_id = m.id
@@ -85,14 +102,15 @@ $rawContribs = $contribStmt->fetchAll();
 
 $welfare_contributions = array_map(function($c) {
     return [
-        'id'        => $c['id'],
-        'member'    => $c['first_name'] . ' ' . $c['last_name'],
-        'member_id' => $c['member_code'],
-        'amount'    => number_format($c['amount'], 2),
-        'method'    => $c['payment_method'],
-        'date'      => date('M j, Y', strtotime($c['payment_date'])),
-        'reference' => $c['reference_no'],
-        'notif_sent' => (bool)$c['notif_sent']
+        'id'           => $c['id'],
+        'member'       => $c['first_name'] . ' ' . $c['last_name'],
+        'member_id'    => $c['member_code'],
+        'family_group' => $c['family_group'] ?? '—',
+        'amount'       => number_format($c['amount'], 2),
+        'method'       => $c['payment_method'],
+        'date'         => date('M j, Y', strtotime($c['payment_date'])),
+        'reference'    => $c['reference_no'],
+        'notif_sent'   => (bool)$c['notif_sent']
     ];
 }, $rawContribs);
 
@@ -220,9 +238,16 @@ $nonWelfareMembers = $db->query(
                   <i class="ph ph-magnifying-glass"></i>
                   <input class="search-input" id="welfareSearch" placeholder="Search member…" oninput="filterWelfareMembers()" style="width:100%;">
                 </div>
+                <select class="form-control" id="welfareFamilyFilter" style="width:130px;padding:9px 14px;" onchange="filterWelfareMembers()">
+                  <option value="All">All Families</option>
+                  <option value="Prudence">Prudence</option>
+                  <option value="Temperance">Temperance</option>
+                  <option value="Fortitude">Fortitude</option>
+                  <option value="Justice">Justice</option>
+                </select>
                 <select class="form-control" id="welfareStatusFilter" style="width:130px;padding:9px 14px;" onchange="filterWelfareMembers()">
                   <option value="All">All Status</option>
-                  <option value="Active">Active</option>
+                  <option value="Up to date">Up to date</option>
                   <option value="Arrears">Arrears</option>
                 </select>
               </div>
@@ -239,6 +264,7 @@ $nonWelfareMembers = $db->query(
                   <tr>
                     <th>Member</th>
                     <th>Phone</th>
+                    <th>Family Group</th>
                     <th>Enrolled</th>
                     <th>Last Payment</th>
                     <th>Total Contributed</th>
@@ -249,7 +275,7 @@ $nonWelfareMembers = $db->query(
                 <tbody id="welfareMembersTbody">
                   <?php foreach ($welfare_members as $wm): ?>
                   <?php
-                    $statusBadge = $wm['status'] === 'Active' ? 'badge-welfare' : 'badge-red';
+                    $statusBadge = $wm['status'] === 'Up to date' ? 'badge-welfare' : 'badge-red';
                   ?>
                   <tr>
                     <td>
@@ -262,6 +288,9 @@ $nonWelfareMembers = $db->query(
                       </div>
                     </td>
                     <td style="font-size:13px;"><?= $wm['phone'] ?></td>
+                    <td>
+                      <span class="badge badge-gray"><?= $wm['family_group'] ?></span>
+                    </td>
                     <td style="font-size:12px;color:var(--muted);"><?= $wm['enrolled'] ?></td>
                     <td style="font-size:13px;"><?= $wm['last_pay'] ?></td>
                     <td style="font-weight:600;color:#0D9488;">GH₵ <?= $wm['total'] ?></td>
@@ -296,6 +325,13 @@ $nonWelfareMembers = $db->query(
                   <i class="ph ph-magnifying-glass"></i>
                   <input class="search-input" id="contribSearch" placeholder="Search contributions…" oninput="filterContribs()" style="width:280px;">
                 </div>
+                <select class="form-control" id="contribFamilyFilter" style="width:130px;padding:9px 14px;" onchange="filterContribs()">
+                  <option value="All">All Families</option>
+                  <option value="Prudence">Prudence</option>
+                  <option value="Temperance">Temperance</option>
+                  <option value="Fortitude">Fortitude</option>
+                  <option value="Justice">Justice</option>
+                </select>
               </div>
               <div style="display:flex;gap:8px;">
                 <button class="btn btn-outline btn-sm"><i class="ph ph-export"></i> Export CSV</button>
@@ -310,6 +346,7 @@ $nonWelfareMembers = $db->query(
                 <thead>
                   <tr>
                     <th>Member</th>
+                    <th>Family Group</th>
                     <th>Amount</th>
                     <th>Method</th>
                     <th>Date</th>
@@ -325,6 +362,7 @@ $nonWelfareMembers = $db->query(
                       <div style="font-weight:500;"><?= htmlspecialchars($c['member']) ?></div>
                       <div style="font-size:11px;color:var(--muted);"><?= $c['member_id'] ?></div>
                     </td>
+                    <td><span class="badge badge-gray"><?= $c['family_group'] ?></span></td>
                     <td style="font-weight:600;color:#0D9488;">GH₵ <?= $c['amount'] ?></td>
                     <td><span class="badge badge-gray"><?= $c['method'] ?></span></td>
                     <td style="font-size:12px;color:var(--muted);"><?= $c['date'] ?></td>
@@ -444,23 +482,41 @@ $nonWelfareMembers = $db->query(
   function filterWelfareMembers() {
     const q      = document.getElementById('welfareSearch').value.toLowerCase();
     const status = document.getElementById('welfareStatusFilter').value;
+    const family = document.getElementById('welfareFamilyFilter').value;
     let count    = 0;
+    
     document.querySelectorAll('#welfareMembersTbody tr').forEach(row => {
-      const text      = row.textContent.toLowerCase();
-      const rowStatus = row.querySelector('td:nth-child(6) .badge')?.textContent.trim();
-      const matchQ    = text.includes(q);
-      const matchS    = status === 'All' || rowStatus === status;
-      row.style.display = (matchQ && matchS) ? '' : 'none';
-      if (matchQ && matchS) count++;
+      const text        = row.textContent.toLowerCase();
+      const rowFamily   = row.querySelector('td:nth-child(3) .badge')?.textContent.trim();
+      const rowStatus   = row.querySelector('td:nth-child(7) .badge')?.textContent.trim();
+      
+      const matchQ      = text.includes(q);
+      const matchS      = status === 'All' || rowStatus === status;
+      const matchF      = family === 'All' || rowFamily === family;
+      
+      if (matchQ && matchS && matchF) {
+        row.style.display = '';
+        count++;
+      } else {
+        row.style.display = 'none';
+      }
     });
     document.getElementById('welfareMemberCount').textContent = count;
   }
 
   /* ---- Contributions search ---- */
   function filterContribs() {
-    const q = document.getElementById('contribSearch').value.toLowerCase();
+    const q      = document.getElementById('contribSearch').value.toLowerCase();
+    const family = document.getElementById('contribFamilyFilter').value;
+    
     document.querySelectorAll('#contribTbody tr').forEach(row => {
-      row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+      const text      = row.textContent.toLowerCase();
+      const rowFamily = row.querySelector('td:nth-child(2) .badge')?.textContent.trim();
+      
+      const matchQ    = text.includes(q);
+      const matchF    = family === 'All' || rowFamily === family;
+      
+      row.style.display = (matchQ && matchF) ? '' : 'none';
     });
   }
 

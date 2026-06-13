@@ -30,8 +30,14 @@
 
         <div class="grid-2" style="gap:16px;">
           <div class="form-group">
-            <label class="form-label">Date of Enrolment</label>
-            <input type="date" class="form-control" name="enrol_date" value="<?= date('Y-m-d') ?>" required>
+            <label class="form-label">Family Group</label>
+            <select class="form-control" name="family_group" required>
+              <option value="">Select Group...</option>
+              <option value="Prudence">Prudence</option>
+              <option value="Temperance">Temperance</option>
+              <option value="Fortitude">Fortitude</option>
+              <option value="Justice">Justice</option>
+            </select>
           </div>
           <div class="form-group">
             <label class="form-label">Monthly Contribution (GH₵)</label>
@@ -162,8 +168,12 @@
           <div style="font-weight:500;" id="welfareViewEnrolled">Jan 2025</div>
         </div>
         <div>
+          <div style="font-size:11px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Family Group</div>
+          <div style="font-weight:500;" id="welfareViewFamilyGroup">Prudence</div>
+        </div>
+        <div>
           <div style="font-size:11px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Status</div>
-          <div id="welfareViewStatus"><span class="badge badge-welfare">Active</span></div>
+          <div id="welfareViewStatus"><span class="badge badge-welfare">Up to date</span></div>
         </div>
         <div>
           <div style="font-size:11px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Last Payment</div>
@@ -422,30 +432,8 @@
      WELFARE MODAL JAVASCRIPT
      ===================================================== */
 
-  // --- Mock welfare members for JS (TODO: replace with real API/JSON) ---
-  const welfareMembersData = [
-    {
-      id: 'W-001', member_id: 'CCR-001', name: 'Abena Kusi', phone: '0244-123-456', email: 'abena@email.com', enrolled: 'Jan 2025', last_pay: 'Apr 15, 2026', total: '480.00', status: 'Active', history: [
-        { date: 'Apr 15, 2026', amount: '20.00', method: 'MoMo', ref: 'TXN8821', notif: true },
-        { date: 'Mar 12, 2026', amount: '20.00', method: 'Cash', ref: '', notif: false },
-      ]
-    },
-    {
-      id: 'W-002', member_id: 'CCR-002', name: 'Kwame Ofori', phone: '0200-987-654', email: 'kwame@email.com', enrolled: 'Feb 2025', last_pay: 'Apr 15, 2026', total: '360.00', status: 'Active', history: [
-        { date: 'Apr 15, 2026', amount: '20.00', method: 'MoMo', ref: 'TXN8830', notif: true },
-      ]
-    },
-    {
-      id: 'W-003', member_id: 'CCR-004', name: 'Michael Boateng', phone: '0277-456-123', email: 'michael@email.com', enrolled: 'Mar 2025', last_pay: 'Mar 1, 2026', total: '140.00', status: 'Arrears', history: [
-        { date: 'Mar 1, 2026', amount: '20.00', method: 'Cash', ref: '', notif: false },
-      ]
-    },
-    {
-      id: 'W-004', member_id: 'CCR-006', name: 'Pastor Adu', phone: '0201-000-001', email: 'pastor@ccrhog.org', enrolled: 'Jan 2025', last_pay: 'Apr 28, 2026', total: '600.00', status: 'Active', history: [
-        { date: 'Apr 28, 2026', amount: '50.00', method: 'Bank Transfer', ref: 'BNK0042', notif: true },
-      ]
-    },
-  ];
+  // --- Real welfare members for JS ---
+  const welfareMembersData = <?= json_encode($welfare_members ?? []) ?>;
 
   // Contributions on today's date for the send-message default
   const todayStr = new Date().toISOString().split('T')[0];
@@ -522,10 +510,11 @@
     document.getElementById('welfareViewPhone').textContent = m.phone;
     document.getElementById('welfareViewEmail').textContent = m.email;
     document.getElementById('welfareViewEnrolled').textContent = m.enrolled;
+    document.getElementById('welfareViewFamilyGroup').textContent = m.family_group || '—';
     document.getElementById('welfareViewLastPay').textContent = m.last_pay;
     document.getElementById('welfareViewTotal').textContent = 'GH₵ ' + m.total;
 
-    const statusClass = m.status === 'Active' ? 'badge-welfare' : 'badge-red';
+    const statusClass = m.status === 'Up to date' ? 'badge-welfare' : 'badge-red';
     document.getElementById('welfareViewStatus').innerHTML = `<span class="badge ${statusClass}">${m.status}</span>`;
 
     // History

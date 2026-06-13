@@ -95,6 +95,7 @@ if ($action === 'fetch_welfare_recipients') {
 if ($action === 'enrol_welfare') {
     $memberId      = (int)($_POST['member_id']      ?? 0);
     $enrolDate     = $_POST['enrol_date']           ?? date('Y-m-d');
+    $familyGroup   = $_POST['family_group']         ?? null;
     $monthlyAmount = (float)($_POST['monthly_amount'] ?? 0);
     $notes         = trim($_POST['notes']           ?? '');
 
@@ -104,11 +105,11 @@ if ($action === 'enrol_welfare') {
 
     try {
         $stmt = $db->prepare(
-            "INSERT INTO welfare_members (member_id, enrol_date, monthly_amount, notes, enrolled_by)
-             VALUES (?, ?, ?, ?, ?)"
+            "INSERT INTO welfare_members (member_id, enrol_date, family_group, monthly_amount, notes, enrolled_by)
+             VALUES (?, ?, ?, ?, ?, ?)"
         );
         $stmt->execute([
-            $memberId, $enrolDate, $monthlyAmount, $notes ?: null, $_SESSION['user_id']
+            $memberId, $enrolDate, $familyGroup, $monthlyAmount, $notes ?: null, $_SESSION['user_id']
         ]);
 
         // Fetch name for log
