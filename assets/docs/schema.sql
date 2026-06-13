@@ -19,8 +19,9 @@ CREATE TABLE IF NOT EXISTS admins (
   name         VARCHAR(100)  NOT NULL,
   username     VARCHAR(50)   NOT NULL UNIQUE,
   email        VARCHAR(150)  NOT NULL UNIQUE,
+  phone        VARCHAR(20)   NULL,
   password     VARCHAR(255)  NOT NULL,  -- bcrypt hash
-  role         ENUM('Administrator','Secretary','Finance Secretary') DEFAULT 'Secretary',
+  role         ENUM('Administrator','Secretary','Finance Secretary','Head Pastor') DEFAULT 'Secretary',
   initials     VARCHAR(5),
   created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -171,20 +172,16 @@ CREATE TABLE IF NOT EXISTS attendance_records (
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS finance_transactions (
   id               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  member_id        INT UNSIGNED NULL,
-  member_name      VARCHAR(200),               -- for non-registered payers
+  week_number      ENUM('Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5') DEFAULT 'Week 1',
   type             ENUM('Tithe','Offering','Donation','Pledge','Project Contribution','Welfare') NOT NULL,
   amount           DECIMAL(12,2) NOT NULL,
   payment_method   ENUM('Cash','MoMo','Bank Transfer','Cheque') DEFAULT 'Cash',
   reference_no     VARCHAR(100),
-  phone            VARCHAR(20),
-  email            VARCHAR(150),
   notes            TEXT,
   transaction_date DATE NOT NULL,
   receipt_sent     TINYINT(1) DEFAULT 0,
   recorded_by      INT UNSIGNED NULL,
   created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_txn_member  FOREIGN KEY (member_id)   REFERENCES members(id) ON DELETE SET NULL,
   CONSTRAINT fk_txn_admin   FOREIGN KEY (recorded_by) REFERENCES admins(id)  ON DELETE SET NULL
 ) ENGINE=InnoDB;
 

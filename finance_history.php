@@ -40,10 +40,10 @@ $fromDate  = trim($_GET['from_date'] ?? '');
 $toDate    = trim($_GET['to_date'] ?? '');
 
 if ($search) {
-    // Search by member_name in finance_transactions OR first_name/last_name/code in members table
-    $whereClauses[] = "(t.member_name LIKE ? OR m.first_name LIKE ? OR m.last_name LIKE ? OR m.member_code LIKE ?)";
+    // Search by week_number
+    $whereClauses[] = "(t.week_number LIKE ?)";
     $searchWildcard = "%{$search}%";
-    array_push($params, $searchWildcard, $searchWildcard, $searchWildcard, $searchWildcard);
+    array_push($params, $searchWildcard);
 }
 
 if ($type) {
@@ -75,13 +75,8 @@ $limit = 100; // Limit to prevent massive loads
 
 // ── Query Records ────────────────────────────────────────────────────────────
 $query = "
-    SELECT 
-        t.*, 
-        m.first_name, 
-        m.last_name, 
-        m.member_code
+    SELECT t.* 
     FROM finance_transactions t
-    LEFT JOIN members m ON t.member_id = m.id
     $whereSql
     ORDER BY t.transaction_date DESC, t.created_at DESC
     LIMIT $limit
@@ -101,18 +96,15 @@ $typeBadges = [
 ];
 
 $transactions = array_map(function($t) use ($typeBadges) {
-    $memberName = $t['first_name'] ? ($t['first_name'] . ' ' . $t['last_name']) : ($t['member_name'] ?: 'Guest');
-    $memberCode = $t['member_code'] ? $t['member_code'] : 'External';
     return [
         'id'           => $t['id'],
-        'member'       => $memberName,
-        'member_code'  => $memberCode,
+        'week'         => $t['week_number'],
         'type'         => $t['type'],
         'type_badge'   => $typeBadges[$t['type']] ?? 'badge-gray',
         'amount'       => number_format($t['amount'], 2),
         'method'       => $t['payment_method'],
         'reference'    => $t['reference_no'] ?: 'N/A',
-        'date'         => date('M j, Y', strtotime($t['transaction_date']))
+        'date'         => date('F j, Y', strtotime($t['transaction_date']))
     ];
 }, $rawTxns);
 
@@ -161,8 +153,8 @@ $transactions = array_map(function($t) use ($typeBadges) {
             <form method="GET" action="finance_history.php" class="grid-4" style="gap:16px;">
               
               <div class="form-group" style="margin-bottom:0;">
-                <label class="form-label">Search Payer</label>
-                <input type="text" name="search" class="form-control" placeholder="Name or ID..." value="<?= htmlspecialchars($search) ?>">
+                <label class="form-label">Search Week</label>
+                <input type="text" name="search" class="form-control" placeholder="Week..." value="<?= htmlspecialchars($search) ?>">
               </div>
 
               <div class="form-group" style="margin-bottom:0;">
@@ -232,7 +224,7 @@ $transactions = array_map(function($t) use ($typeBadges) {
               <thead>
                 <tr>
                   <th>Date</th>
-                  <th>Payer</th>
+                  <th>Week</th>
                   <th>Type</th>
                   <th>Method & Ref</th>
                   <th>Amount</th>
@@ -253,8 +245,7 @@ $transactions = array_map(function($t) use ($typeBadges) {
                       <div style="font-weight:500; color:var(--deep);"><?= $tx['date'] ?></div>
                     </td>
                     <td>
-                      <div style="font-weight:500;"><?= htmlspecialchars($tx['member']) ?></div>
-                      <div style="font-size:12px; color:var(--muted);"><?= htmlspecialchars($tx['member_code']) ?></div>
+                      <div style="font-weight:500;"><?= htmlspecialchars($tx['week']) ?></div>
                     </td>
                     <td>
                       <span class="badge <?= $tx['type_badge'] ?>"><?= $tx['type'] ?></span>
@@ -337,7 +328,7 @@ $transactions = array_map(function($t) use ($typeBadges) {
     function openReceiptModal(tx) {
       document.getElementById('receiptId').textContent     = '#' + tx.id;
       document.getElementById('receiptDate').textContent   = tx.date;
-      document.getElementById('receiptMember').textContent = tx.member;
+      document.getElementById('receiptMember').textContent = tx.week;
       document.getElementById('receiptType').textContent   = tx.type;
       document.getElementById('receiptAmount').textContent = tx.amount;
       document.getElementById('receiptMethod').textContent = tx.method;

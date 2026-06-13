@@ -2,7 +2,7 @@
 <div class="modal-overlay" id="viewReceiptModal">
   <div class="modal" style="max-width:440px; padding: 0; background: #F8FAFC; overflow: hidden;">
     <div class="modal-header" style="background: white; border-bottom: 1px solid #E2E8F0; padding: 16px 24px;">
-      <h3 style="margin:0; font-size: 18px; color: var(--deep);">Digital Receipt</h3>
+      <h3 style="margin:0; font-size: 18px; color: var(--deep);">Digital Summary</h3>
       <button class="close-btn" onclick="closeModal('viewReceiptModal')"><i class="ph ph-x"></i></button>
     </div>
     
@@ -13,13 +13,13 @@
         <!-- Church Branding -->
         <div style="text-align: center; margin-bottom: 24px;">
           <div style="font-size: 20px; font-weight: 800; color: var(--deep); letter-spacing: -0.5px;">HOUSE OF GRACE CCR</div>
-          <div style="font-size: 11px; color: var(--gold); font-weight: 700; text-transform: uppercase; margin-top: 4px; letter-spacing: 1px;">Official Payment Receipt</div>
+          <div style="font-size: 11px; color: var(--gold); font-weight: 700; text-transform: uppercase; margin-top: 4px; letter-spacing: 1px;">Official Weekly Summary</div>
         </div>
 
         <!-- Success Indicator -->
         <div style="display: flex; justify-content: center; margin-bottom: 24px;">
           <div style="background: #F0FDFA; color: #0D9488; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; border: 1px solid #CCFBF1;">
-            <i class="ph-fill ph-check-circle"></i> PAYMENT CONFIRMED
+            <i class="ph-fill ph-check-circle"></i> ENTRY CONFIRMED
           </div>
         </div>
 
@@ -34,8 +34,8 @@
             <span style="font-size: 13px; font-weight: 600;" id="receiptDate">Jan 01, 2026</span>
           </div>
           <div style="display: flex; justify-content: space-between;">
-            <span style="font-size: 13px; color: #64748B;">Payer:</span>
-            <span style="font-size: 13px; font-weight: 600; text-align: right;" id="receiptMember">Guest Member</span>
+            <span style="font-size: 13px; color: #64748B;">Week:</span>
+            <span style="font-size: 13px; font-weight: 600; text-align: right;" id="receiptMember">Week 1</span>
           </div>
         </div>
 
@@ -52,8 +52,8 @@
 
         <!-- Footer Note -->
         <div style="text-align: center; color: #94A3B8; font-size: 12px; line-height: 1.5;">
-          Thank you for your generous contribution. <br>
-          "God loves a cheerful giver."
+          System generated summary. <br>
+          Administration
         </div>
 
       </div>

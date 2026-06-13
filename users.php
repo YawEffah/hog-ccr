@@ -38,7 +38,7 @@ if (!$successMsg && !$errorMsg) {
 $db = getDB();
 
 // Fetch all administrators
-$stmt = $db->query("SELECT id, name, username, email, role, initials, created_at FROM admins ORDER BY name ASC");
+$stmt = $db->query("SELECT id, name, username, email, phone, role, initials, created_at FROM admins ORDER BY name ASC");
 $users = $stmt->fetchAll();
 
 ?>
@@ -101,7 +101,7 @@ $users = $stmt->fetchAll();
                   </td>
                   <td style="color:var(--muted); font-size:13px;">@<?= htmlspecialchars($u['username']) ?></td>
                   <td>
-                    <span class="badge <?= $u['role'] === 'Administrator' ? 'badge-blue' : ($u['role'] === 'Finance Secretary' ? 'badge-green' : 'badge-purple') ?>">
+                    <span class="badge <?= $u['role'] === 'Administrator' ? 'badge-blue' : ($u['role'] === 'Head Pastor' ? 'badge-yellow' : ($u['role'] === 'Finance Secretary' ? 'badge-green' : 'badge-purple')) ?>">
                       <?= $u['role'] ?>
                     </span>
                   </td>
@@ -145,6 +145,7 @@ $users = $stmt->fetchAll();
       document.getElementById('edit_name').value = u.name;
       document.getElementById('edit_username').value = u.username;
       document.getElementById('edit_email').value = u.email;
+      document.getElementById('edit_phone').value = u.phone || '';
       document.getElementById('edit_role').value = u.role;
       document.getElementById('edit_initials').value = u.initials;
       

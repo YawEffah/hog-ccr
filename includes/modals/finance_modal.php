@@ -10,15 +10,15 @@
       <input type="hidden" name="action" value="add_transaction">
       <div class="modal-body">
         <div class="grid-2" style="gap:16px;">
-          <div class="form-group" style="position: relative;">
-            <label class="form-label">Member (Search by Name or ID)</label>
-            <input class="form-control" id="financeMemberSearch" name="member_display"
-              placeholder="Enter name or member ID…" oninput="filterFinanceMember(this.value)" autocomplete="off"
-              required>
-            <input type="hidden" name="member_id" id="financeMemberId">
-            <div id="financeSuggestions"
-              style="position:absolute; top:100%; left:0; right:0; z-index:100; background:#fff; border:1px solid #EDE8DF; border-radius:8px; max-height:200px; overflow-y:auto; display:none; box-shadow:0 4px 12px rgba(0,0,0,0.1); margin-top:4px;">
-            </div>
+          <div class="form-group">
+            <label class="form-label">Week</label>
+            <select class="form-control" name="week_number" required>
+              <option value="Week 1">Week 1</option>
+              <option value="Week 2">Week 2</option>
+              <option value="Week 3">Week 3</option>
+              <option value="Week 4">Week 4</option>
+              <option value="Week 5">Week 5</option>
+            </select>
           </div>
           <div class="form-group">
             <label class="form-label">Transaction Type</label>
@@ -52,12 +52,7 @@
             <input class="form-control" name="reference_no" placeholder="e.g. TXN123 or CHQ456">
           </div>
         </div>
-        <div class="grid-2" style="gap:16px;" id="financeContactFields">
-          <div class="form-group"><label class="form-label">Phone Number</label><input class="form-control" name="phone"
-              placeholder="0244-000-000"></div>
-          <div class="form-group"><label class="form-label">Email Address</label><input class="form-control"
-              type="email" name="email" placeholder="receipt-to@email.com"></div>
-        </div>
+
         <div class="form-group"><label class="form-label">Notes</label><textarea class="form-control" name="notes"
             rows="2" placeholder="Optional notes…" style="resize:none;"></textarea></div>
         <div style="background:#F1F5F9;border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;">
@@ -65,8 +60,7 @@
             style="width:16px;height:16px;cursor:pointer;">
           <div>
             <label for="genReceipt"
-              style="font-size:13px;font-weight:600;cursor:pointer;color:var(--deep2);display:block;">Send
-              receipt automatically via SMS & email</label>
+              style="font-size:13px;font-weight:600;cursor:pointer;color:var(--deep2);display:block;">Send summary notification to Finance Officer & Head Pastor</label>
           </div>
         </div>
       </div>
