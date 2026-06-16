@@ -297,9 +297,9 @@ $nonWelfareMembers = $db->query(
                     <td><span class="badge <?= $statusBadge ?>"><?= $wm['status'] ?></span></td>
                     <td>
                       <div style="display:flex;gap:6px;">
-                        <button class="btn-icon" onclick="viewWelfareMember('<?= $wm['id'] ?>')" title="View details">
+                        <a href="welfare_member_details.php?id=<?= $wm['id'] ?>" class="btn-icon" title="View details" style="display:inline-flex;text-decoration:none;">
                           <i class="ph ph-eye"></i>
-                        </button>
+                        </a>
                         <button class="btn-icon" onclick="openRecordPaymentFor('<?= $wm['id'] ?>','<?= htmlspecialchars($wm['name']) ?>')" title="Record payment" style="background:var(--gold-pale);color:var(--gold);">
                           <i class="ph ph-plus"></i>
                         </button>
