@@ -19,8 +19,9 @@ CREATE TABLE IF NOT EXISTS admins (
   name         VARCHAR(100)  NOT NULL,
   username     VARCHAR(50)   NOT NULL UNIQUE,
   email        VARCHAR(150)  NOT NULL UNIQUE,
+  phone        VARCHAR(20)   NULL,
   password     VARCHAR(255)  NOT NULL,  -- bcrypt hash
-  role         ENUM('Administrator','Secretary','Finance Secretary') DEFAULT 'Secretary',
+  role         ENUM('Administrator','Secretary','Finance Secretary','Head Pastor') DEFAULT 'Secretary',
   initials     VARCHAR(5),
   created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -61,28 +62,48 @@ ON DUPLICATE KEY UPDATE id = id;
 -- 3. MEMBERS
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS members (
-  id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  member_code  VARCHAR(20)   NOT NULL UNIQUE,   -- e.g. CCR-001
-  first_name   VARCHAR(100)  NOT NULL,
-  last_name    VARCHAR(100)  NOT NULL,
-  gender       ENUM('Male','Female') NOT NULL,
-  phone        VARCHAR(20),
-  email        VARCHAR(150),
-  dob          DATE,
-  address      TEXT,
-  ministry_id  INT UNSIGNED  NULL,
-  status       ENUM('Active','Inactive','Visitor') DEFAULT 'Active',
-  photo_path   VARCHAR(255),                    -- e.g. assets/images/members/CCR-001.jpg
-  joined_date  DATE,
-  notes        TEXT,
-  created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT fk_member_ministry FOREIGN KEY (ministry_id)
-    REFERENCES ministries(id) ON DELETE SET NULL ON UPDATE CASCADE
+  id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  member_code     VARCHAR(20)   NOT NULL UNIQUE,
+  first_name      VARCHAR(100)  NOT NULL,
+  last_name       VARCHAR(100)  NOT NULL,
+  gender          ENUM('Male','Female') NOT NULL,
+  phone           VARCHAR(20),
+  phone2          VARCHAR(20),
+  email           VARCHAR(150),
+  dob             DATE,
+  address         TEXT,
+  home_town       VARCHAR(150),
+  occupation      VARCHAR(150),
+  marital_status  ENUM('Single','Married','Widowed','Divorced'),
+  children_count  TINYINT UNSIGNED DEFAULT 0,
+  is_baptised     TINYINT(1) DEFAULT 0,
+  is_communicant  TINYINT(1) DEFAULT 0,
+  group_memberships TEXT,
+  next_of_kin_name      VARCHAR(150),
+  next_of_kin_relation  VARCHAR(100),
+  next_of_kin_address   TEXT,
+  next_of_kin_phone     VARCHAR(20),
+  status          ENUM('Active','Inactive','Visitor','Affiliate Community Member') DEFAULT 'Active',
+  photo_path      VARCHAR(255),
+  joined_date     DATE,
+  notes           TEXT,
+  created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 -- ─────────────────────────────────────────────
--- 4. MEMBER SACRAMENTS
+-- 3b. MEMBER MINISTRIES
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS member_ministries (
+  member_id    INT UNSIGNED NOT NULL,
+  ministry_id  INT UNSIGNED NOT NULL,
+  PRIMARY KEY (member_id, ministry_id),
+  CONSTRAINT fk_mm_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE,
+  CONSTRAINT fk_mm_ministry FOREIGN KEY (ministry_id) REFERENCES ministries(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ─────────────────────────────────────────────
+-- 3c. MEMBER SACRAMENTS (received)
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS member_sacraments (
   id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -92,6 +113,26 @@ CREATE TABLE IF NOT EXISTS member_sacraments (
   UNIQUE KEY uniq_member_sacrament (member_id, sacrament),
   CONSTRAINT fk_sacr_member FOREIGN KEY (member_id)
     REFERENCES members(id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- ─────────────────────────────────────────────
+-- 3d. MEMBER SACRAMENTS NEEDED (Q13)
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS member_sacraments_needed (
+  member_id  INT UNSIGNED NOT NULL,
+  sacrament  ENUM('First Communion','Confirmation','Holy Matrimony','Holy Orders') NOT NULL,
+  PRIMARY KEY (member_id, sacrament),
+  CONSTRAINT fk_sacn_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ─────────────────────────────────────────────
+-- 3e. MEMBER PROGRAMMES ATTENDED (Q14)
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS member_programmes (
+  member_id  INT UNSIGNED NOT NULL,
+  programme  ENUM('Life in the Spirit Seminar','Growth in the Spirit Seminar','Charisms Session','Catholic Alpha') NOT NULL,
+  PRIMARY KEY (member_id, programme),
+  CONSTRAINT fk_prog_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- ─────────────────────────────────────────────
@@ -149,7 +190,7 @@ CREATE TABLE IF NOT EXISTS attendance_records (
   id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   session_id     INT UNSIGNED NOT NULL,
   member_id      INT UNSIGNED NOT NULL,
-  status         ENUM('Present','Absent','Visitor') DEFAULT 'Present',
+  status         ENUM('Present','Absent','Affiliate Community Member') DEFAULT 'Present',
   check_in_time  TIME,
   UNIQUE KEY uniq_record (session_id, member_id),
   CONSTRAINT fk_rec_session FOREIGN KEY (session_id)
@@ -163,20 +204,16 @@ CREATE TABLE IF NOT EXISTS attendance_records (
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS finance_transactions (
   id               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  member_id        INT UNSIGNED NULL,
-  member_name      VARCHAR(200),               -- for non-registered payers
+  week_number      ENUM('Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5') DEFAULT 'Week 1',
   type             ENUM('Tithe','Offering','Donation','Pledge','Project Contribution','Welfare') NOT NULL,
   amount           DECIMAL(12,2) NOT NULL,
   payment_method   ENUM('Cash','MoMo','Bank Transfer','Cheque') DEFAULT 'Cash',
   reference_no     VARCHAR(100),
-  phone            VARCHAR(20),
-  email            VARCHAR(150),
   notes            TEXT,
   transaction_date DATE NOT NULL,
   receipt_sent     TINYINT(1) DEFAULT 0,
   recorded_by      INT UNSIGNED NULL,
   created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_txn_member  FOREIGN KEY (member_id)   REFERENCES members(id) ON DELETE SET NULL,
   CONSTRAINT fk_txn_admin   FOREIGN KEY (recorded_by) REFERENCES admins(id)  ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
@@ -200,6 +237,7 @@ CREATE TABLE IF NOT EXISTS welfare_members (
   id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   member_id      INT UNSIGNED NOT NULL UNIQUE,
   enrol_date     DATE         NOT NULL,
+  family_group   ENUM('Prudence','Temperance','Fortitude','Justice') NULL,
   monthly_amount DECIMAL(10,2) DEFAULT 0.00,
   notes          TEXT,
   enrolled_by    INT UNSIGNED NULL,

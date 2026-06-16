@@ -24,6 +24,7 @@ if ($action === 'add_user') {
     $name     = trim($_POST['name']     ?? '');
     $username = trim($_POST['username'] ?? '');
     $email    = trim($_POST['email']    ?? '');
+    $phone    = trim($_POST['phone']    ?? '');
     $password = $_POST['password']      ?? '';
     $role     = $_POST['role']          ?? 'Secretary';
     $initials = strtoupper(trim($_POST['initials'] ?? ''));
@@ -36,10 +37,10 @@ if ($action === 'add_user') {
 
     try {
         $stmt = $db->prepare(
-            "INSERT INTO admins (name, username, email, password, role, initials) 
-             VALUES (?, ?, ?, ?, ?, ?)"
+            "INSERT INTO admins (name, username, email, phone, password, role, initials) 
+             VALUES (?, ?, ?, ?, ?, ?, ?)"
         );
-        $stmt->execute([$name, $username, $email, $hashedPassword, $role, $initials]);
+        $stmt->execute([$name, $username, $email, $phone ?: null, $hashedPassword, $role, $initials]);
 
         logActivity("Created new admin account: {$username} ({$role})", 'system');
         redirect($redirect . '?success=user_added');
@@ -59,6 +60,7 @@ if ($action === 'edit_user') {
     $name     = trim($_POST['name']     ?? '');
     $username = trim($_POST['username'] ?? '');
     $email    = trim($_POST['email']    ?? '');
+    $phone    = trim($_POST['phone']    ?? '');
     $password = $_POST['password']      ?? '';
     $role     = $_POST['role']          ?? 'Secretary';
     $initials = strtoupper(trim($_POST['initials'] ?? ''));
@@ -71,14 +73,14 @@ if ($action === 'edit_user') {
         if (!empty($password)) {
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
             $stmt = $db->prepare(
-                "UPDATE admins SET name=?, username=?, email=?, password=?, role=?, initials=? WHERE id=?"
+                "UPDATE admins SET name=?, username=?, email=?, phone=?, password=?, role=?, initials=? WHERE id=?"
             );
-            $stmt->execute([$name, $username, $email, $hashedPassword, $role, $initials, $id]);
+            $stmt->execute([$name, $username, $email, $phone ?: null, $hashedPassword, $role, $initials, $id]);
         } else {
             $stmt = $db->prepare(
-                "UPDATE admins SET name=?, username=?, email=?, role=?, initials=? WHERE id=?"
+                "UPDATE admins SET name=?, username=?, email=?, phone=?, role=?, initials=? WHERE id=?"
             );
-            $stmt->execute([$name, $username, $email, $role, $initials, $id]);
+            $stmt->execute([$name, $username, $email, $phone ?: null, $role, $initials, $id]);
         }
 
         logActivity("Updated admin account: {$username}", 'system');

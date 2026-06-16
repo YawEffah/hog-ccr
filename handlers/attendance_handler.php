@@ -45,7 +45,7 @@ if ($action === 'record_attendance') {
         }
 
         // Fetch all active members to compute absent list
-        $allMembers = $db->query("SELECT id FROM members WHERE status != 'Visitor'")->fetchAll(PDO::FETCH_COLUMN);
+        $allMembers = $db->query("SELECT id FROM members WHERE status != 'Affiliate Community Member'")->fetchAll(PDO::FETCH_COLUMN);
 
         $presentSet = array_map('intval', $presentIds);
         $visitorSet = array_map('intval', $visitorIds);
@@ -62,7 +62,7 @@ if ($action === 'record_attendance') {
             if (in_array($mid, $presentSet, true)) {
                 $recStmt->execute([$sessionId, $mid, 'Present', $checkInTime]);
             } elseif (in_array($mid, $visitorSet, true)) {
-                $recStmt->execute([$sessionId, $mid, 'Visitor', $checkInTime]);
+                $recStmt->execute([$sessionId, $mid, 'Affiliate Community Member', $checkInTime]);
             } else {
                 $recStmt->execute([$sessionId, $mid, 'Absent', null]);
             }

@@ -16,14 +16,11 @@ $redirect = '../finance.php';
 
 // ── RECORD TRANSACTION ────────────────────────────────────────────────────────
 if ($action === 'add_transaction') {
-    $memberDisplay = trim($_POST['member_display'] ?? '');
-    $memberIdRaw   = trim($_POST['member_id'] ?? '');
+    $weekNumber    = $_POST['week_number']           ?? 'Week 1';
     $type          = $_POST['transaction_type']      ?? '';
     $amount        = (float)($_POST['amount']        ?? 0);
     $method        = $_POST['payment_method']        ?? 'Cash';
     $reference     = trim($_POST['reference_no']     ?? '');
-    $phone         = trim($_POST['phone']            ?? '');
-    $email         = trim($_POST['email']            ?? '');
     $notes         = trim($_POST['notes']            ?? '');
     $date          = $_POST['date']                  ?? date('Y-m-d');
     $sendReceipt   = isset($_POST['generate_receipt']);
@@ -35,55 +32,51 @@ if ($action === 'add_transaction') {
         redirect($redirect . '?error=invalid_data');
     }
 
-    $memberId   = null;
-    $memberName = $memberDisplay;
-
-    // If an ID was explicitly selected from the dropdown, verify it
-    if (!empty($memberIdRaw)) {
-        $mStmt = $db->prepare("SELECT id, CONCAT(first_name,' ',last_name) AS full_name, phone, email FROM members WHERE id = ?");
-        $mStmt->execute([$memberIdRaw]);
-        $found = $mStmt->fetch();
-        if ($found) {
-            $memberId   = $found['id'];
-            $memberName = $found['full_name'];
-            $phone      = $found['phone'];
-            $email      = $found['email'];
-        }
-    }
-
     try {
         $stmt = $db->prepare(
             "INSERT INTO finance_transactions
-             (member_id, member_name, type, amount, payment_method, reference_no,
-              phone, email, notes, transaction_date, receipt_sent, recorded_by)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+             (week_number, type, amount, payment_method, reference_no,
+              notes, transaction_date, receipt_sent, recorded_by)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
 
         $receiptSentFlag = 0;
         $stmt->execute([
-            $memberId, $memberName, $type, $amount, $method, $reference,
-            $phone ?: null, $email ?: null, $notes ?: null,
+            $weekNumber, $type, $amount, $method, $reference,
+            $notes ?: null,
             $date, $receiptSentFlag, $_SESSION['user_id']
         ]);
         $txnId = (int)$db->lastInsertId();
 
-        // Send receipt email / SMS
-        if ($sendReceipt && ($email || $phone)) {
+        // Send receipt email / SMS to admins
+        if ($sendReceipt) {
             $txnData = [
                 'type'             => $type,
                 'amount'           => $amount,
                 'payment_method'   => $method,
                 'reference_no'     => $reference,
                 'transaction_date' => $date,
+                'week_number'      => $weekNumber,
             ];
-            $sent = sendFinanceReceipt(['name' => $memberName, 'email' => $email, 'phone' => $phone], $txnData);
-            if ($sent) {
+            
+            // Get admins
+            $adminsStmt = $db->query("SELECT name, email, phone FROM admins WHERE role IN ('Administrator', 'Finance Secretary')");
+            $admins = $adminsStmt->fetchAll();
+            $anySent = false;
+            foreach ($admins as $admin) {
+                if ($admin['email'] || $admin['phone']) {
+                    $sent = sendFinanceReceipt(['name' => $admin['name'], 'email' => $admin['email'], 'phone' => $admin['phone']], $txnData);
+                    if ($sent) $anySent = true;
+                }
+            }
+            
+            if ($anySent) {
                 $db->prepare("UPDATE finance_transactions SET receipt_sent = 1 WHERE id = ?")
                    ->execute([$txnId]);
             }
         }
 
-        logActivity("Recorded {$type} of " . formatGhc($amount) . " from {$memberName}", 'finance');
+        logActivity("Recorded {$type} of " . formatGhc($amount) . " for {$weekNumber}", 'finance');
         redirect($redirect . '?success=transaction_added');
 
     } catch (PDOException $e) {
@@ -160,9 +153,8 @@ if ($action === 'resend_receipt') {
 
     try {
         $stmt = $db->prepare(
-            "SELECT t.*, m.first_name, m.last_name 
+            "SELECT t.* 
              FROM finance_transactions t
-             LEFT JOIN members m ON t.member_id = m.id
              WHERE t.id = ?"
         );
         $stmt->execute([$txnId]);
@@ -172,7 +164,7 @@ if ($action === 'resend_receipt') {
             redirect($returnTo . '?error=not_found');
         }
 
-        $memberName = $tx['first_name'] ? ($tx['first_name'] . ' ' . $tx['last_name']) : $tx['member_name'];
+        $weekNumber = $tx['week_number'];
         
         $txnData = [
             'type'             => $tx['type'],
@@ -180,18 +172,24 @@ if ($action === 'resend_receipt') {
             'payment_method'   => $tx['payment_method'],
             'reference_no'     => $tx['reference_no'],
             'transaction_date' => $tx['transaction_date'],
+            'week_number'      => $weekNumber,
         ];
 
-        // Send receipt email / SMS
-        $sent = sendFinanceReceipt(
-            ['name' => $memberName, 'email' => $tx['email'], 'phone' => $tx['phone']], 
-            $txnData
-        );
+        // Send receipt email / SMS to admins
+        $adminsStmt = $db->query("SELECT name, email, phone FROM admins WHERE role IN ('Administrator', 'Finance Secretary')");
+        $admins = $adminsStmt->fetchAll();
+        $anySent = false;
+        foreach ($admins as $admin) {
+            if ($admin['email'] || $admin['phone']) {
+                $sent = sendFinanceReceipt(['name' => $admin['name'], 'email' => $admin['email'], 'phone' => $admin['phone']], $txnData);
+                if ($sent) $anySent = true;
+            }
+        }
 
-        if ($sent) {
+        if ($anySent) {
             $db->prepare("UPDATE finance_transactions SET receipt_sent = 1 WHERE id = ?")
                ->execute([$txnId]);
-            logActivity("Resent receipt for {$tx['type']} to {$memberName}", 'finance');
+            logActivity("Resent notification for {$tx['type']} for {$weekNumber}", 'finance');
             redirect($returnTo . '&success=receipt_resent');
         } else {
             redirect($returnTo . '&error=send_failed');

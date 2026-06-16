@@ -16,18 +16,30 @@ $redirect = '../members.php';
 
 // ── ADD MEMBER ────────────────────────────────────────────────────────────────
 if ($action === 'add_member') {
-    $firstName  = trim($_POST['first_name'] ?? '');
-    $lastName   = trim($_POST['last_name']  ?? '');
-    $gender     = $_POST['gender']     ?? 'Male';
-    $phone      = trim($_POST['phone']  ?? '');
-    $email      = trim($_POST['email']  ?? '');
-    $dob        = $_POST['dob']         ?? null;
-    $address    = trim($_POST['address'] ?? '');
-    $ministryId = !empty($_POST['ministry_id']) ? (int)$_POST['ministry_id'] : null;
-    $status     = $_POST['status']      ?? 'Active';
-    $joined     = $_POST['joined_date'] ?? date('Y-m-d');
-    $notes      = trim($_POST['notes']  ?? '');
-    $sacraments = $_POST['sacraments']  ?? [];
+    $firstName      = trim($_POST['first_name']      ?? '');
+    $lastName       = trim($_POST['last_name']       ?? '');
+    $gender         = $_POST['gender']               ?? 'Male';
+    $phone          = trim($_POST['phone']           ?? '');
+    $phone2         = trim($_POST['phone2']          ?? '');
+    $email          = trim($_POST['email']           ?? '');
+    $dob            = $_POST['dob']                  ?? null;
+    $address        = trim($_POST['address']         ?? '');
+    $homeTown       = trim($_POST['home_town']       ?? '');
+    $occupation     = trim($_POST['occupation']      ?? '');
+    $maritalStatus  = $_POST['marital_status']       ?? null;
+    $childrenCount  = (int)($_POST['children_count'] ?? 0);
+    $isBaptised     = (int)($_POST['is_baptised']    ?? 0);
+    $isCommunicant  = (int)($_POST['is_communicant'] ?? 0);
+    $groupMemberships = trim($_POST['group_memberships'] ?? '');
+    $nokName        = trim($_POST['next_of_kin_name']     ?? '');
+    $nokRelation    = trim($_POST['next_of_kin_relation'] ?? '');
+    $nokAddress     = trim($_POST['next_of_kin_address']  ?? '');
+    $nokPhone       = trim($_POST['next_of_kin_phone']    ?? '');
+    $ministries     = $_POST['ministries']           ?? [];
+    $status         = $_POST['status']               ?? 'Active';
+    $joined         = $_POST['joined_date']          ?? date('Y-m-d');
+    $sacramentsNeeded = $_POST['sacraments_needed']  ?? [];
+    $programmes     = $_POST['programmes']           ?? [];
 
     if (!$firstName || !$lastName || !$gender) {
         redirect($redirect . '?error=missing_fields');
@@ -44,27 +56,47 @@ if ($action === 'add_member') {
     try {
         $stmt = $db->prepare(
             "INSERT INTO members
-             (member_code, first_name, last_name, gender, phone, email, dob, address,
-              ministry_id, status, photo_path, joined_date, notes)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+             (member_code, first_name, last_name, gender, phone, phone2, email, dob,
+              address, home_town, occupation, marital_status, children_count,
+              is_baptised, is_communicant, group_memberships,
+              next_of_kin_name, next_of_kin_relation, next_of_kin_address, next_of_kin_phone,
+              status, photo_path, joined_date)
+             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
         );
         $stmt->execute([
-            $code, $firstName, $lastName, $gender, $phone, $email ?: null,
-            $dob ?: null, $address, $ministryId, $status, $photoPath, $joined, $notes ?: null
+            $code, $firstName, $lastName, $gender, $phone, $phone2 ?: null,
+            $email ?: null, $dob ?: null, $address, $homeTown ?: null,
+            $occupation ?: null, $maritalStatus ?: null, $childrenCount,
+            $isBaptised, $isCommunicant, $groupMemberships ?: null,
+            $nokName ?: null, $nokRelation ?: null, $nokAddress ?: null, $nokPhone ?: null,
+            $status, $photoPath, $joined
         ]);
 
         $memberId = (int)$db->lastInsertId();
 
-        // Insert sacraments
-        if (!empty($sacraments)) {
-            $sacStmt = $db->prepare(
-                "INSERT IGNORE INTO member_sacraments (member_id, sacrament) VALUES (?, ?)"
-            );
-            $allowed = ['Baptised','Confirmed','First Communion','Matrimony','Orders'];
-            foreach ($sacraments as $s) {
-                if (in_array($s, $allowed, true)) {
-                    $sacStmt->execute([$memberId, $s]);
-                }
+        // Insert ministries
+        if (!empty($ministries)) {
+            $minStmt = $db->prepare("INSERT IGNORE INTO member_ministries (member_id, ministry_id) VALUES (?, ?)");
+            foreach ($ministries as $mId) {
+                if ((int)$mId > 0) $minStmt->execute([$memberId, (int)$mId]);
+            }
+        }
+
+        // Insert sacraments needed
+        $allowedSacNeeded = ['First Communion','Confirmation','Holy Matrimony','Holy Orders'];
+        if (!empty($sacramentsNeeded)) {
+            $snStmt = $db->prepare("INSERT IGNORE INTO member_sacraments_needed (member_id, sacrament) VALUES (?, ?)");
+            foreach ($sacramentsNeeded as $s) {
+                if (in_array($s, $allowedSacNeeded, true)) $snStmt->execute([$memberId, $s]);
+            }
+        }
+
+        // Insert programmes attended
+        $allowedProgs = ['Life in the Spirit Seminar','Growth in the Spirit Seminar','Charisms Session','Catholic Alpha'];
+        if (!empty($programmes)) {
+            $progStmt = $db->prepare("INSERT IGNORE INTO member_programmes (member_id, programme) VALUES (?, ?)");
+            foreach ($programmes as $p) {
+                if (in_array($p, $allowedProgs, true)) $progStmt->execute([$memberId, $p]);
             }
         }
 
@@ -89,18 +121,30 @@ if ($action === 'add_member') {
 
 // ── EDIT MEMBER ───────────────────────────────────────────────────────────────
 if ($action === 'edit_member') {
-    $memberId   = (int)($_POST['member_id'] ?? 0);
-    $firstName  = trim($_POST['first_name'] ?? '');
-    $lastName   = trim($_POST['last_name']  ?? '');
-    $gender     = $_POST['gender']     ?? 'Male';
-    $phone      = trim($_POST['phone']  ?? '');
-    $email      = trim($_POST['email']  ?? '');
-    $dob        = $_POST['dob']         ?? null;
-    $address    = trim($_POST['address'] ?? '');
-    $ministryId = !empty($_POST['ministry_id']) ? (int)$_POST['ministry_id'] : null;
-    $status     = $_POST['status']      ?? 'Active';
-    $notes      = trim($_POST['notes']  ?? '');
-    $sacraments = $_POST['sacraments']  ?? [];
+    $memberId       = (int)($_POST['member_id']      ?? 0);
+    $firstName      = trim($_POST['first_name']      ?? '');
+    $lastName       = trim($_POST['last_name']       ?? '');
+    $gender         = $_POST['gender']               ?? 'Male';
+    $phone          = trim($_POST['phone']           ?? '');
+    $phone2         = trim($_POST['phone2']          ?? '');
+    $email          = trim($_POST['email']           ?? '');
+    $dob            = $_POST['dob']                  ?? null;
+    $address        = trim($_POST['address']         ?? '');
+    $homeTown       = trim($_POST['home_town']       ?? '');
+    $occupation     = trim($_POST['occupation']      ?? '');
+    $maritalStatus  = $_POST['marital_status']       ?? null;
+    $childrenCount  = (int)($_POST['children_count'] ?? 0);
+    $isBaptised     = (int)($_POST['is_baptised']    ?? 0);
+    $isCommunicant  = (int)($_POST['is_communicant'] ?? 0);
+    $groupMemberships = trim($_POST['group_memberships'] ?? '');
+    $nokName        = trim($_POST['next_of_kin_name']     ?? '');
+    $nokRelation    = trim($_POST['next_of_kin_relation'] ?? '');
+    $nokAddress     = trim($_POST['next_of_kin_address']  ?? '');
+    $nokPhone       = trim($_POST['next_of_kin_phone']    ?? '');
+    $ministries     = $_POST['ministries']           ?? [];
+    $status         = $_POST['status']               ?? 'Active';
+    $sacramentsNeeded = $_POST['sacraments_needed']  ?? [];
+    $programmes     = $_POST['programmes']           ?? [];
 
     if (!$memberId || !$firstName || !$lastName) {
         redirect($redirect . '?error=missing_fields');
@@ -122,39 +166,53 @@ if ($action === 'edit_member') {
     }
 
     try {
-        if ($photoPath) {
-            $stmt = $db->prepare(
-                "UPDATE members SET first_name=?, last_name=?, gender=?, phone=?, email=?,
-                 dob=?, address=?, ministry_id=?, status=?, notes=?, photo_path=?
-                 WHERE id=?"
-            );
-            $stmt->execute([
-                $firstName, $lastName, $gender, $phone, $email ?: null,
-                $dob ?: null, $address, $ministryId, $status, $notes ?: null, $photoPath, $memberId
-            ]);
-        } else {
-            $stmt = $db->prepare(
-                "UPDATE members SET first_name=?, last_name=?, gender=?, phone=?, email=?,
-                 dob=?, address=?, ministry_id=?, status=?, notes=?
-                 WHERE id=?"
-            );
-            $stmt->execute([
-                $firstName, $lastName, $gender, $phone, $email ?: null,
-                $dob ?: null, $address, $ministryId, $status, $notes ?: null, $memberId
-            ]);
+        $photoSql  = $photoPath ? ', photo_path=?' : '';
+        $photoArgs = $photoPath ? [$photoPath] : [];
+
+        $stmt = $db->prepare(
+            "UPDATE members SET
+             first_name=?, last_name=?, gender=?, phone=?, phone2=?, email=?, dob=?,
+             address=?, home_town=?, occupation=?, marital_status=?, children_count=?,
+             is_baptised=?, is_communicant=?, group_memberships=?,
+             next_of_kin_name=?, next_of_kin_relation=?, next_of_kin_address=?, next_of_kin_phone=?,
+             status=? {$photoSql}
+             WHERE id=?"
+        );
+        $stmt->execute(array_merge([
+            $firstName, $lastName, $gender, $phone, $phone2 ?: null,
+            $email ?: null, $dob ?: null, $address, $homeTown ?: null,
+            $occupation ?: null, $maritalStatus ?: null, $childrenCount,
+            $isBaptised, $isCommunicant, $groupMemberships ?: null,
+            $nokName ?: null, $nokRelation ?: null, $nokAddress ?: null, $nokPhone ?: null,
+            $status
+        ], $photoArgs, [$memberId]));
+
+        // Sync ministries
+        $db->prepare("DELETE FROM member_ministries WHERE member_id = ?")->execute([$memberId]);
+        if (!empty($ministries)) {
+            $minStmt = $db->prepare("INSERT IGNORE INTO member_ministries (member_id, ministry_id) VALUES (?, ?)");
+            foreach ($ministries as $mId) {
+                if ((int)$mId > 0) $minStmt->execute([$memberId, (int)$mId]);
+            }
         }
 
-        // Sync sacraments — delete all then re-insert
-        $db->prepare("DELETE FROM member_sacraments WHERE member_id = ?")->execute([$memberId]);
-        if (!empty($sacraments)) {
-            $sacStmt = $db->prepare(
-                "INSERT IGNORE INTO member_sacraments (member_id, sacrament) VALUES (?, ?)"
-            );
-            $allowed = ['Baptised','Confirmed','First Communion','Matrimony','Orders'];
-            foreach ($sacraments as $s) {
-                if (in_array($s, $allowed, true)) {
-                    $sacStmt->execute([$memberId, $s]);
-                }
+        // Sync sacraments needed
+        $db->prepare("DELETE FROM member_sacraments_needed WHERE member_id = ?")->execute([$memberId]);
+        $allowedSacNeeded = ['First Communion','Confirmation','Holy Matrimony','Holy Orders'];
+        if (!empty($sacramentsNeeded)) {
+            $snStmt = $db->prepare("INSERT IGNORE INTO member_sacraments_needed (member_id, sacrament) VALUES (?, ?)");
+            foreach ($sacramentsNeeded as $s) {
+                if (in_array($s, $allowedSacNeeded, true)) $snStmt->execute([$memberId, $s]);
+            }
+        }
+
+        // Sync programmes
+        $db->prepare("DELETE FROM member_programmes WHERE member_id = ?")->execute([$memberId]);
+        $allowedProgs = ['Life in the Spirit Seminar','Growth in the Spirit Seminar','Charisms Session','Catholic Alpha'];
+        if (!empty($programmes)) {
+            $progStmt = $db->prepare("INSERT IGNORE INTO member_programmes (member_id, programme) VALUES (?, ?)");
+            foreach ($programmes as $p) {
+                if (in_array($p, $allowedProgs, true)) $progStmt->execute([$memberId, $p]);
             }
         }
 

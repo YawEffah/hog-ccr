@@ -66,7 +66,7 @@ if ($action === 'delete_ministry') {
     if (!$id) redirect($redirect . '?error=missing_fields');
 
     // Guard: prevent deletion if members are still assigned
-    $count = $db->prepare("SELECT COUNT(*) FROM members WHERE ministry_id = ?");
+    $count = $db->prepare("SELECT COUNT(*) FROM member_ministries WHERE ministry_id = ?");
     $count->execute([$id]);
     if ((int)$count->fetchColumn() > 0) {
         redirect($redirect . '?error=ministry_has_members');

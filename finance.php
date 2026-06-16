@@ -66,9 +66,8 @@ $finance_stats = [
 
 // ── Recent Transactions ──────────────────────────────────────────────────────
 $txnStmt = $db->prepare(
-    "SELECT t.*, m.first_name, m.last_name 
+    "SELECT t.* 
      FROM finance_transactions t
-     LEFT JOIN members m ON t.member_id = m.id
      WHERE DATE_FORMAT(t.transaction_date, '%Y-%m') = ?
      ORDER BY t.transaction_date DESC, t.created_at DESC
      LIMIT 100"
@@ -85,16 +84,15 @@ $typeBadges = [
 ];
 
 $transactions = array_map(function($t) use ($typeBadges) {
-    $memberName = $t['first_name'] ? ($t['first_name'] . ' ' . $t['last_name']) : ($t['member_name'] ?: 'Guest');
     return [
         'id'         => $t['id'],
-        'member'     => $memberName,
+        'week'       => $t['week_number'],
         'type'       => $t['type'],
         'type_badge' => $typeBadges[$t['type']] ?? 'badge-gray',
         'amount'     => number_format($t['amount'], 2),
         'method'     => $t['payment_method'],
         'reference'  => $t['reference_no'] ?: 'N/A',
-        'date'       => date('M j', strtotime($t['transaction_date']))
+        'date'       => date('F j, Y', strtotime($t['transaction_date']))
     ];
 }, $rawTxns);
 
@@ -125,14 +123,7 @@ $income_breakdown = array_map(function($b) use ($totalIncome, $breakdownColors) 
     ];
 }, $rawBreakdown);
 
-// ── All Members (for Finance Search) ─────────────────────────────────────────
-$allMembersStmt = $db->query(
-    "SELECT id, first_name, last_name, member_code 
-     FROM members 
-     WHERE status = 'Active' 
-     ORDER BY last_name ASC"
-);
-$allMembers = $allMembersStmt->fetchAll();
+
 
 ?>
 <!DOCTYPE html>
@@ -229,7 +220,7 @@ $allMembers = $allMembersStmt->fetchAll();
               <table>
                 <thead>
                   <tr>
-                    <th>Member</th>
+                    <th>Week</th>
                     <th>Type</th>
                     <th>Amount</th>
                     <th>Date</th>
@@ -239,7 +230,7 @@ $allMembers = $allMembersStmt->fetchAll();
                 <tbody>
                   <?php foreach ($transactions as $tx): ?>
                   <tr>
-                    <td style="font-weight:500;"><?= htmlspecialchars($tx['member']) ?></td>
+                    <td style="font-weight:500;"><?= htmlspecialchars($tx['week']) ?></td>
                     <td><span class="badge <?= $tx['type_badge'] ?>"><?= $tx['type'] ?></span></td>
                     <td style="font-weight:600;color:var(--success);">GH₵ <?= $tx['amount'] ?></td>
                     <td style="font-size:12px;color:var(--muted);"><?= $tx['date'] ?></td>
@@ -320,7 +311,7 @@ $allMembers = $allMembersStmt->fetchAll();
     function openReceiptModal(tx) {
       document.getElementById('receiptId').textContent     = '#' + tx.id;
       document.getElementById('receiptDate').textContent   = tx.date;
-      document.getElementById('receiptMember').textContent = tx.member;
+      document.getElementById('receiptMember').textContent = tx.week;
       document.getElementById('receiptType').textContent   = tx.type;
       document.getElementById('receiptAmount').textContent = tx.amount;
       document.getElementById('receiptMethod').textContent = tx.method;
@@ -331,54 +322,7 @@ $allMembers = $allMembersStmt->fetchAll();
       openModal('viewReceiptModal');
     }
 
-    const allFinanceMembers = <?= json_encode($allMembers) ?>;
 
-    function filterFinanceMember(query) {
-      const q = query.toLowerCase();
-      const sugDiv = document.getElementById('financeSuggestions');
-      const hiddenId = document.getElementById('financeMemberId');
-      const contactFields = document.getElementById('financeContactFields');
-      
-      // Clear ID if they keep typing after selection
-      hiddenId.value = '';
-      if (contactFields) contactFields.style.display = ''; // show fallback for manual guests (reverts to grid)
-
-      if (!q) {
-        sugDiv.style.display = 'none';
-        return;
-      }
-      
-      const matches = allFinanceMembers.filter(m => {
-        const full = (m.first_name + ' ' + m.last_name).toLowerCase();
-        return full.includes(q) || m.member_code.toLowerCase().includes(q);
-      });
-      
-      if (matches.length > 0) {
-        sugDiv.innerHTML = '';
-        matches.forEach(m => {
-          const div = document.createElement('div');
-          div.style.padding = '10px 14px';
-          div.style.cursor = 'pointer';
-          div.style.borderBottom = '1px solid #EDE8DF';
-          div.style.fontSize = '13px';
-          div.innerHTML = `<strong>${m.first_name} ${m.last_name}</strong> <span style="color:var(--muted);font-size:11px;margin-left:6px;">${m.member_code}</span>`;
-          div.onclick = () => selectFinanceMember(m.id, `${m.first_name} ${m.last_name}`);
-          sugDiv.appendChild(div);
-        });
-        sugDiv.style.display = 'block';
-      } else {
-        sugDiv.style.display = 'none';
-      }
-    }
-
-    function selectFinanceMember(id, name) {
-      document.getElementById('financeMemberSearch').value = name;
-      document.getElementById('financeMemberId').value = id;
-      document.getElementById('financeSuggestions').style.display = 'none';
-      
-      const contactFields = document.getElementById('financeContactFields');
-      if (contactFields) contactFields.style.display = 'none'; // hide fallback, use DB data
-    }
 
     function updateFinanceFilter() {
       const y = document.getElementById('financeYearSelect').value;

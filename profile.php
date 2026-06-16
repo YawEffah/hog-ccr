@@ -21,16 +21,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrf();
     $action = $_POST['form_action'] ?? '';
 
-    // Update profile info
     if ($action === 'update_profile') {
         $name  = trim($_POST['name']  ?? '');
         $email = trim($_POST['email'] ?? '');
+        $phone = trim($_POST['phone'] ?? '');
 
         if (!$name || !$email) {
             $errorMsg = 'Name and email are required.';
         } else {
             try {
-                $db->prepare("UPDATE admins SET name=?, email=? WHERE id=?")->execute([$name, $email, $adminId]);
+                $db->prepare("UPDATE admins SET name=?, email=?, phone=? WHERE id=?")->execute([$name, $email, $phone ?: null, $adminId]);
                 $_SESSION['user_data']['name']  = $name;
                 $_SESSION['user_data']['email'] = $email;
                 $successMsg = 'Profile updated successfully.';
@@ -79,6 +79,7 @@ $user_data = [
     'id'       => $admin['id'],
     'name'     => $admin['name'],
     'email'    => $admin['email'],
+    'phone'    => $admin['phone'],
     'role'     => $admin['role'],
     'initials' => $admin['initials'] ?? strtoupper(substr($admin['name'], 0, 2)),
     'photo_url'=> null,
@@ -153,6 +154,12 @@ $currentUser = array_merge($currentUser ?? [], $user_data);
                   <label class="form-label">Email Address</label>
                   <input class="form-control" name="email" type="email"
                     value="<?= htmlspecialchars($user_data['email']) ?>" required>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Phone Number</label>
+                  <input class="form-control" name="phone" type="text"
+                    value="<?= htmlspecialchars($user_data['phone'] ?? '') ?>">
                 </div>
 
                 <div style="margin-top:24px;">

@@ -343,7 +343,8 @@ function sendSMS(string $to, string $message): bool
 function sendFinanceReceipt(array $recipient, array $txn): bool
 {
     $amount = formatGhc((float)$txn['amount']);
-    $date   = date('j F Y', strtotime($txn['transaction_date']));
+    $date   = date('F j, Y', strtotime($txn['transaction_date']));
+    $week   = htmlspecialchars($txn['week_number'] ?? 'Week 1');
     $ref    = htmlspecialchars($txn['reference_no'] ?: 'N/A');
     $type   = htmlspecialchars($txn['type']);
     $name   = htmlspecialchars($recipient['name']);
@@ -353,12 +354,12 @@ function sendFinanceReceipt(array $recipient, array $txn): bool
     <div style="font-family:'DM Sans',Arial,sans-serif;max-width:540px;margin:0 auto;border:1px solid #EDE8DF;border-radius:12px;overflow:hidden;">
       <div style="background:#2E2D7B;padding:28px 32px;text-align:center;">
         <h1 style="color:#ffffff;font-size:22px;margin:0;">House of Grace CCR</h1>
-        <p style="color:#B0A090;font-size:13px;margin:4px 0 0;">Payment Receipt</p>
+        <p style="color:#B0A090;font-size:13px;margin:4px 0 0;">Weekly Finance Summary</p>
       </div>
       <div style="padding:32px;">
         <p style="color:#475569;font-size:14px;">Dear <strong>{$name}</strong>,</p>
         <p style="color:#475569;font-size:14px;margin-bottom:24px;">
-          Thank you for your faithful giving. Your {$type} has been received.
+          A new weekly finance summary has been recorded. Please find the details below:
         </p>
         <table style="width:100%;border-collapse:collapse;font-size:14px;">
           <tr style="border-bottom:1px solid #EDE8DF;">
@@ -370,6 +371,10 @@ function sendFinanceReceipt(array $recipient, array $txn): bool
             <td style="padding:10px 0;font-weight:700;color:#15803D;text-align:right;">{$amount}</td>
           </tr>
           <tr style="border-bottom:1px solid #EDE8DF;">
+            <td style="padding:10px 0;color:#64748B;">Week</td>
+            <td style="padding:10px 0;font-weight:600;text-align:right;">{$week}</td>
+          </tr>
+          <tr style="border-bottom:1px solid #EDE8DF;">
             <td style="padding:10px 0;color:#64748B;">Date</td>
             <td style="padding:10px 0;text-align:right;">{$date}</td>
           </tr>
@@ -379,7 +384,7 @@ function sendFinanceReceipt(array $recipient, array $txn): bool
           </tr>
         </table>
         <p style="margin-top:28px;font-size:13px;color:#94A3B8;">
-          God bless you abundantly. — House of Grace CCR Administration
+          System generated summary. — House of Grace CCR Administration
         </p>
       </div>
       <div style="background:#F8FAFC;padding:16px 32px;text-align:center;font-size:11px;color:#94A3B8;">
@@ -393,16 +398,15 @@ function sendFinanceReceipt(array $recipient, array $txn): bool
         $emailSent = sendEmail(
             $recipient['email'],
             $recipient['name'],
-            'Payment Receipt — ' . $type . ' · ' . $date,
+            'Weekly Finance Summary — ' . $type . ' (' . $week . ')',
             $html
         );
     }
 
     $smsSent = false;
     if (!empty($recipient['phone'])) {
-        $smsDate = date('d M Y, h:ia', strtotime($txn['transaction_date']));
         $smsAmount = number_format((float)$txn['amount'], 2);
-        $smsMsg = "Dear {$name}, your {$type} of GHS {$smsAmount} on {$smsDate} has been received. God bless you. - House of Grace CCR";
+        $smsMsg = "Dear {$name}, a new weekly summary of GHS {$smsAmount} has been recorded for {$type} ({$week}). - House of Grace CCR";
         $smsSent = sendSMS($recipient['phone'], $smsMsg);
     }
 
@@ -667,7 +671,7 @@ function broadcastMinistryMessage(int $ministryId, string $subject, string $mess
     $mNameStmt->execute([$ministryId]);
     $ministryName = $mNameStmt->fetchColumn() ?: 'Ministry';
 
-    $stmt = $db->prepare("SELECT first_name, last_name, email, phone FROM members WHERE ministry_id = ? AND status = 'Active'");
+    $stmt = $db->prepare("SELECT m.first_name, m.last_name, m.email, m.phone FROM members m JOIN member_ministries mm ON m.id = mm.member_id WHERE mm.ministry_id = ? AND m.status = 'Active'");
     $stmt->execute([$ministryId]);
     $members = $stmt->fetchAll();
 

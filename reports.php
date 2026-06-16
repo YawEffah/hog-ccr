@@ -26,7 +26,7 @@ $periodEndDate = date('jS F, Y', strtotime(date('Y-m-t', strtotime($filterMonth 
 // ==========================================
 $total_members = (int) $db->query("SELECT COUNT(*) FROM members")->fetchColumn();
 $active_members = (int) $db->query("SELECT COUNT(*) FROM members WHERE status='Active'")->fetchColumn();
-$visitors = (int) $db->query("SELECT COUNT(*) FROM members WHERE status='Visitor'")->fetchColumn();
+$affiliates = (int) $db->query("SELECT COUNT(*) FROM members WHERE status='Affiliate Community Member'")->fetchColumn();
 
 $lastYearCount = (int) $db->query("SELECT COUNT(*) FROM members WHERE YEAR(created_at) = " . ($currentYear - 1))->fetchColumn();
 $thisYearCount = (int) $db->query("SELECT COUNT(*) FROM members WHERE YEAR(created_at) = " . $currentYear)->fetchColumn();
@@ -36,7 +36,7 @@ $yoySign = $yoyPercent >= 0 ? '+' : '';
 $growth_stats = [
   'total' => $total_members,
   'active' => $active_members,
-  'visitors' => $visitors,
+  'affiliates' => $affiliates,
   'percent_yoy' => $yoySign . $yoyPercent . '%',
 ];
 
@@ -52,12 +52,12 @@ $minStmt = $db->prepare(
   "SELECT name, 
             (SELECT COUNT(*) FROM attendance_records ar 
              JOIN attendance_sessions s ON ar.session_id = s.id
-             JOIN members m ON ar.member_id = m.id 
-             WHERE m.ministry_id = min.id AND ar.status='Present' AND DATE_FORMAT(s.session_date, '%Y-%m') = ?) as present_count,
+             JOIN member_ministries mm ON ar.member_id = mm.member_id 
+             WHERE mm.ministry_id = min.id AND ar.status='Present' AND DATE_FORMAT(s.session_date, '%Y-%m') = ?) as present_count,
             (SELECT COUNT(*) FROM attendance_records ar 
              JOIN attendance_sessions s ON ar.session_id = s.id
-             JOIN members m ON ar.member_id = m.id 
-             WHERE m.ministry_id = min.id AND DATE_FORMAT(s.session_date, '%Y-%m') = ?) as total_count,
+             JOIN member_ministries mm ON ar.member_id = mm.member_id 
+             WHERE mm.ministry_id = min.id AND DATE_FORMAT(s.session_date, '%Y-%m') = ?) as total_count,
             bg_color
      FROM ministries min
      LIMIT 6"
@@ -446,8 +446,8 @@ $accumFund = $balances['3000']['balance'] ?? 0;
                     <div style="text-align:center;">
                       <div
                         style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--gold);">
-                        <?= $growth_stats['visitors'] ?></div>
-                      <div style="font-size:11px;color:var(--muted);">Visitors</div>
+                        <?= $growth_stats['affiliates'] ?></div>
+                      <div style="font-size:11px;color:var(--muted);">Affiliates</div>
                     </div>
                   </div>
                 </div>

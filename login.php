@@ -77,10 +77,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     body {
-      background: radial-gradient(circle at top left, var(--deep2), var(--deep));
+      background: linear-gradient(rgba(30, 27, 75, 0.75), rgba(46, 45, 123, 0.85)), url('assets/images/back.jpg') no-repeat center center fixed;
+      background-size: cover;
       display: flex;
       align-items: center;
       justify-content: center;
+      min-height: 100vh;
       padding: 20px;
       margin: 0;
     }

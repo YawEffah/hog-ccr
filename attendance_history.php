@@ -49,7 +49,7 @@ if ($toDate) {
 }
 
 if ($ministryId) {
-    $whereClauses[] = "m.ministry_id = ?";
+    $whereClauses[] = "m.id IN (SELECT member_id FROM member_ministries WHERE ministry_id = ?)";
     $params[] = $ministryId;
 }
 
@@ -68,21 +68,11 @@ $limit = 100;
 
 // ── Query Records ────────────────────────────────────────────────────────────
 $query = "
-    SELECT 
-        ar.id,
-        ar.status,
-        ar.check_in_time,
-        m.first_name, 
-        m.last_name, 
-        m.member_code, 
-        min.name AS ministry,
-        s.session_type,
-        s.session_date,
-        s.session_time
+    SELECT ar.*, m.first_name, m.last_name, m.member_code, s.session_date, s.session_type,
+           (SELECT GROUP_CONCAT(min.name SEPARATOR ', ') FROM member_ministries mm JOIN ministries min ON mm.ministry_id = min.id WHERE mm.member_id = m.id) AS ministry
     FROM attendance_records ar
     JOIN members m ON ar.member_id = m.id
-    JOIN attendance_sessions s ON ar.session_id = s.id
-    LEFT JOIN ministries min ON m.ministry_id = min.id
+    LEFT JOIN attendance_sessions s ON ar.session_id = s.id
     $whereSql
     ORDER BY s.session_date DESC, s.session_time DESC, m.first_name ASC
     LIMIT $limit
@@ -163,7 +153,7 @@ $records = $stmt->fetchAll();
                   <option value="">All Statuses</option>
                   <option value="Present" <?= $status === 'Present' ? 'selected' : '' ?>>Present</option>
                   <option value="Absent" <?= $status === 'Absent' ? 'selected' : '' ?>>Absent</option>
-                  <option value="Visitor" <?= $status === 'Visitor' ? 'selected' : '' ?>>Visitor</option>
+                  <option value="Affiliate Community Member" <?= $status === 'Affiliate Community Member' ? 'selected' : '' ?>>Affiliate</option>
                 </select>
               </div>
 

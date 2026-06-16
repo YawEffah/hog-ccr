@@ -31,13 +31,20 @@
               <option value="Secretary">Secretary</option>
               <option value="Finance Secretary">Finance Secretary</option>
               <option value="Administrator">Administrator</option>
+              <option value="Head Pastor">Head Pastor</option>
             </select>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Email Address</label>
-          <input type="email" class="form-control" name="email" placeholder="john@example.com" required>
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" class="form-control" name="email" placeholder="john@example.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <input type="text" class="form-control" name="phone" placeholder="e.g. 0541234567">
+          </div>
         </div>
 
         <div class="form-group">
@@ -88,13 +95,20 @@
               <option value="Secretary">Secretary</option>
               <option value="Finance Secretary">Finance Secretary</option>
               <option value="Administrator">Administrator</option>
+              <option value="Head Pastor">Head Pastor</option>
             </select>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Email Address</label>
-          <input type="email" class="form-control" name="email" id="edit_email" required>
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" class="form-control" name="email" id="edit_email" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <input type="text" class="form-control" name="phone" id="edit_phone">
+          </div>
         </div>
 
         <div class="form-group" style="background:var(--gold-pale); padding:12px; border-radius:8px; border:1px solid #FECACA; margin-top:8px;">
