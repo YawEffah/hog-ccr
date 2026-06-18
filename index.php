@@ -361,12 +361,12 @@ $finance_summary = [
               <div style="display:flex; gap:16px; margin-bottom:16px;">
                 <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);">
                   <span
-                    style="width:10px;height:10px;border-radius:2px;background:var(--gold);display:inline-block;"></span>Sunday
+                    style="width:10px;height:10px;border-radius:2px;background:#1E40AF;display:inline-block;"></span>Sunday
                   Service
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);">
                   <span
-                    style="width:10px;height:10px;border-radius:2px;background:var(--deep);display:inline-block;"></span>Midweek
+                    style="width:10px;height:10px;border-radius:2px;background:#F87171;display:inline-block;"></span>Midweek
                 </div>
               </div>
               <!-- Monthly Chart (Default) -->

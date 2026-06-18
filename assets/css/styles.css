@@ -1,19 +1,30 @@
 :root {
-  --gold: #DC261A;
-  --gold-light: #EF4444;
-  --gold-pale: #FEF2F2;
-  --deep: #2E2D7B;
-  --deep2: #1E1B4B;
-  --deep3: #4338CA;
-  --mid: #475569;
-  --muted: #64748B;
-  --cream: #F8FAFC;
-  --white: #FFFFFF;
-  --border: rgba(220, 38, 26, 0.15);
-  --border2: rgba(220, 38, 26, 0.3);
-  --success: #15803D;
-  --danger: #DC261A;
-  --info: #2563EB;
+  /* ── Design System Palette ───────────────────────────── */
+  --primary:      #1E40AF;   /* Royal Blue  — buttons, nav */
+  --secondary:    #6D28D9;   /* Vibrant Purple — highlights, gradient end */
+  --accent:       #F87171;   /* Warm Coral   — alerts, danger */
+  --accent-dark:  #DC2626;   /* Coral hover */
+  --success:      #10B981;   /* Emerald Green */
+  --success-dark: #047857;   /* Emerald hover */
+  --bg:           #F3F4F6;   /* Light Gray   — page background */
+  --text:         #111827;   /* Deep Charcoal — body text */
+  --white:        #FFFFFF;
+  /* ── Supporting ──────────────────────────────────────── */
+  --mid:          #475569;
+  --muted:        #64748B;
+  --border:       rgba(30, 64, 175, 0.15);
+  --border2:      rgba(30, 64, 175, 0.3);
+  --sidebar-bg:   #1E40AF;
+  /* ── Backward-compat aliases (keep existing HTML working) */
+  --gold:         #1E40AF;
+  --gold-light:   #6D28D9;
+  --gold-pale:    #EEF2FF;
+  --deep:         #111827;
+  --deep2:        #111827;
+  --deep3:        #6D28D9;
+  --cream:        #F3F4F6;
+  --danger:       #F87171;
+  --info:         #2563EB;
 }
 
 * {
@@ -24,8 +35,8 @@
 
 body {
   font-family: 'DM Sans', sans-serif;
-  background: var(--cream);
-  color: var(--deep);
+  background: var(--bg);
+  color: var(--text);
   min-height: 100vh;
   display: flex;
 }
@@ -41,11 +52,11 @@ h3,
   font-family: 'Cormorant Garamond', serif;
 }
 
-/* Sidebar */
+/* ── Sidebar ──────────────────────────────────────────────────────── */
 #sidebar {
   width: 256px;
   min-height: 100vh;
-  background: var(--deep);
+  background: linear-gradient(180deg, #1E40AF 0%, #1a38a0 100%);
   position: fixed;
   left: 0;
   top: 0;
@@ -54,6 +65,7 @@ h3,
   flex-direction: column;
   z-index: 100;
   transition: transform 0.3s ease;
+  box-shadow: 4px 0 20px rgba(30, 64, 175, 0.35);
 }
 
 .sidebar-logo {
@@ -61,7 +73,7 @@ h3,
   align-items: center;
   gap: 10px;
   padding: 28px 24px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .sidebar-logo .logo {
@@ -73,14 +85,14 @@ h3,
 .sidebar-logo h1 {
   font-size: 20px;
   font-weight: bold;
-  color: var(--gold-light);
+  color: #FFFFFF;
   letter-spacing: 0.3px;
   line-height: 1.3;
 }
 
 .sidebar-logo p {
   font-size: 13px;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.65);
   margin-top: 2px;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -90,9 +102,9 @@ h3,
   font-size: 10px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.5);
   padding: 18px 24px 8px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .nav-item {
@@ -101,7 +113,7 @@ h3,
   gap: 12px;
   padding: 11px 24px;
   cursor: pointer;
-  color: #B0A090;
+  color: rgba(255, 255, 255, 0.75);
   font-size: 14px;
   font-weight: 400;
   transition: all 0.18s;
@@ -111,15 +123,16 @@ h3,
 }
 
 .nav-item:hover {
-  color: var(--gold-light);
-  background: rgba(201, 168, 76, 0.07);
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.12);
+  border-left-color: rgba(255, 255, 255, 0.5);
 }
 
 .nav-item.active {
-  color: var(--gold-light);
-  background: rgba(201, 168, 76, 0.12);
-  border-left-color: var(--gold);
-  font-weight: 500;
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.2);
+  border-left-color: #FFFFFF;
+  font-weight: 600;
 }
 
 .nav-item svg,
@@ -128,18 +141,20 @@ h3,
   height: 17px;
   font-size: 17px;
   flex-shrink: 0;
-  opacity: 0.8;
+  opacity: 0.75;
 }
 
 .nav-item.active svg,
-.nav-item.active i {
+.nav-item.active i,
+.nav-item:hover svg,
+.nav-item:hover i {
   opacity: 1;
 }
 
 .sidebar-footer {
   margin-top: auto;
   padding: 18px 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .user-chip {
@@ -152,13 +167,13 @@ h3,
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--gold), var(--deep));
+  background: linear-gradient(135deg, #6D28D9, #1E40AF);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 13px;
   font-weight: 600;
-  color: var(--white);
+  color: #FFFFFF;
   flex-shrink: 0;
 }
 
@@ -172,8 +187,8 @@ h3,
 
 .user-info p {
   font-size: 13.5px;
-  color: #F1F5F9;
-  font-weight: 500;
+  color: #FFFFFF;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -182,7 +197,7 @@ h3,
 
 .user-info span {
   font-size: 11px;
-  color: #94A3B8;
+  color: rgba(255, 255, 255, 0.6);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -202,9 +217,9 @@ h3,
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.7);
   transition: all 0.16s;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .action-btn svg,
@@ -215,15 +230,15 @@ h3,
 }
 
 .action-btn:hover {
-  background: rgba(201, 168, 76, 0.15);
-  color: var(--gold-light);
-  border-color: rgba(201, 168, 76, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .action-btn.logout:hover {
-  background: rgba(220, 38, 26, 0.1);
-  color: #ef4444;
-  border-color: rgba(220, 38, 26, 0.2);
+  background: rgba(248, 113, 113, 0.2);
+  color: #F87171;
+  border-color: rgba(248, 113, 113, 0.35);
 }
 
 /* Main content */
@@ -234,8 +249,8 @@ h3,
 }
 
 .topbar {
-  background: white;
-  border-bottom: 1px solid #EDE8DF;
+  background: #FFFFFF;
+  border-bottom: 1px solid #E5E7EB;
   padding: 14px 32px;
   display: flex;
   align-items: center;
@@ -249,13 +264,46 @@ h3,
   font-family: 'Cormorant Garamond', serif;
   font-size: 22px;
   font-weight: 600;
-  color: var(--deep2);
+  color: var(--text);
 }
 
 .topbar-actions {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+/* Action buttons / search on white topbar */
+.topbar .btn-icon {
+  background: #F1F5F9;
+  color: var(--mid);
+  border: 1px solid #E2E8F0;
+}
+
+.topbar .btn-icon:hover {
+  background: var(--gold-pale);
+  color: var(--gold);
+}
+
+.topbar .search-input {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: var(--text);
+}
+
+.topbar .search-input::placeholder {
+  color: var(--muted);
+}
+
+.topbar .search-wrap svg,
+.topbar .search-wrap i {
+  color: var(--muted);
+}
+
+.topbar select.form-control {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: var(--text);
 }
 
 .btn {
@@ -275,14 +323,15 @@ h3,
 }
 
 .btn-primary {
-  background: var(--gold) !important;
+  background: #1E40AF !important;
   color: #FFFFFF !important;
-  box-shadow: 0 2px 4px rgba(220, 38, 26, 0.1);
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(30, 64, 175, 0.15);
 }
 
 .btn-primary:hover {
-  background: var(--gold-light) !important;
-  box-shadow: 0 4px 12px rgba(220, 38, 26, 0.2);
+  background: linear-gradient(135deg, #1E40AF, #6D28D9) !important;
+  box-shadow: 0px 4px 8px rgba(109, 40, 217, 0.3);
   transform: translateY(-1px);
 }
 
@@ -303,13 +352,25 @@ h3,
 }
 
 .btn-danger {
-  background: var(--danger) !important;
+  background: #F87171 !important;
   color: #FFFFFF !important;
 }
 
+.btn-danger:hover {
+  background: #DC2626 !important;
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.25);
+  transform: translateY(-1px);
+}
+
 .btn-success {
-  background: #15803D !important;
+  background: #10B981 !important;
   color: #FFFFFF !important;
+}
+
+.btn-success:hover {
+  background: #047857 !important;
+  box-shadow: 0 4px 8px rgba(4, 120, 87, 0.25);
+  transform: translateY(-1px);
 }
 
 .btn-sm {
@@ -318,9 +379,45 @@ h3,
   border-radius: 6px;
 }
 
-/* Global contrast insurance for red background buttons */
+/* Soft / ghost danger — subtle background, coral text, no full fill */
+.btn-danger-soft {
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+  border-radius: 6px;
+}
+
+.btn-danger-soft:hover {
+  background: #FEE2E2;
+  color: #B91C1C;
+  border-color: #FCA5A5;
+  transform: translateY(-1px);
+}
+
+.btn-danger-soft i, .btn-danger-soft svg {
+  color: #DC2626;
+}
+
+/* Warning / amber button */
+.btn-warning {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #F59E0B;
+  border-radius: 6px;
+}
+
+.btn-warning:hover {
+  background: #FDE68A;
+  color: #78350F;
+  border-color: #D97706;
+  transform: translateY(-1px);
+}
+
+/* Global contrast insurance for coloured background buttons */
 .btn[style*="background-color: var(--gold)"],
 .btn[style*="background: var(--gold)"],
+.btn[style*="background-color: #1E40AF"],
+.btn[style*="background: #1E40AF"],
 .btn[style*="background-color: #DC261A"],
 .btn[style*="background: #DC261A"],
 .btn[style*="background:red"],
@@ -334,6 +431,7 @@ h3,
   color: #FFFFFF !important;
 }
 
+/* Icon buttons */
 .btn-icon {
   padding: 8px;
   border-radius: 8px;
@@ -347,6 +445,42 @@ h3,
 .btn-icon:hover {
   background: var(--gold-pale);
   color: var(--gold);
+}
+
+/* btn-icon danger variant */
+.btn-icon-danger {
+  padding: 8px;
+  border-radius: 8px;
+  background: #FEF2F2;
+  color: #DC2626;
+  border: none;
+  cursor: pointer;
+  transition: all 0.16s;
+}
+
+.btn-icon-danger:hover {
+  background: #FEE2E2;
+  color: #B91C1C;
+}
+
+.btn-icon-danger i, .btn-icon-danger svg {
+  color: #DC2626;
+}
+
+/* btn-icon primary variant */
+.btn-icon-primary {
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--gold-pale);
+  color: var(--gold);
+  border: none;
+  cursor: pointer;
+  transition: all 0.16s;
+}
+
+.btn-icon-primary:hover {
+  background: #DBEAFE;
+  color: #1E40AF;
 }
 
 .content {
@@ -380,10 +514,10 @@ h3,
 
 /* Stat cards */
 .stat-card {
-  background: white;
+  background: linear-gradient(180deg, #F3F4F6 0%, #FFFFFF 100%);
   border-radius: 14px;
   padding: 22px 24px;
-  border: 1px solid #EDE8DF;
+  border: 1px solid #E5E7EB;
   position: relative;
   overflow: hidden;
   transition: box-shadow 0.2s;
@@ -451,9 +585,9 @@ h3,
 }
 
 .table-wrap {
-  background: white;
+  background: linear-gradient(180deg, #F3F4F6 0%, #FFFFFF 100%);
   border-radius: 14px;
-  border: 1px solid #EDE8DF;
+  border: 1px solid #E5E7EB;
   overflow: hidden;
 }
 
@@ -463,8 +597,8 @@ table {
 }
 
 thead tr {
-  background: #FAF8F4;
-  border-bottom: 1px solid #EDE8DF;
+  background: #EEF2FF;
+  border-bottom: 1px solid #E0E7FF;
 }
 
 th {
@@ -489,7 +623,7 @@ tr:last-child td {
 }
 
 tbody tr:hover {
-  background: #FBF8F3;
+  background: #F0F7FF;
 }
 
 /* Badge */
@@ -580,7 +714,7 @@ tbody tr:hover {
 
 .form-control:focus {
   border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.12);
+  box-shadow: 0 0 0 3px rgba(132, 191, 244, 0.25);
 }
 
 select.form-control {
@@ -589,9 +723,9 @@ select.form-control {
 
 /* Card */
 .card {
-  background: white;
+  background: linear-gradient(180deg, #F3F4F6 0%, #FFFFFF 100%);
   border-radius: 14px;
-  border: 1px solid #EDE8DF;
+  border: 1px solid #E5E7EB;
   overflow: hidden;
 }
 
@@ -664,14 +798,14 @@ select.form-control {
 }
 
 .modal {
-  background: white;
+  background: linear-gradient(180deg, #F3F4F6 0%, #FFFFFF 100%);
   border-radius: 16px;
   width: 100%;
   max-width: 560px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 24px 64px rgba(30, 64, 175, 0.15);
 }
 
 .modal form {
@@ -754,15 +888,16 @@ select.form-control {
 }
 
 .bar {
-  background: var(--gold);
+  background: #1E40AF;   /* Royal Blue — Sunday Service */
   border-radius: 5px 5px 0 0;
   width: 100%;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, box-shadow 0.2s;
   min-height: 4px;
 }
 
 .bar:hover {
-  opacity: 0.8;
+  opacity: 0.85;
+  box-shadow: 0 -2px 8px rgba(30, 64, 175, 0.35);
 }
 
 .bar-label {
@@ -771,7 +906,12 @@ select.form-control {
 }
 
 .bar-wrap.alt .bar {
-  background: var(--deep);
+  background: #F87171;   /* Warm Coral — Midweek Service */
+}
+
+.bar-wrap.alt .bar:hover {
+  opacity: 0.85;
+  box-shadow: 0 -2px 8px rgba(248, 113, 113, 0.35);
 }
 
 /* Progress ring */
@@ -1080,7 +1220,7 @@ select.form-control {
   display: none;
   background: none;
   border: none;
-  color: var(--deep);
+  color: var(--text);
   cursor: pointer;
   padding: 8px;
   margin-right: 12px;

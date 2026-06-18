@@ -66,18 +66,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --gold: #DC261A;
-      --gold-light: #EF4444;
-      --gold-pale: #FEF2F2;
-      --deep: #2E2D7B;
-      --deep2: #1E1B4B;
-      --muted: #64748B;
-      --mid: #475569;
-      --white: #FFFFFF;
+      --gold:       #1E40AF;
+      --gold-light: #6D28D9;
+      --gold-pale:  #EEF2FF;
+      --deep:       #111827;
+      --deep2:      #111827;
+      --muted:      #64748B;
+      --mid:        #475569;
+      --white:      #FFFFFF;
     }
 
     body {
-      background: linear-gradient(rgba(30, 27, 75, 0.75), rgba(46, 45, 123, 0.85)), url('assets/images/back.jpg') no-repeat center center fixed;
+      background: linear-gradient(135deg, rgba(30, 64, 175, 0.85), rgba(109, 40, 217, 0.85)), url('assets/images/back.jpg') no-repeat center center fixed;
       background-size: cover;
       display: flex;
       align-items: center;
@@ -158,7 +158,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     .input-wrapper:focus-within {
       border-color: var(--gold);
-      box-shadow: 0 0 0 3px rgba(220, 38, 26, 0.08);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.12);
     }
 
     .input-wrapper .field-icon {
@@ -227,15 +227,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       justify-content: center;
       gap: 8px;
       letter-spacing: 0.2px;
-      background: var(--gold);
+      background: #1E40AF;
       color: #ffffff;
-      box-shadow: 0 2px 4px rgba(220, 38, 26, 0.15);
+      box-shadow: 0 2px 4px rgba(30, 64, 175, 0.15);
       transition: all 0.2s ease;
     }
 
     .btn-login:hover:not(:disabled) {
-      background: var(--gold-light);
-      box-shadow: 0 4px 12px rgba(220, 38, 26, 0.25);
+      background: linear-gradient(135deg, #1E40AF, #6D28D9);
+      box-shadow: 0px 4px 8px rgba(109, 40, 217, 0.3);
       transform: translateY(-1px);
     }
 

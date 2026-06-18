@@ -262,8 +262,7 @@ $transactions = array_map(function($t) use ($typeBadges) {
                         <button class="btn btn-outline btn-sm" title="View Receipt" onclick='openReceiptModal(<?= json_encode($tx) ?>)'>
                           <i class="ph ph-receipt"></i>
                         </button>
-                        <button class="btn btn-sm" title="Delete"
-                          style="background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;"
+                        <button class="btn btn-danger-soft btn-sm" title="Delete"
                           onclick="confirmDeleteTxn(<?= $tx['id'] ?>)">
                           <i class="ph ph-trash"></i>
                         </button>

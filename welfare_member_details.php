@@ -438,9 +438,8 @@ if ($filterMonth === 'all') {
                           onclick='openWelfareReceiptModal(<?= htmlspecialchars(json_encode($receiptObj), ENT_QUOTES, "UTF-8") ?>)'>
                           <i class="ph ph-receipt"></i>
                         </button>
-                        <button class="btn btn-sm" title="Delete Contribution"
-                          onclick="confirmDeleteContrib('<?= $c['id'] ?>')"
-                          style="background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;">
+                        <button class="btn btn-danger-soft btn-sm" title="Delete Contribution"
+                          onclick="confirmDeleteContrib('<?= $c['id'] ?>')">
                           <i class="ph ph-trash"></i>
                         </button>
                       </div>

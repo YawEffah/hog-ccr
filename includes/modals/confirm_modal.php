@@ -8,7 +8,7 @@
     <p id="globalConfirmMessage" style="color: var(--muted); font-size: 14px; margin-bottom: 28px; line-height: 1.5;">Are you sure you want to proceed?</p>
     <div style="display: flex; gap: 12px; justify-content: center;">
       <button class="btn btn-outline" style="flex: 1;" onclick="closeModal('globalConfirmModal')">Cancel</button>
-      <button class="btn btn-primary" style="flex: 1; background: #DC2626; border-color: #DC2626; color: white;" id="globalConfirmBtn">Confirm</button>
+      <button class="btn btn-danger" style="flex: 1;" id="globalConfirmBtn">Confirm</button>
     </div>
   </div>
 </div>

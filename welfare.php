@@ -300,10 +300,10 @@ $nonWelfareMembers = $db->query(
                         <a href="welfare_member_details.php?id=<?= $wm['id'] ?>" class="btn-icon" title="View details" style="display:inline-flex;text-decoration:none;">
                           <i class="ph ph-eye"></i>
                         </a>
-                        <button class="btn-icon" onclick="openRecordPaymentFor('<?= $wm['id'] ?>','<?= htmlspecialchars($wm['name']) ?>')" title="Record payment" style="background:var(--gold-pale);color:var(--gold);">
+                        <button class="btn-icon-primary" onclick="openRecordPaymentFor('<?= $wm['id'] ?>','<?= htmlspecialchars($wm['name']) ?>')" title="Record payment">
                           <i class="ph ph-plus"></i>
                         </button>
-                        <button class="btn-icon" onclick="confirmRemoveWelfareMember('<?= $wm['id'] ?>', '<?= htmlspecialchars(addslashes($wm['name'])) ?>')" title="Remove member" style="background:#FEF2F2;color:#DC2626;">
+                        <button class="btn-icon-danger" onclick="confirmRemoveWelfareMember('<?= $wm['id'] ?>', '<?= htmlspecialchars(addslashes($wm['name'])) ?>')" title="Remove member">
                           <i class="ph ph-trash"></i>
                         </button>
                       </div>
@@ -383,7 +383,7 @@ $nonWelfareMembers = $db->query(
                         <button class="btn btn-outline btn-sm" title="View Receipt" onclick='openWelfareReceiptModal(<?= htmlspecialchars(json_encode($c), ENT_QUOTES, "UTF-8") ?>)'>
                           <i class="ph ph-receipt"></i>
                         </button>
-                        <button class="btn btn-outline btn-sm" onclick="confirmDeleteContrib('<?= $c['id'] ?>')" style="color:#DC2626;border-color:#FECACA;background:#FEF2F2;" title="Delete Contribution">
+                        <button class="btn btn-danger-soft btn-sm" onclick="confirmDeleteContrib('<?= $c['id'] ?>')" title="Delete Contribution">
                           <i class="ph ph-trash"></i>
                         </button>
                       </div>
