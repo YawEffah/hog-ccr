@@ -121,15 +121,42 @@ $transactions = array_map(function($t) use ($typeBadges) {
   <!-- MAIN CONTENT -->
   <main id="main">
 
+    <!-- Print Only Header -->
+    <div class="print-only-header" style="display: none; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+        <div>
+          <h1 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-size: 28px; color: #1E3A8A;">CCR House of Grace</h1>
+          <h2 style="margin: 5px 0 0 0; font-size: 18px; color: #4B5563;">Finance Transaction History Ledger</h2>
+        </div>
+        <div style="text-align: right; font-size: 12px; color: #6B7280;">
+          <div>Generated on: <?= date('F j, Y g:i a') ?></div>
+        </div>
+      </div>
+      <?php if ($search || $type || $method || $fromDate || $toDate): ?>
+        <div style="margin-top: 15px; padding: 8px 12px; background: #F3F4F6; border-radius: 6px; font-size: 12px; color: #374151;">
+          <strong>Active Filters:</strong>
+          <?php
+            $filterItems = [];
+            if ($search) $filterItems[] = "Search Week: " . htmlspecialchars($search);
+            if ($type) $filterItems[] = "Type: " . htmlspecialchars($type);
+            if ($method) $filterItems[] = "Method: " . htmlspecialchars($method);
+            if ($fromDate) $filterItems[] = "From: " . htmlspecialchars($fromDate);
+            if ($toDate) $filterItems[] = "To: " . htmlspecialchars($toDate);
+            echo implode(' | ', $filterItems);
+          ?>
+        </div>
+      <?php endif; ?>
+    </div>
+
     <div id="page-finance-history" class="page">
-      <div class="topbar">
+      <div class="topbar no-print">
         <div style="display:flex;align-items:center;">
-          <button class="mobile-toggle" onclick="toggleSidebar()">
+          <button class="mobile-toggle no-print" onclick="toggleSidebar()">
             <i class="ph ph-list"></i>
           </button>
           <div class="topbar-title">Transaction History</div>
         </div>
-        <div class="topbar-actions">
+        <div class="topbar-actions no-print">
           <a href="finance.php" class="btn btn-outline btn-sm">
             <i class="ph ph-arrow-left"></i> Back to Finance
           </a>
@@ -142,7 +169,7 @@ $transactions = array_map(function($t) use ($typeBadges) {
         <?php renderToastAlerts($successMsg, $errorMsg); ?>
 
         <!-- Filters Card -->
-        <div class="card" style="margin-bottom: 24px;">
+        <div class="card no-print" style="margin-bottom: 24px;">
           <div class="card-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="toggleFilters()">
             <h3>Filter Transactions</h3>
             <button class="btn btn-outline btn-sm" style="border: none; padding: 4px;" id="filterToggleBtn">
@@ -215,9 +242,14 @@ $transactions = array_map(function($t) use ($typeBadges) {
                 Showing <?= count($transactions) ?> result(s) <?= count($transactions) === $limit ? '(Limit reached)' : '' ?>
               </div>
             </div>
-            <button class="btn btn-outline btn-sm">
-              <i class="ph ph-download-simple"></i> Export CSV
-            </button>
+            <div style="display:flex; gap:8px;">
+              <a href="export_finance.php?search=<?= urlencode($search) ?>&type=<?= urlencode($type) ?>&method=<?= urlencode($method) ?>&from_date=<?= urlencode($fromDate) ?>&to_date=<?= urlencode($toDate) ?>" class="btn btn-outline btn-sm no-print">
+                <i class="ph ph-download-simple"></i> Export CSV
+              </a>
+              <button onclick="window.print()" class="btn btn-outline btn-sm no-print">
+                <i class="ph ph-printer"></i> Print
+              </button>
+            </div>
           </div>
           <div class="table-responsive">
             <table>
@@ -228,7 +260,7 @@ $transactions = array_map(function($t) use ($typeBadges) {
                   <th>Type</th>
                   <th>Method & Ref</th>
                   <th>Amount</th>
-                  <th style="text-align:right;">Action</th>
+                  <th class="no-print" style="text-align:right;">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -257,7 +289,7 @@ $transactions = array_map(function($t) use ($typeBadges) {
                     <td>
                       <div style="font-weight:600;color:var(--success);">GH₵ <?= $tx['amount'] ?></div>
                     </td>
-                    <td style="text-align:right;">
+                    <td class="no-print" style="text-align:right;">
                       <div style="display:flex; justify-content:flex-end; gap:4px;">
                         <button class="btn btn-outline btn-sm" title="View Receipt" onclick='openReceiptModal(<?= json_encode($tx) ?>)'>
                           <i class="ph ph-receipt"></i>

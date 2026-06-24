@@ -1688,3 +1688,68 @@ select.form-control {
 .toast-info .toast-progress-bar {
   background: var(--deep);
 }
+
+/* ── Print Media Queries ────────────────────────────────────────────────── */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+  }
+
+  #main {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .page {
+    padding: 0 !important;
+  }
+
+  .card {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .card-header {
+    border-bottom: 2px solid #333 !important;
+    padding: 10px 0 !important;
+    margin-bottom: 15px !important;
+  }
+
+  .card-header h3 {
+    font-size: 22px !important;
+    color: #000000 !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  th {
+    background: #f3f4f6 !important;
+    color: #000000 !important;
+    border-bottom: 2px solid #333 !important;
+    padding: 8px 10px !important;
+  }
+
+  td {
+    border-bottom: 1px solid #e5e7eb !important;
+    padding: 8px 10px !important;
+    color: #000000 !important;
+    font-size: 10.5px !important;
+  }
+
+  .print-only-header {
+    display: block !important;
+  }
+}
