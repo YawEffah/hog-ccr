@@ -66,7 +66,7 @@ function buildWelfareMessage(string $name, float $amount, string $date, string $
     $formattedArrears = number_format($arrears, 2);
     $ref       = $reference ?: 'N/A';
     return "Dear {$name}, your welfare contribution of GH\u{20B5} {$formatted} on {$date} (Ref: {$ref}) has been received. "
-         . "Total Paid: GH\u{20B5} {$formattedTotal}. Arrears: GH\u{20B5} {$formattedArrears}. "
+         . "Total Contribution: GH\u{20B5} {$formattedTotal}. Arrears: GH\u{20B5} {$formattedArrears}. "
          . "God bless you. — House of Grace CCR";
 }
 
