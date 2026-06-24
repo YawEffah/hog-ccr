@@ -136,9 +136,9 @@ $nonWelfareMembers = $db->query(
   <main id="main">
 
     <div id="page-welfare" class="page">
-      <div class="topbar">
+      <div class="topbar no-print">
         <div style="display:flex;align-items:center;">
-          <button class="mobile-toggle" onclick="toggleSidebar()">
+          <button class="mobile-toggle no-print" onclick="toggleSidebar()">
             <i class="ph ph-list"></i>
           </button>
           <div class="topbar-title">Welfare</div>
@@ -180,7 +180,7 @@ $nonWelfareMembers = $db->query(
         <?php renderToastAlerts($successMsg, $errorMsg); ?>
 
         <!-- Stat Cards -->
-        <div class="grid-4" style="margin-bottom:24px;">
+        <div class="grid-4 no-print" style="margin-bottom:24px;">
           <div class="stat-card">
             <div class="accent-bar" style="background:#0D9488;"></div>
             <div class="label">Welfare Members</div>
@@ -220,7 +220,7 @@ $nonWelfareMembers = $db->query(
         </div>
 
         <!-- Tab Navigation -->
-        <div class="tabs" id="welfareTabs" style="margin-bottom:20px;background:white;border:1px solid #EDE8DF;border-radius:10px;padding:4px;display:inline-flex;">
+        <div class="tabs no-print" id="welfareTabs" style="margin-bottom:20px;background:white;border:1px solid #EDE8DF;border-radius:10px;padding:4px;display:inline-flex;">
           <button class="tab active" id="tabMembersBtn" onclick="switchWelfareTab('members')" style="padding:7px 20px;font-size:13px;">
             <i class="ph ph-users"></i> Members
           </button>
@@ -231,8 +231,22 @@ $nonWelfareMembers = $db->query(
 
         <!-- MEMBERS TAB -->
         <div id="welfareMembersTab">
+          <!-- Print Only Header -->
+          <div class="print-only-header" style="display: none; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+              <div>
+                <h1 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-size: 28px; color: #1E3A8A;">CCR House of Grace</h1>
+                <h2 style="margin: 5px 0 0 0; font-size: 18px; color: #4B5563;">Welfare Members Roster</h2>
+              </div>
+              <div style="text-align: right; font-size: 12px; color: #6B7280;">
+                <div>Generated on: <?= date('F j, Y g:i a') ?></div>
+                <div>Month Period: <?= date('F Y', strtotime($filterMonth . '-01')) ?></div>
+              </div>
+            </div>
+          </div>
+
           <div class="table-wrap">
-            <div style="padding:16px 20px;border-bottom:1px solid #EDE8DF;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+            <div class="no-print" style="padding:16px 20px;border-bottom:1px solid #EDE8DF;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
               <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:280px;">
                 <div class="search-wrap" style="flex:1;max-width:300px;">
                   <i class="ph ph-magnifying-glass"></i>
@@ -252,6 +266,12 @@ $nonWelfareMembers = $db->query(
                 </select>
               </div>
               <div style="display:flex;align-items:center;gap:10px;">
+                <button class="btn btn-outline btn-sm" onclick="exportWelfareMembers()">
+                  <i class="ph ph-download-simple"></i> Export CSV
+                </button>
+                <button class="btn btn-outline btn-sm" onclick="window.print()">
+                  <i class="ph ph-printer"></i> Print
+                </button>
                 <button class="btn btn-outline btn-sm" onclick="openSendWelfareMessage()">
                   <i class="ph ph-paper-plane-tilt"></i> Message Payers
                 </button>
@@ -269,7 +289,7 @@ $nonWelfareMembers = $db->query(
                     <th>Last Payment</th>
                     <th>Total Contributed</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    <th class="no-print">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="welfareMembersTbody">
@@ -295,7 +315,7 @@ $nonWelfareMembers = $db->query(
                     <td style="font-size:13px;"><?= $wm['last_pay'] ?></td>
                     <td style="font-weight:600;color:#0D9488;">GH₵ <?= $wm['total'] ?></td>
                     <td><span class="badge <?= $statusBadge ?>"><?= $wm['status'] ?></span></td>
-                    <td>
+                    <td class="no-print">
                       <div style="display:flex;gap:6px;">
                         <a href="welfare_member_details.php?id=<?= $wm['id'] ?>" class="btn-icon" title="View details" style="display:inline-flex;text-decoration:none;">
                           <i class="ph ph-eye"></i>
@@ -318,8 +338,22 @@ $nonWelfareMembers = $db->query(
 
         <!-- CONTRIBUTIONS TAB -->
         <div id="welfareContribTab" style="display:none;">
+          <!-- Print Only Header -->
+          <div class="print-only-header" style="display: none; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+              <div>
+                <h1 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-size: 28px; color: #1E3A8A;">CCR House of Grace</h1>
+                <h2 style="margin: 5px 0 0 0; font-size: 18px; color: #4B5563;">Welfare Contributions Log</h2>
+              </div>
+              <div style="text-align: right; font-size: 12px; color: #6B7280;">
+                <div>Generated on: <?= date('F j, Y g:i a') ?></div>
+                <div>Month Period: <?= date('F Y', strtotime($filterMonth . '-01')) ?></div>
+              </div>
+            </div>
+          </div>
+
           <div class="table-wrap">
-            <div style="padding:16px 20px;border-bottom:1px solid #EDE8DF;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+            <div class="no-print" style="padding:16px 20px;border-bottom:1px solid #EDE8DF;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
               <div style="display:flex;align-items:center;gap:12px;">
                 <div class="search-wrap" style="max-width:280px;">
                   <i class="ph ph-magnifying-glass"></i>
@@ -334,7 +368,12 @@ $nonWelfareMembers = $db->query(
                 </select>
               </div>
               <div style="display:flex;gap:8px;">
-                <button class="btn btn-outline btn-sm"><i class="ph ph-export"></i> Export CSV</button>
+                <button class="btn btn-outline btn-sm" onclick="exportWelfareContributions()">
+                  <i class="ph ph-download-simple"></i> Export CSV
+                </button>
+                <button class="btn btn-outline btn-sm" onclick="window.print()">
+                  <i class="ph ph-printer"></i> Print
+                </button>
                 <button class="btn btn-outline btn-sm" onclick="openSendWelfareMessage()">
                   <i class="ph ph-paper-plane-tilt"></i> Bulk Message
                 </button>
@@ -352,7 +391,7 @@ $nonWelfareMembers = $db->query(
                     <th>Date</th>
                     <th>Reference</th>
                     <th>Notif. Sent</th>
-                    <th>Receipt</th>
+                    <th class="no-print">Receipt</th>
                   </tr>
                 </thead>
                 <tbody id="contribTbody">
@@ -378,7 +417,7 @@ $nonWelfareMembers = $db->query(
                         </span>
                       <?php endif; ?>
                     </td>
-                    <td>
+                    <td class="no-print">
                       <div style="display:flex;gap:6px;">
                         <button class="btn btn-outline btn-sm" title="View Receipt" onclick='openWelfareReceiptModal(<?= htmlspecialchars(json_encode($c), ENT_QUOTES, "UTF-8") ?>)'>
                           <i class="ph ph-receipt"></i>
@@ -451,6 +490,22 @@ $nonWelfareMembers = $db->query(
 
   <script src="assets/js/main.js"></script>
   <script>
+  /* ---- CSV Exporters ---- */
+  function exportWelfareMembers() {
+    const search = encodeURIComponent(document.getElementById('welfareSearch').value);
+    const family = encodeURIComponent(document.getElementById('welfareFamilyFilter').value);
+    const status = encodeURIComponent(document.getElementById('welfareStatusFilter').value);
+    const month  = encodeURIComponent('<?= $filterMonth ?>');
+    window.location.href = `export_welfare_members.php?month=${month}&search=${search}&family=${family}&status=${status}`;
+  }
+
+  function exportWelfareContributions() {
+    const search = encodeURIComponent(document.getElementById('contribSearch').value);
+    const family = encodeURIComponent(document.getElementById('contribFamilyFilter').value);
+    const month  = encodeURIComponent('<?= $filterMonth ?>');
+    window.location.href = `export_welfare_contributions.php?month=${month}&search=${search}&family=${family}`;
+  }
+
   /* ---- Filter update ---- */
   function updateWelfareFilter() {
     const y = document.getElementById('welfareYearSelect').value;
