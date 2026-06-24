@@ -11,7 +11,7 @@ $currentUser = $currentUser ?? [
 ];
 ?>
 <!-- SIDEBAR -->
-<aside id="sidebar">
+<aside id="sidebar" class="no-print">
   <div class="sidebar-logo">
     <div class="logo-wrap">
       <img src="assets/images/logo.png" alt="Logo" class="logo">

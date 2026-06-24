@@ -207,6 +207,7 @@ if ($action === 'record_welfare_payment') {
             $displayDate = date('j F Y', strtotime($payDate));
             $sent = sendWelfareNotification(
                 [
+                    'id'    => $welfareId,
                     'name'  => $member['first_name'] . ' ' . $member['last_name'],
                     'phone' => $member['phone'],
                     'email' => $member['email'] ?? '',
@@ -390,6 +391,7 @@ if ($action === 'resend_welfare_receipt') {
         $displayDate = date('j F Y', strtotime($tx['payment_date']));
 
         $memberData = [
+            'id'    => $tx['welfare_id'],
             'name'  => $memberName,
             'phone' => $tx['phone'],
             'email' => $tx['email'] ?? '',

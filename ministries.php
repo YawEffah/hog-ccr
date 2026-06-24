@@ -304,6 +304,13 @@ foreach ($rawMinistries as $m) {
         'danger'
       );
     }
+
+    function downloadMinistryReport() {
+      const id = document.getElementById('edit_mId').value;
+      if (id) {
+        window.location.href = `export_ministry_report.php?id=${id}`;
+      }
+    }
   </script>
 </body>
 </html>

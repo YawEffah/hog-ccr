@@ -157,8 +157,32 @@ $ministries = $db->query("SELECT id, name FROM ministries ORDER BY name")->fetch
   <!-- MAIN CONTENT -->
   <main id="main">
 
+    <!-- Print Only Header -->
+    <div class="print-only-header" style="display: none; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+        <div>
+          <h1 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-size: 28px; color: #1E3A8A;">CCR House of Grace</h1>
+          <h2 style="margin: 5px 0 0 0; font-size: 18px; color: #4B5563;">Members Directory</h2>
+        </div>
+        <div style="text-align: right; font-size: 12px; color: #6B7280;">
+          <div>Generated on: <?= date('F j, Y g:i a') ?></div>
+        </div>
+      </div>
+      <?php if ($search || $statusFilter): ?>
+        <div style="margin-top: 15px; padding: 8px 12px; background: #F3F4F6; border-radius: 6px; font-size: 12px; color: #374151;">
+          <strong>Active Filters:</strong>
+          <?php
+            $filterItems = [];
+            if ($search) $filterItems[] = "Search: " . htmlspecialchars($search);
+            if ($statusFilter) $filterItems[] = "Status: " . htmlspecialchars($statusFilter);
+            echo implode(' | ', $filterItems);
+          ?>
+        </div>
+      <?php endif; ?>
+    </div>
+
     <div id="page-members" class="page">
-      <div class="topbar">
+      <div class="topbar no-print">
         <div style="display:flex;align-items:center;">
           <button class="mobile-toggle" onclick="toggleSidebar()">
             <i class="ph ph-list"></i>
@@ -175,7 +199,7 @@ $ministries = $db->query("SELECT id, name FROM ministries ORDER BY name")->fetch
 
       <div class="content">
         <!-- Member Stats -->
-        <div class="grid-4" style="margin-bottom:24px;">
+        <div class="grid-4 no-print" style="margin-bottom:24px;">
           <div class="stat-card">
             <div class="accent-bar" style="background: var(--gold);"></div>
             <div class="label">Total Members</div>
@@ -211,7 +235,7 @@ $ministries = $db->query("SELECT id, name FROM ministries ORDER BY name")->fetch
         </div>
 
         <div class="table-wrap">
-          <div style="padding: 16px 20px; border-bottom: 1px solid #EDE8DF; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+          <div class="no-print" style="padding: 16px 20px; border-bottom: 1px solid #EDE8DF; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
             <form action="members.php" method="GET" style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 300px;">
               <div class="search-wrap" style="flex: 1; max-width: 320px;">
                 <i class="ph ph-magnifying-glass"></i>
@@ -224,8 +248,16 @@ $ministries = $db->query("SELECT id, name FROM ministries ORDER BY name")->fetch
                 <option value="Affiliate Community Member" <?= $statusFilter === 'Affiliate Community Member' ? 'selected' : '' ?>>Affiliate Community Member</option>
               </select>
             </form>
-            <div style="font-size: 13px; color: var(--muted);">
-              Showing <strong id="membersCount"><?= $members_shown ?></strong> of <?= $total_members ?>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <a href="export_members.php?q=<?= urlencode($search) ?>&status=<?= urlencode($statusFilter) ?>" class="btn btn-outline btn-sm">
+                <i class="ph ph-download-simple"></i> Export CSV
+              </a>
+              <button onclick="window.print()" class="btn btn-outline btn-sm">
+                <i class="ph ph-printer"></i> Print
+              </button>
+              <div style="font-size: 13px; color: var(--muted);">
+                Showing <strong id="membersCount"><?= $members_shown ?></strong> of <?= $total_members ?>
+              </div>
             </div>
           </div>
           <div class="table-responsive">
@@ -237,7 +269,7 @@ $ministries = $db->query("SELECT id, name FROM ministries ORDER BY name")->fetch
                 <th>Ministry</th>
                 <th>Status</th>
                 <th>Joined</th>
-                <th>Actions</th>
+                <th class="no-print">Actions</th>
               </tr>
             </thead>
             <tbody id="membersTbody">
@@ -275,7 +307,7 @@ $ministries = $db->query("SELECT id, name FROM ministries ORDER BY name")->fetch
                 </td>
                 <td><span class="badge <?= $m['status_class'] ?>"><?= $m['status'] ?></span></td>
                 <td style="font-size:12px;color:var(--muted);"><?= $m['joined'] ?></td>
-                <td>
+                <td class="no-print">
                    <div style="display:flex;gap:6px;">
                     <button class="btn-icon" onclick="editMember('<?= $m['id'] ?>')" title="View / Edit Profile">
                       <i class="ph ph-address-book"></i>
@@ -298,7 +330,7 @@ $ministries = $db->query("SELECT id, name FROM ministries ORDER BY name")->fetch
         </div>
 
         <!-- Pagination -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;font-size:13px;color:var(--muted);">
+        <div class="no-print" style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;font-size:13px;color:var(--muted);">
           <span>Page <?= $page ?> of <?= ceil($total_members / $perPage) ?: 1 ?></span>
           <div style="display:flex;gap:6px;">
             <?php if ($page > 1): ?>
