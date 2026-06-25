@@ -17,14 +17,20 @@ $errorMsg   = flash('error');
 // Decode ?success= / ?error= query params (redirect-based pattern)
 if (!$successMsg && !$errorMsg) {
     $successLabels = [
-        'member_added'   => 'Member registered successfully.',
-        'member_updated' => 'Member profile updated.',
-        'member_deleted' => 'Member deactivated successfully.',
+        'member_added'    => 'Member registered successfully.',
+        'member_updated'  => 'Member profile updated.',
+        'member_deleted'  => 'Member deactivated successfully.',
+        'bulk_imported'   => 'Bulk import completed. See results below.',
     ];
     $errorLabels = [
-        'missing_fields' => 'Please fill in all required fields.',
-        'db_error'       => 'A database error occurred. Please try again.',
-        'not_found'      => 'Member not found.',
+        'missing_fields'    => 'Please fill in all required fields.',
+        'db_error'          => 'A database error occurred. Please try again.',
+        'not_found'         => 'Member not found.',
+        'no_file'           => 'No file was uploaded. Please select a file.',
+        'invalid_file_type' => 'Invalid file type. Only .xlsx and .csv files are accepted.',
+        'file_too_large'    => 'The uploaded file exceeds the 10 MB limit.',
+        'parse_error'       => 'Could not read the uploaded file. Ensure it is a valid .xlsx or .csv.',
+        'empty_file'        => 'The uploaded file contains no data rows.',
     ];
     $successMsg = $successLabels[$_GET['success'] ?? ''] ?? '';
     $errorMsg   = $errorLabels[$_GET['error']   ?? ''] ?? '';
@@ -191,6 +197,9 @@ $ministries = $db->query("SELECT id, name FROM ministries ORDER BY name")->fetch
         </div>
         <div class="topbar-actions">
 
+          <button class="btn btn-outline btn-sm" onclick="openModal('bulkImportModal')" title="Import multiple members from Excel/CSV">
+            <i class="ph ph-upload-simple"></i> Bulk Import
+          </button>
           <button class="btn btn-primary btn-sm" onclick="openModal('addMemberModal')">+ Add Member</button>
         </div>
       </div>
@@ -350,6 +359,16 @@ $ministries = $db->query("SELECT id, name FROM ministries ORDER BY name")->fetch
   </main>
 
   <?php require_once 'includes/modals/member_modals.php'; ?>
+  <?php require_once 'includes/modals/bulk_import_modal.php'; ?>
+
+  <?php if (($_GET['success'] ?? '') === 'bulk_imported'): ?>
+  <script>
+    // Auto-open bulk import modal to show results after redirect
+    document.addEventListener('DOMContentLoaded', function() {
+      openModal('bulkImportModal');
+    });
+  </script>
+  <?php endif; ?>
 
   <!-- Hidden delete-member form -->
   <form method="POST" action="handlers/member_handler.php" id="deleteMemberForm" style="display:none;">
