@@ -18,7 +18,7 @@ $currentUser = $currentUser ?? [
     </div>
     <span>
       <h1>House of Grace</h1>
-      <p>CCR Management</p>
+      <p>CCR Community</p>
     </span>
   </div>
 

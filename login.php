@@ -9,71 +9,80 @@ require_once 'includes/db.php';
 
 // If already logged in, redirect to dashboard
 if (isAuthenticated()) {
-    header('Location: index.php');
-    exit();
+  header('Location: index.php');
+  exit();
 }
 
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
+  $username = trim($_POST['username'] ?? '');
+  $password = $_POST['password'] ?? '';
 
-    if ($username === '' || $password === '') {
-        $error = 'Please enter both username and password.';
-    } else {
-        try {
-            $db   = getDB();
-            $stmt = $db->prepare("SELECT * FROM admins WHERE username = ? LIMIT 1");
-            $stmt->execute([$username]);
-            $admin = $stmt->fetch();
+  if ($username === '' || $password === '') {
+    $error = 'Please enter both username and password.';
+  } else {
+    try {
+      $db = getDB();
+      $stmt = $db->prepare("SELECT * FROM admins WHERE username = ? LIMIT 1");
+      $stmt->execute([$username]);
+      $admin = $stmt->fetch();
 
-            if ($admin && password_verify($password, $admin['password'])) {
-                // Regenerate session ID to prevent fixation
-                session_regenerate_id(true);
+      if ($admin && password_verify($password, $admin['password'])) {
+        // Regenerate session ID to prevent fixation
+        session_regenerate_id(true);
 
-                $_SESSION['user_id']   = $admin['id'];
-                $_SESSION['user_data'] = [
-                    'id'       => $admin['id'],
-                    'name'     => $admin['name'],
-                    'initials' => $admin['initials'],
-                    'role'     => $admin['role'],
-                    'email'    => $admin['email'],
-                ];
+        $_SESSION['user_id'] = $admin['id'];
+        $_SESSION['user_data'] = [
+          'id' => $admin['id'],
+          'name' => $admin['name'],
+          'initials' => $admin['initials'],
+          'role' => $admin['role'],
+          'email' => $admin['email'],
+        ];
 
-                header('Location: index.php');
-                exit();
-            } else {
-                $error = 'Invalid username or password. Please try again.';
-            }
-        } catch (PDOException $e) {
-            error_log('Login error: ' . $e->getMessage());
-            $error = 'A system error occurred. Please try again later.';
-        }
+        header('Location: index.php');
+        exit();
+      } else {
+        $error = 'Invalid username or password. Please try again.';
+      }
+    } catch (PDOException $e) {
+      error_log('Login error: ' . $e->getMessage());
+      $error = 'A system error occurred. Please try again later.';
     }
+  }
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login | House of Grace CCR</title>
   <link rel="icon" type="image/png" href="assets/images/logo.png">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     :root {
-      --gold:       #1E40AF;
+      --gold: #1E40AF;
       --gold-light: #6D28D9;
-      --gold-pale:  #EEF2FF;
-      --deep:       #111827;
-      --deep2:      #111827;
-      --muted:      #64748B;
-      --mid:        #475569;
-      --white:      #FFFFFF;
+      --gold-pale: #EEF2FF;
+      --deep: #111827;
+      --deep2: #111827;
+      --muted: #64748B;
+      --mid: #475569;
+      --white: #FFFFFF;
     }
 
     body {
@@ -104,8 +113,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     @keyframes slideUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .login-header {
@@ -117,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       width: 80px;
       height: 80px;
       margin-bottom: 16px;
-      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));
+      filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.1));
     }
 
     .login-header h1 {
@@ -206,9 +222,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      75% { transform: translateX(5px); }
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-5px);
+      }
+
+      75% {
+        transform: translateX(5px);
+      }
     }
 
     .btn-login {
@@ -321,7 +347,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     @keyframes spin {
-      to { transform: translate(-50%, -50%) rotate(360deg); }
+      to {
+        transform: translate(-50%, -50%) rotate(360deg);
+      }
     }
 
     .btn-login.loading .spinner {
@@ -334,6 +362,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
   </style>
 </head>
+
 <body>
 
   <div class="login-container">
@@ -341,7 +370,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="login-header">
         <img src="assets/images/logo.png" alt="Logo" class="login-logo">
         <h1>Welcome Back</h1>
-        <p>Sign in to HOG-CCR Management System</p>
+        <p>Adomfie (HOG) CCR Community Mgmt. System</p>
       </div>
 
       <?php if ($error): ?>
@@ -364,8 +393,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <label class="form-label">Password</label>
           <div class="input-wrapper">
             <i class="ph ph-lock field-icon"></i>
-            <input type="password" name="password" id="passwordInput" class="form-control" placeholder="Enter password" required>
-            <button type="button" class="password-toggle" onclick="togglePassword()" aria-label="Toggle password visibility">
+            <input type="password" name="password" id="passwordInput" class="form-control" placeholder="Enter password"
+              required>
+            <button type="button" class="password-toggle" onclick="togglePassword()"
+              aria-label="Toggle password visibility">
               <i class="ph ph-eye" id="toggleIcon"></i>
             </button>
           </div>
@@ -386,7 +417,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </form>
 
       <div class="login-footer">
-        &copy; <?= date('Y') ?> House of Grace Church. All rights reserved.
+        &copy; <?= date('Y') ?> Adomfie (HOG) CCR Community. All rights reserved.
       </div>
     </div>
   </div>
@@ -395,7 +426,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     function togglePassword() {
       const input = document.getElementById('passwordInput');
       const icon = document.getElementById('toggleIcon');
-      
+
       if (input.type === 'password') {
         input.type = 'text';
         icon.classList.remove('ph-eye');
@@ -407,15 +438,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
     }
 
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
+    document.getElementById('loginForm').addEventListener('submit', function (e) {
       const btn = document.getElementById('submitBtn');
       btn.classList.add('loading');
       btn.disabled = true;
-      
+
       // In a real app, the form would submit here. 
       // The loading state will stay until the page reloads or redirects.
     });
   </script>
 
 </body>
+
 </html>

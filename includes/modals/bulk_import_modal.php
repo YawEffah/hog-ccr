@@ -185,38 +185,7 @@ if ($bulkResult !== null) {
           </div>
         </div>
 
-        <!-- Collapsible column reference -->
-        <div style="border:1px solid #E5E7EB; border-radius:8px; overflow:hidden;">
-          <button onclick="toggleColumnRef()" id="colRefToggle"
-                  style="width:100%; background:#F9FAFB; border:none; padding:10px 14px; text-align:left; cursor:pointer; display:flex; align-items:center; justify-content:space-between; font-size:12.5px; font-weight:600; color:#374151;">
-            <span><i class="ph ph-columns" style="margin-right:6px; color:#6B7280;"></i> Column Reference</span>
-            <i class="ph ph-caret-down" id="colRefIcon" style="color:#9CA3AF; transition:transform 0.2s;"></i>
-          </button>
-          <div id="colRefContent" style="display:none; padding:12px 14px; background:#fff;">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 16px; font-size:11.5px; color:#4B5563;">
-              <?php
-              $cols = [
-                ['First Name','Required'],['Last Name','Required'],['Gender','Required: Male/Female'],
-                ['Phone','Required'],['Secondary Phone','Optional'],['Email','Optional'],
-                ['Date of Birth','Optional: YYYY-MM-DD'],['Joined Date','Optional: YYYY-MM-DD'],
-                ['Status','Optional: Active/Inactive/Affiliate…'],['Address','Optional'],
-                ['Home Town','Optional'],['Occupation','Optional'],
-                ['Marital Status','Optional: Single/Married/Widowed/Divorced'],['Children Count','Optional: number'],
-                ['Baptised','Optional: Yes/No'],['Communicant','Optional: Yes/No'],
-                ['Group Memberships','Optional: free text'],['Next of Kin Name','Optional'],
-                ['Next of Kin Relation','Optional'],['Next of Kin Address','Optional'],
-                ['Next of Kin Phone','Optional'],['Ministries','Optional: comma-separated'],
-                ['Sacraments Needed','Optional: comma-separated'],['Programmes Attended','Optional: comma-separated'],
-              ];
-              foreach ($cols as $i => [$name, $note]): ?>
-              <div style="padding:4px 0; border-bottom:1px solid #F3F4F6; display:flex; gap:6px; align-items:baseline;">
-                <span style="font-weight:600; color:#1E3A8A;"><?= $name ?></span>
-                <span style="color:#9CA3AF; font-size:11px;"><?= $note ?></span>
-              </div>
-              <?php endforeach; ?>
-            </div>
-          </div>
-        </div>
+
       </div>
       <?php endif; ?>
 
@@ -289,13 +258,6 @@ function resetBulkImport() {
   window.location.href = 'members.php';
 }
 
-function toggleColumnRef() {
-  const content = document.getElementById('colRefContent');
-  const icon    = document.getElementById('colRefIcon');
-  const open    = content.style.display !== 'none';
-  content.style.display = open ? 'none' : 'block';
-  icon.style.transform  = open ? 'rotate(0deg)' : 'rotate(180deg)';
-}
 
 function downloadErrorReport() {
   if (!window.bulkErrorData || !bulkErrorData.length) return;
