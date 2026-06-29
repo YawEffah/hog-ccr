@@ -362,18 +362,42 @@
   </div>
 </div>
 
-<!-- Record Expense / Journal Modal -->
-<div class="modal-overlay" id="recordExpenseModal">
-  <div class="modal">
+<!-- Record Welfare Expense Modal -->
+<div class="modal-overlay" id="recordWelfareExpenseModal">
+  <div class="modal" style="max-width:550px;">
     <div class="modal-header">
       <h3>Record Welfare Expense</h3>
-      <button class="close-btn" onclick="closeModal('recordExpenseModal')"><i class="ph ph-x"></i></button>
+      <button class="close-btn" onclick="closeModal('recordWelfareExpenseModal')"><i class="ph ph-x"></i></button>
     </div>
     <form action="handlers/welfare_handler.php" method="POST">
       <?= csrfField() ?>
-      <input type="hidden" name="action" value="record_journal">
+      <input type="hidden" name="action" value="record_welfare_expense">
       <div class="modal-body">
         
+        <div class="form-group">
+          <label class="form-label">Beneficiary Type</label>
+          <div style="display:flex;gap:16px;">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+              <input type="radio" name="recipient_type" value="Member" checked onchange="toggleExpenseRecipient(this.value, 'record')"> Church Member
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+              <input type="radio" name="recipient_type" value="External" onchange="toggleExpenseRecipient(this.value, 'record')"> External (Other)
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group" id="recordExpenseMemberGroup">
+          <label class="form-label">Select Member</label>
+          <input class="form-control" id="recordExpenseMemberSearch" placeholder="Search member by name or ID..." oninput="searchExpenseMember(this.value, 'record')" autocomplete="off">
+          <input type="hidden" name="recipient_member_id" id="recordExpenseMemberId">
+          <div id="recordExpenseMemberSuggestions" style="background:#F8FAFC;border:1px solid #EDE8DF;border-radius:8px;max-height:140px;overflow-y:auto;display:none;margin-top:4px;margin-bottom:14px;"></div>
+        </div>
+
+        <div class="form-group" id="recordExpenseExternalGroup" style="display:none;">
+          <label class="form-label">Beneficiary Name</label>
+          <input class="form-control" name="recipient_name" id="recordExpenseExternalName" placeholder="e.g. Orphanage Home">
+        </div>
+
         <div class="grid-2" style="gap:16px;">
           <div class="form-group">
             <label class="form-label">Expense Category</label>
@@ -407,20 +431,104 @@
           </div>
           <div class="form-group">
             <label class="form-label">Date</label>
-            <input type="date" class="form-control" name="journal_date" value="<?= date('Y-m-d') ?>" required>
+            <input type="date" class="form-control" name="expense_date" value="<?= date('Y-m-d') ?>" required>
           </div>
         </div>
 
         <div class="form-group">
           <label class="form-label">Description / Reason</label>
-          <textarea class="form-control" name="description" rows="2" placeholder="e.g. Wedding gift for John Doe" required style="resize:none;"></textarea>
+          <textarea class="form-control" name="description" rows="2" placeholder="e.g. Wedding gift" required style="resize:none;"></textarea>
         </div>
 
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline" onclick="closeModal('recordExpenseModal')">Cancel</button>
+        <button type="button" class="btn btn-outline" onclick="closeModal('recordWelfareExpenseModal')">Cancel</button>
         <button type="submit" class="btn btn-primary">
           <i class="ph ph-check-circle"></i> Save Expense
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Welfare Expense Modal -->
+<div class="modal-overlay" id="editWelfareExpenseModal">
+  <div class="modal" style="max-width:550px;">
+    <div class="modal-header">
+      <h3>Edit Welfare Expense</h3>
+      <button class="close-btn" onclick="closeModal('editWelfareExpenseModal')"><i class="ph ph-x"></i></button>
+    </div>
+    <form action="handlers/welfare_handler.php" method="POST">
+      <?= csrfField() ?>
+      <input type="hidden" name="action" value="edit_welfare_expense">
+      <input type="hidden" name="expense_id" id="editExpenseId">
+      <div class="modal-body">
+        
+        <div class="form-group">
+          <label class="form-label">Beneficiary Type</label>
+          <div style="display:flex;gap:16px;">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+              <input type="radio" name="recipient_type" value="Member" id="editTypeMember" onchange="toggleExpenseRecipient(this.value, 'edit')"> Church Member
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+              <input type="radio" name="recipient_type" value="External" id="editTypeExternal" onchange="toggleExpenseRecipient(this.value, 'edit')"> External (Other)
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group" id="editExpenseMemberGroup">
+          <label class="form-label">Select Member</label>
+          <input class="form-control" id="editExpenseMemberSearch" placeholder="Search member by name or ID..." oninput="searchExpenseMember(this.value, 'edit')" autocomplete="off">
+          <input type="hidden" name="recipient_member_id" id="editExpenseMemberId">
+          <div id="editExpenseMemberSuggestions" style="background:#F8FAFC;border:1px solid #EDE8DF;border-radius:8px;max-height:140px;overflow-y:auto;display:none;margin-top:4px;margin-bottom:14px;"></div>
+        </div>
+
+        <div class="form-group" id="editExpenseExternalGroup" style="display:none;">
+          <label class="form-label">Beneficiary Name</label>
+          <input class="form-control" name="recipient_name" id="editExpenseExternalName" placeholder="e.g. Orphanage Home">
+        </div>
+
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Expense Category</label>
+            <select class="form-control" name="expense_account" id="editExpenseCategory" required>
+              <option value="">Select Category...</option>
+              <?php foreach($expenses as $exp): ?>
+              <option value="<?= $exp['code'] ?>"><?= htmlspecialchars($exp['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Paid From (Asset)</label>
+            <select class="form-control" name="asset_account" id="editExpenseAsset" required>
+              <?php foreach($assets as $ast): ?>
+              <option value="<?= $ast['code'] ?>"><?= htmlspecialchars($ast['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Amount (GH₵)</label>
+            <input type="number" step="0.01" class="form-control" name="amount" id="editExpenseAmount" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control" name="expense_date" id="editExpenseDate" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description / Reason</label>
+          <textarea class="form-control" name="description" id="editExpenseDesc" rows="2" required style="resize:none;"></textarea>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('editWelfareExpenseModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">
+          <i class="ph ph-check-circle"></i> Save Changes
         </button>
       </div>
     </form>
@@ -580,5 +688,73 @@
     document.getElementById('resendWelfareContribId').value = contrib.id;
     
     openModal('viewWelfareReceiptModal');
+  }
+
+  /* ---- Expenses Modals logic ---- */
+  const allChurchMembers = <?php
+    $allMem = $db->query("SELECT id, first_name, last_name, member_code FROM members ORDER BY last_name ASC")->fetchAll(PDO::FETCH_ASSOC);
+    echo json_encode(array_map(function($m){
+        return ['id' => $m['id'], 'code' => $m['member_code'], 'name' => htmlspecialchars($m['first_name'] . ' ' . $m['last_name'])];
+    }, $allMem));
+  ?>;
+
+  function toggleExpenseRecipient(type, modal) {
+    const memGroup = document.getElementById(modal + 'ExpenseMemberGroup');
+    const extGroup = document.getElementById(modal + 'ExpenseExternalGroup');
+    const memSearch = document.getElementById(modal + 'ExpenseMemberSearch');
+    const extName = document.getElementById(modal + 'ExpenseExternalName');
+    
+    if (type === 'Member') {
+      memGroup.style.display = 'block';
+      extGroup.style.display = 'none';
+      memSearch.setAttribute('required', 'required');
+      extName.removeAttribute('required');
+    } else {
+      memGroup.style.display = 'none';
+      extGroup.style.display = 'block';
+      memSearch.removeAttribute('required');
+      extName.setAttribute('required', 'required');
+    }
+  }
+
+  function searchExpenseMember(q, modal) {
+    const box = document.getElementById(modal + 'ExpenseMemberSuggestions');
+    if (!q) { box.style.display = 'none'; return; }
+    const filtered = allChurchMembers.filter(m =>
+      m.name.toLowerCase().includes(q.toLowerCase()) || m.code.toLowerCase().includes(q.toLowerCase())
+    );
+    if (!filtered.length) { box.style.display = 'none'; return; }
+    box.innerHTML = filtered.map(m =>
+      `<div onclick="selectExpenseMember('${m.id}','${m.name}','${modal}')"
+      style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid #F4F0EA;"
+      onmouseover="this.style.background='#F0FDFA'" onmouseout="this.style.background=''">${m.name} <span style="color:var(--muted);font-size:11px;">${m.code}</span></div>`
+    ).join('');
+    box.style.display = 'block';
+  }
+
+  function selectExpenseMember(id, name, modal) {
+    document.getElementById(modal + 'ExpenseMemberSearch').value = name;
+    document.getElementById(modal + 'ExpenseMemberId').value = id;
+    document.getElementById(modal + 'ExpenseMemberSuggestions').style.display = 'none';
+  }
+
+  function openEditExpenseModal(expense) {
+    document.getElementById('editExpenseId').value = expense.id;
+    if (expense.recipient_type === 'Member') {
+      document.getElementById('editTypeMember').checked = true;
+      document.getElementById('editExpenseMemberSearch').value = expense.first_name + ' ' + expense.last_name;
+      document.getElementById('editExpenseMemberId').value = expense.recipient_member_id;
+      toggleExpenseRecipient('Member', 'edit');
+    } else {
+      document.getElementById('editTypeExternal').checked = true;
+      document.getElementById('editExpenseExternalName').value = expense.recipient_name;
+      toggleExpenseRecipient('External', 'edit');
+    }
+    document.getElementById('editExpenseCategory').value = expense.category_code;
+    document.getElementById('editExpenseAsset').value = expense.asset_code;
+    document.getElementById('editExpenseAmount').value = expense.amount;
+    document.getElementById('editExpenseDate').value = expense.expense_date;
+    document.getElementById('editExpenseDesc').value = expense.description;
+    openModal('editWelfareExpenseModal');
   }
 </script>

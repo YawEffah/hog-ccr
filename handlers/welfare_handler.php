@@ -412,13 +412,16 @@ if ($action === 'resend_welfare_receipt') {
         redirect($returnTo . '&error=db_error');
     }
 }
-// ── RECORD JOURNAL ENTRY ──────────────────────────────────────────────────────
-if ($action === 'record_journal') {
-    $date        = $_POST['journal_date'] ?? date('Y-m-d');
-    $expenseCode = $_POST['expense_account'] ?? '';
-    $assetCode   = $_POST['asset_account'] ?? '1000'; // Default to Bank
-    $amount      = (float)($_POST['amount'] ?? 0);
-    $desc        = trim($_POST['description'] ?? '');
+// ── RECORD WELFARE EXPENSE ──────────────────────────────────────────────────────
+if ($action === 'record_welfare_expense') {
+    $date           = $_POST['expense_date'] ?? date('Y-m-d');
+    $expenseCode    = $_POST['expense_account'] ?? '';
+    $assetCode      = $_POST['asset_account'] ?? '1000';
+    $amount         = (float)($_POST['amount'] ?? 0);
+    $recipientType  = $_POST['recipient_type'] ?? 'Member';
+    $recipientMemId = !empty($_POST['recipient_member_id']) ? (int)$_POST['recipient_member_id'] : null;
+    $recipientName  = trim($_POST['recipient_name'] ?? '');
+    $desc           = trim($_POST['description'] ?? '');
 
     if (!$expenseCode || !$assetCode || $amount <= 0 || !$desc) {
         redirect($redirect . '?error=missing_fields');
@@ -432,19 +435,118 @@ if ($action === 'record_journal') {
             redirect($redirect . '?error=invalid_data');
         }
 
+        $db->beginTransaction();
+
+        $stmt = $db->prepare("INSERT INTO welfare_expenses (expense_date, amount, category_id, asset_account_id, recipient_type, recipient_member_id, recipient_name, description, recorded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$date, $amount, $expenseId, $assetId, $recipientType, $recipientMemId, $recipientName, $desc, $_SESSION['user_id']]);
+        
+        $expId = $db->lastInsertId();
+        $refNo = 'WEXP-' . $expId;
+
+        $db->prepare("UPDATE welfare_expenses SET reference_no = ? WHERE id = ?")->execute([$refNo, $expId]);
+
         // Debit Expense
-        $db->prepare("INSERT INTO welfare_ledger (transaction_date, account_id, description, debit, credit, created_by) VALUES (?, ?, ?, ?, ?, ?)")
-           ->execute([$date, $expenseId, $desc, $amount, 0, $_SESSION['user_id']]);
+        $db->prepare("INSERT INTO welfare_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
+           ->execute([$date, $expenseId, $desc, $amount, 0, $refNo, $_SESSION['user_id']]);
 
-        // Credit Asset (Cash/Bank)
-        $db->prepare("INSERT INTO welfare_ledger (transaction_date, account_id, description, debit, credit, created_by) VALUES (?, ?, ?, ?, ?, ?)")
-           ->execute([$date, $assetId, $desc, 0, $amount, $_SESSION['user_id']]);
+        // Credit Asset
+        $db->prepare("INSERT INTO welfare_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
+           ->execute([$date, $assetId, $desc, 0, $amount, $refNo, $_SESSION['user_id']]);
 
-        logActivity("Recorded welfare journal entry: " . formatGhc($amount) . " for '{$desc}'", 'welfare');
-        redirect($redirect . '?success=journal_recorded');
+        $db->commit();
+
+        logActivity("Recorded welfare expense: GH₵ " . number_format($amount, 2) . " for '{$desc}'", 'welfare');
+        redirect($redirect . '?success=expense_recorded');
 
     } catch (PDOException $e) {
-        error_log('record_journal error: ' . $e->getMessage());
+        if ($db->inTransaction()) $db->rollBack();
+        error_log('record_welfare_expense error: ' . $e->getMessage());
+        redirect($redirect . '?error=db_error');
+    }
+}
+
+// ── EDIT WELFARE EXPENSE ────────────────────────────────────────────────────────
+if ($action === 'edit_welfare_expense') {
+    // Role Check
+    if (!in_array($_SESSION['user_data']['role'], ['Administrator', 'Finance Secretary'])) {
+        redirect($redirect . '?error=unauthorized');
+    }
+
+    $id             = (int)$_POST['expense_id'];
+    $date           = $_POST['expense_date'] ?? date('Y-m-d');
+    $expenseCode    = $_POST['expense_account'] ?? '';
+    $assetCode      = $_POST['asset_account'] ?? '';
+    $amount         = (float)($_POST['amount'] ?? 0);
+    $recipientType  = $_POST['recipient_type'] ?? 'Member';
+    $recipientMemId = !empty($_POST['recipient_member_id']) ? (int)$_POST['recipient_member_id'] : null;
+    $recipientName  = trim($_POST['recipient_name'] ?? '');
+    $desc           = trim($_POST['description'] ?? '');
+
+    if (!$id || !$expenseCode || !$assetCode || $amount <= 0 || !$desc) {
+        redirect($redirect . '?error=missing_fields');
+    }
+
+    try {
+        $expenseId = $db->query("SELECT id FROM welfare_accounts WHERE code = '$expenseCode'")->fetchColumn();
+        $assetId   = $db->query("SELECT id FROM welfare_accounts WHERE code = '$assetCode'")->fetchColumn();
+
+        if (!$expenseId || !$assetId) {
+            redirect($redirect . '?error=invalid_data');
+        }
+
+        $db->beginTransaction();
+
+        $stmt = $db->prepare("UPDATE welfare_expenses SET expense_date = ?, amount = ?, category_id = ?, asset_account_id = ?, recipient_type = ?, recipient_member_id = ?, recipient_name = ?, description = ? WHERE id = ?");
+        $stmt->execute([$date, $amount, $expenseId, $assetId, $recipientType, $recipientMemId, $recipientName, $desc, $id]);
+        
+        $refNo = 'WEXP-' . $id;
+
+        // Delete old ledger entries and recreate
+        $db->prepare("DELETE FROM welfare_ledger WHERE reference_no = ?")->execute([$refNo]);
+
+        // Debit Expense
+        $db->prepare("INSERT INTO welfare_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
+           ->execute([$date, $expenseId, $desc, $amount, 0, $refNo, $_SESSION['user_id']]);
+
+        // Credit Asset
+        $db->prepare("INSERT INTO welfare_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
+           ->execute([$date, $assetId, $desc, 0, $amount, $refNo, $_SESSION['user_id']]);
+
+        $db->commit();
+
+        logActivity("Updated welfare expense #{$id}: GH₵ " . number_format($amount, 2), 'welfare');
+        redirect($redirect . '?success=expense_updated');
+
+    } catch (PDOException $e) {
+        if ($db->inTransaction()) $db->rollBack();
+        error_log('edit_welfare_expense error: ' . $e->getMessage());
+        redirect($redirect . '?error=db_error');
+    }
+}
+
+// ── DELETE WELFARE EXPENSE ──────────────────────────────────────────────────────
+if ($action === 'delete_welfare_expense') {
+    // Role Check
+    if (!in_array($_SESSION['user_data']['role'], ['Administrator', 'Finance Secretary'])) {
+        redirect($redirect . '?error=unauthorized');
+    }
+
+    $id = (int)$_POST['expense_id'];
+
+    try {
+        $db->beginTransaction();
+        
+        $db->prepare("DELETE FROM welfare_expenses WHERE id = ?")->execute([$id]);
+        $refNo = 'WEXP-' . $id;
+        $db->prepare("DELETE FROM welfare_ledger WHERE reference_no = ?")->execute([$refNo]);
+
+        $db->commit();
+
+        logActivity("Deleted welfare expense #{$id}", 'welfare');
+        redirect($redirect . '?success=expense_deleted');
+    } catch (PDOException $e) {
+        if ($db->inTransaction()) $db->rollBack();
+        error_log('delete_welfare_expense error: ' . $e->getMessage());
         redirect($redirect . '?error=db_error');
     }
 }
