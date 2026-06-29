@@ -5,23 +5,76 @@
  */
 
 require_once __DIR__ . '/helpers.php';
+require_once __DIR__ . '/db.php';
+
+/**
+ * Calculate dynamic welfare statistics for a member (total paid, arrears, status).
+ */
+function calculateWelfareMemberStats(PDO $db, int $welfareId): array
+{
+    // Fetch member enrollment and contribution data
+    $stmt = $db->prepare("
+        SELECT wm.enrol_date, wm.monthly_amount,
+               COALESCE((SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id), 0) as total_paid,
+               COALESCE((SELECT COUNT(*) FROM welfare_contributions WHERE welfare_id = wm.id AND DATE_FORMAT(payment_date, '%Y-%m') = ?), 0) as paid_current_month
+        FROM welfare_members wm
+        WHERE wm.id = ?
+    ");
+    $currentMonthStr = date('Y-m');
+    $stmt->execute([$currentMonthStr, $welfareId]);
+    $data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$data) {
+        return [
+            'total_paid' => 0.0,
+            'arrears'    => 0.0,
+            'status'     => 'Unknown'
+        ];
+    }
+
+    $monthlyAmount = (float)$data['monthly_amount'];
+    $totalPaid     = (float)$data['total_paid'];
+    
+    // Calculate differences in months since enrollment
+    $enrolTime    = strtotime($data['enrol_date']);
+    $enrolYear    = (int)date('Y', $enrolTime);
+    $enrolMonth   = (int)date('m', $enrolTime);
+    $currentYear  = (int)date('Y');
+    $currentMonth = (int)date('m');
+    
+    $diffMonths = (($currentYear - $enrolYear) * 12) + ($currentMonth - $enrolMonth) + 1;
+    $expectedMonths = max(0, $diffMonths);
+    $expectedAmount = $expectedMonths * $monthlyAmount;
+    
+    $arrears = max(0.00, $expectedAmount - $totalPaid);
+    $status  = ($data['paid_current_month'] > 0) ? 'Up to date' : 'Arrears';
+
+    return [
+        'total_paid' => $totalPaid,
+        'arrears'    => $arrears,
+        'status'     => $status
+    ];
+}
 
 /**
  * Build the standard welfare SMS/plain-text message body.
  */
-function buildWelfareMessage(string $name, float $amount, string $date, string $reference): string
+function buildWelfareMessage(string $name, float $amount, string $date, string $reference, float $totalPaid, float $arrears): string
 {
     $formatted = number_format($amount, 2);
+    $formattedTotal = number_format($totalPaid, 2);
+    $formattedArrears = number_format($arrears, 2);
     $ref       = $reference ?: 'N/A';
-    return "Dear {$name}, your welfare contribution of GH\u{20B5} {$formatted} on {$date} "
-         . "(Ref: {$ref}) has been received. God bless you. — House of Grace CCR";
+    return "Dear {$name}, your welfare contribution of GH\u{20B5} {$formatted} on {$date} (Ref: {$ref}) has been received. "
+         . "Total Contribution: GH\u{20B5} {$formattedTotal}. Arrears: GH\u{20B5} {$formattedArrears}. "
+         . "God bless you. — House of Grace CCR";
 }
 
 /**
  * Send a welfare payment notification to a single member via email.
  * Falls back to logging if email is not available.
  *
- * @param array  $member    ['name', 'phone', 'email']
+ * @param array  $member    ['id', 'name', 'phone', 'email']
  * @param float  $amount
  * @param string $date
  * @param string $reference
@@ -30,16 +83,25 @@ function buildWelfareMessage(string $name, float $amount, string $date, string $
  */
 function sendWelfareNotification(array $member, float $amount, string $date, string $reference, string $channel = 'both'): bool
 {
+    $db = getDB();
+    $welfareId = $member['id'] ?? 0;
+    
+    // Fetch stats
+    $stats = calculateWelfareMemberStats($db, $welfareId);
+    $totalPaid = $stats['total_paid'];
+    $arrears = $stats['arrears'];
+    $status = $stats['status'];
+
     $emailSent = false;
     // Send email if channel allows and address is available
     if (($channel === 'email' || $channel === 'both') && !empty($member['email'])) {
-        $emailSent = sendWelfareEmail($member, $amount, $date, $reference);
+        $emailSent = sendWelfareEmail($member, $amount, $date, $reference, $totalPaid, $arrears, $status);
     }
 
     $smsSent = false;
     // Send SMS if channel allows and phone is available
     if (($channel === 'sms' || $channel === 'both') && !empty($member['phone'])) {
-        $message = buildWelfareMessage($member['name'], $amount, $date, $reference);
+        $message = buildWelfareMessage($member['name'], $amount, $date, $reference, $totalPaid, $arrears);
         $smsSent = sendSMS($member['phone'], $message);
     }
 
@@ -49,7 +111,7 @@ function sendWelfareNotification(array $member, float $amount, string $date, str
 /**
  * Send bulk notifications to members who paid on a given date.
  *
- * @param array  $members  Each: ['name', 'phone', 'email', 'amount', 'reference']
+ * @param array  $members  Each: ['id', 'name', 'phone', 'email', 'amount', 'reference']
  * @param string $date     Display date string e.g. "29 Apr 2026"
  * @param string $channel  'sms', 'email', or 'both'
  * @return array           ['sent' => int, 'failed' => int]
@@ -59,7 +121,12 @@ function sendBulkWelfareNotifications(array $members, string $date, string $chan
     $sent = $failed = 0;
     foreach ($members as $m) {
         $ok = sendWelfareNotification(
-            ['name' => $m['name'], 'phone' => $m['phone'], 'email' => $m['email'] ?? ''],
+            [
+                'id'    => $m['id'] ?? 0,
+                'name'  => $m['name'],
+                'phone' => $m['phone'],
+                'email' => $m['email'] ?? ''
+            ],
             (float)$m['amount'],
             $date,
             $m['reference'] ?? '',

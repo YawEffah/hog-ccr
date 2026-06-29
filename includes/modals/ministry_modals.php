@@ -163,7 +163,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('manageMinistryModal')">Close</button>
-      <button class="btn btn-primary">Download Report</button>
+      <button class="btn btn-primary" onclick="downloadMinistryReport()">Download Report</button>
     </div>
   </div>
 </div>

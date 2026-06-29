@@ -421,11 +421,14 @@ function sendFinanceReceipt(array $recipient, array $txn): bool
  * @param string $date    Formatted date string
  * @param string $reference
  */
-function sendWelfareEmail(array $member, float $amount, string $date, string $reference): bool
+function sendWelfareEmail(array $member, float $amount, string $date, string $reference, float $totalPaid, float $arrears, string $status): bool
 {
     $amt  = formatGhc($amount);
     $ref  = htmlspecialchars($reference ?: 'N/A');
     $name = htmlspecialchars($member['name']);
+    $formattedTotal = formatGhc($totalPaid);
+    $formattedArrears = formatGhc($arrears);
+    $statusColor = $status === 'Up to date' ? '#0D9488' : '#DC2626';
 
     $html = <<<HTML
     <div style="font-family:'DM Sans',Arial,sans-serif;max-width:540px;margin:0 auto;border:1px solid #99F6E4;border-radius:12px;overflow:hidden;">
@@ -440,16 +443,28 @@ function sendWelfareEmail(array $member, float $amount, string $date, string $re
         </p>
         <table style="width:100%;border-collapse:collapse;font-size:14px;">
           <tr style="border-bottom:1px solid #EDE8DF;">
-            <td style="padding:10px 0;color:#64748B;">Amount</td>
+            <td style="padding:10px 0;color:#64748B;">Current Contribution</td>
             <td style="padding:10px 0;font-weight:700;color:#0D9488;text-align:right;">{$amt}</td>
           </tr>
           <tr style="border-bottom:1px solid #EDE8DF;">
             <td style="padding:10px 0;color:#64748B;">Date</td>
             <td style="padding:10px 0;text-align:right;">{$date}</td>
           </tr>
-          <tr>
+          <tr style="border-bottom:1px solid #EDE8DF;">
             <td style="padding:10px 0;color:#64748B;">Reference</td>
             <td style="padding:10px 0;color:#64748B;text-align:right;">{$ref}</td>
+          </tr>
+          <tr style="border-bottom:1px solid #EDE8DF;">
+            <td style="padding:10px 0;color:#64748B;">Total Contributions to Date</td>
+            <td style="padding:10px 0;font-weight:700;color:#1E3A8A;text-align:right;">{$formattedTotal}</td>
+          </tr>
+          <tr style="border-bottom:1px solid #EDE8DF;">
+            <td style="padding:10px 0;color:#64748B;">Current Arrears</td>
+            <td style="padding:10px 0;font-weight:700;color:#DC2626;text-align:right;">{$formattedArrears}</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 0;color:#64748B;">Welfare Status</td>
+            <td style="padding:10px 0;font-weight:700;text-align:right;"><span style="color:{$statusColor};">{$status}</span></td>
           </tr>
         </table>
         <p style="margin-top:28px;font-size:13px;color:#94A3B8;">

@@ -176,10 +176,10 @@ $announcements = array_map(function($a) {
                         <button class="btn-icon" onclick='viewEventDetails(<?= htmlspecialchars(json_encode($event), ENT_QUOTES, "UTF-8") ?>)' title="View Details">
                           <i class="ph ph-eye"></i>
                         </button>
-                        <button class="btn-icon" onclick='openEditEvent(<?= htmlspecialchars(json_encode($event), ENT_QUOTES, "UTF-8") ?>)' title="Edit Event" style="background:var(--gold-pale);color:var(--gold);">
+                        <button class="btn-icon-primary" onclick='openEditEvent(<?= htmlspecialchars(json_encode($event), ENT_QUOTES, "UTF-8") ?>)' title="Edit Event">
                           <i class="ph ph-pencil"></i>
                         </button>
-                        <button class="btn-icon" onclick="confirmDeleteEvent(<?= $event['id'] ?>, '<?= htmlspecialchars(addslashes($event['title'])) ?>')" title="Delete Event" style="background:#FEF2F2;color:#DC2626;">
+                        <button class="btn-icon-danger" onclick="confirmDeleteEvent(<?= $event['id'] ?>, '<?= htmlspecialchars(addslashes($event['title'])) ?>')" title="Delete Event">
                           <i class="ph ph-trash"></i>
                         </button>
                       </div>
@@ -226,14 +226,14 @@ $announcements = array_map(function($a) {
                         <button class="btn-icon" onclick='viewAnnounceDetails(<?= htmlspecialchars(json_encode($announce), ENT_QUOTES, "UTF-8") ?>)' title="View Announcement">
                           <i class="ph ph-eye"></i>
                         </button>
-                        <button class="btn-icon" onclick='openEditAnnouncement(<?= htmlspecialchars(json_encode($announce), ENT_QUOTES, "UTF-8") ?>)' title="Edit Announcement" style="background:var(--gold-pale);color:var(--gold);">
+                        <button class="btn-icon-primary" onclick='openEditAnnouncement(<?= htmlspecialchars(json_encode($announce), ENT_QUOTES, "UTF-8") ?>)' title="Edit Announcement">
                           <i class="ph ph-pencil"></i>
                         </button>
                         <form method="POST" action="handlers/event_handler.php" style="margin:0;display:inline-block;" id="deleteAnnounceForm_<?= $announce['id'] ?>">
                           <?= csrfField() ?>
                           <input type="hidden" name="action" value="delete_announcement">
                           <input type="hidden" name="announcement_id" value="<?= $announce['id'] ?>">
-                          <button type="button" class="btn-icon" style="background:#FEF2F2;color:#DC2626;" onclick="confirmDeleteAnnounce(<?= $announce['id'] ?>)" title="Delete Announcement">
+                          <button type="button" class="btn-icon-danger" onclick="confirmDeleteAnnounce(<?= $announce['id'] ?>)" title="Delete Announcement">
                             <i class="ph ph-trash"></i>
                           </button>
                         </form>

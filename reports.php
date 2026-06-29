@@ -489,7 +489,7 @@ $accumFund = $balances['3000']['balance'] ?? 0;
                         <div style="width:8px;height:8px;border-radius:2px;background:var(--primary);"></div> Sun
                       </div>
                       <div style="display:flex; align-items:center; gap:4px;">
-                        <div style="width:8px;height:8px;border-radius:2px;background:var(--deep);"></div> Oth
+                        <div style="width:8px;height:8px;border-radius:2px;background:#F87171;"></div> Midweek
                       </div>
                     </div>
                   </div>
@@ -505,7 +505,7 @@ $accumFund = $balances['3000']['balance'] ?? 0;
                           <div class="mini-bar" style="background:var(--primary); height:<?= $at['sun_h'] ?>%;"></div>
                         </div>
                         <div class="mini-bar-col" style="justify-content:flex-end; height:100%;">
-                          <div class="mini-bar" style="background:var(--deep); height:<?= $at['oth_h'] ?>%;"></div>
+                          <div class="mini-bar" style="background:#F87171; height:<?= $at['oth_h'] ?>%;"></div>
                         </div>
                       </div>
                     <?php endforeach; ?>

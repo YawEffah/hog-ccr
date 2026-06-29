@@ -230,7 +230,7 @@ $currentUser = array_merge($currentUser ?? [], $user_data);
                 </h4>
                 <p style="font-size:12px; color:#B45309; margin-bottom:12px;">Add an extra layer of security to your
                   account by enabling 2FA.</p>
-                <button class="btn btn-sm" style="background:white; color:#92400E; border:1px solid #F59E0B;">Enable
+                <button class="btn btn-warning btn-sm">Enable
                   2FA</button>
               </div>
             </div>

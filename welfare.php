@@ -114,6 +114,23 @@ $welfare_contributions = array_map(function($c) {
     ];
 }, $rawContribs);
 
+// ── Welfare Expenses ──────────────────────────────────────────────────────────
+$expenseStmt = $db->prepare(
+    "SELECT e.*, c.name as category_name, c.code as category_code, a.name as asset_name, a.code as asset_code, 
+            m.first_name, m.last_name, m.member_code
+     FROM welfare_expenses e
+     JOIN welfare_accounts c ON e.category_id = c.id
+     JOIN welfare_accounts a ON e.asset_account_id = a.id
+     LEFT JOIN members m ON e.recipient_member_id = m.id
+     WHERE DATE_FORMAT(e.expense_date, '%Y-%m') = ?
+     ORDER BY e.expense_date DESC, e.created_at DESC"
+);
+$expenseStmt->execute([$filterMonth]);
+$welfare_expenses = $expenseStmt->fetchAll();
+
+$welfare_stats['total_expenses'] = array_sum(array_column($welfare_expenses, 'amount'));
+$welfare_stats['expenses_count'] = count($welfare_expenses);
+
 // ── Members not in Welfare (for enrollment dropdown) ────────────────────────
 $nonWelfareMembers = $db->query(
     "SELECT id, first_name, last_name, member_code 
@@ -136,9 +153,9 @@ $nonWelfareMembers = $db->query(
   <main id="main">
 
     <div id="page-welfare" class="page">
-      <div class="topbar">
+      <div class="topbar no-print">
         <div style="display:flex;align-items:center;">
-          <button class="mobile-toggle" onclick="toggleSidebar()">
+          <button class="mobile-toggle no-print" onclick="toggleSidebar()">
             <i class="ph ph-list"></i>
           </button>
           <div class="topbar-title">Welfare</div>
@@ -167,9 +184,7 @@ $nonWelfareMembers = $db->query(
             </select>
           </div>
 
-          <button class="btn btn-outline btn-sm" onclick="openModal('recordExpenseModal')">
-            <i class="ph ph-receipt"></i> Record Expense
-          </button>
+
           <button class="btn btn-primary btn-sm" onclick="openModal('enrolWelfareModal')">
             <i class="ph ph-hand-heart"></i> Enrol Member
           </button>
@@ -180,7 +195,7 @@ $nonWelfareMembers = $db->query(
         <?php renderToastAlerts($successMsg, $errorMsg); ?>
 
         <!-- Stat Cards -->
-        <div class="grid-4" style="margin-bottom:24px;">
+        <div class="grid-4 no-print" style="margin-bottom:24px;">
           <div class="stat-card">
             <div class="accent-bar" style="background:#0D9488;"></div>
             <div class="label">Welfare Members</div>
@@ -220,19 +235,36 @@ $nonWelfareMembers = $db->query(
         </div>
 
         <!-- Tab Navigation -->
-        <div class="tabs" id="welfareTabs" style="margin-bottom:20px;background:white;border:1px solid #EDE8DF;border-radius:10px;padding:4px;display:inline-flex;">
+        <div class="tabs no-print" id="welfareTabs" style="margin-bottom:20px;background:white;border:1px solid #EDE8DF;border-radius:10px;padding:4px;display:inline-flex;">
           <button class="tab active" id="tabMembersBtn" onclick="switchWelfareTab('members')" style="padding:7px 20px;font-size:13px;">
             <i class="ph ph-users"></i> Members
           </button>
           <button class="tab" id="tabContribBtn" onclick="switchWelfareTab('contributions')" style="padding:7px 20px;font-size:13px;">
             <i class="ph ph-receipt"></i> Contributions
           </button>
+          <button class="tab" id="tabExpensesBtn" onclick="switchWelfareTab('expenses')" style="padding:7px 20px;font-size:13px;">
+            <i class="ph ph-money"></i> Expenses
+          </button>
         </div>
 
         <!-- MEMBERS TAB -->
         <div id="welfareMembersTab">
+          <!-- Print Only Header -->
+          <div class="print-only-header" style="display: none; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+              <div>
+                <h1 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-size: 28px; color: #1E3A8A;">CCR House of Grace</h1>
+                <h2 style="margin: 5px 0 0 0; font-size: 18px; color: #4B5563;">Welfare Members Roster</h2>
+              </div>
+              <div style="text-align: right; font-size: 12px; color: #6B7280;">
+                <div>Generated on: <?= date('F j, Y g:i a') ?></div>
+                <div>Month Period: <?= date('F Y', strtotime($filterMonth . '-01')) ?></div>
+              </div>
+            </div>
+          </div>
+
           <div class="table-wrap">
-            <div style="padding:16px 20px;border-bottom:1px solid #EDE8DF;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+            <div class="no-print" style="padding:16px 20px;border-bottom:1px solid #EDE8DF;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
               <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:280px;">
                 <div class="search-wrap" style="flex:1;max-width:300px;">
                   <i class="ph ph-magnifying-glass"></i>
@@ -252,6 +284,12 @@ $nonWelfareMembers = $db->query(
                 </select>
               </div>
               <div style="display:flex;align-items:center;gap:10px;">
+                <button class="btn btn-outline btn-sm" onclick="exportWelfareMembers()">
+                  <i class="ph ph-download-simple"></i> Export CSV
+                </button>
+                <button class="btn btn-outline btn-sm" onclick="window.print()">
+                  <i class="ph ph-printer"></i> Print
+                </button>
                 <button class="btn btn-outline btn-sm" onclick="openSendWelfareMessage()">
                   <i class="ph ph-paper-plane-tilt"></i> Message Payers
                 </button>
@@ -269,7 +307,7 @@ $nonWelfareMembers = $db->query(
                     <th>Last Payment</th>
                     <th>Total Contributed</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    <th class="no-print">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="welfareMembersTbody">
@@ -295,15 +333,15 @@ $nonWelfareMembers = $db->query(
                     <td style="font-size:13px;"><?= $wm['last_pay'] ?></td>
                     <td style="font-weight:600;color:#0D9488;">GH₵ <?= $wm['total'] ?></td>
                     <td><span class="badge <?= $statusBadge ?>"><?= $wm['status'] ?></span></td>
-                    <td>
+                    <td class="no-print">
                       <div style="display:flex;gap:6px;">
                         <a href="welfare_member_details.php?id=<?= $wm['id'] ?>" class="btn-icon" title="View details" style="display:inline-flex;text-decoration:none;">
                           <i class="ph ph-eye"></i>
                         </a>
-                        <button class="btn-icon" onclick="openRecordPaymentFor('<?= $wm['id'] ?>','<?= htmlspecialchars($wm['name']) ?>')" title="Record payment" style="background:var(--gold-pale);color:var(--gold);">
+                        <button class="btn-icon-primary" onclick="openRecordPaymentFor('<?= $wm['id'] ?>','<?= htmlspecialchars($wm['name']) ?>')" title="Record payment">
                           <i class="ph ph-plus"></i>
                         </button>
-                        <button class="btn-icon" onclick="confirmRemoveWelfareMember('<?= $wm['id'] ?>', '<?= htmlspecialchars(addslashes($wm['name'])) ?>')" title="Remove member" style="background:#FEF2F2;color:#DC2626;">
+                        <button class="btn-icon-danger" onclick="confirmRemoveWelfareMember('<?= $wm['id'] ?>', '<?= htmlspecialchars(addslashes($wm['name'])) ?>')" title="Remove member">
                           <i class="ph ph-trash"></i>
                         </button>
                       </div>
@@ -318,8 +356,22 @@ $nonWelfareMembers = $db->query(
 
         <!-- CONTRIBUTIONS TAB -->
         <div id="welfareContribTab" style="display:none;">
+          <!-- Print Only Header -->
+          <div class="print-only-header" style="display: none; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+              <div>
+                <h1 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-size: 28px; color: #1E3A8A;">CCR House of Grace</h1>
+                <h2 style="margin: 5px 0 0 0; font-size: 18px; color: #4B5563;">Welfare Contributions Log</h2>
+              </div>
+              <div style="text-align: right; font-size: 12px; color: #6B7280;">
+                <div>Generated on: <?= date('F j, Y g:i a') ?></div>
+                <div>Month Period: <?= date('F Y', strtotime($filterMonth . '-01')) ?></div>
+              </div>
+            </div>
+          </div>
+
           <div class="table-wrap">
-            <div style="padding:16px 20px;border-bottom:1px solid #EDE8DF;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+            <div class="no-print" style="padding:16px 20px;border-bottom:1px solid #EDE8DF;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
               <div style="display:flex;align-items:center;gap:12px;">
                 <div class="search-wrap" style="max-width:280px;">
                   <i class="ph ph-magnifying-glass"></i>
@@ -334,7 +386,12 @@ $nonWelfareMembers = $db->query(
                 </select>
               </div>
               <div style="display:flex;gap:8px;">
-                <button class="btn btn-outline btn-sm"><i class="ph ph-export"></i> Export CSV</button>
+                <button class="btn btn-outline btn-sm" onclick="exportWelfareContributions()">
+                  <i class="ph ph-download-simple"></i> Export CSV
+                </button>
+                <button class="btn btn-outline btn-sm" onclick="window.print()">
+                  <i class="ph ph-printer"></i> Print
+                </button>
                 <button class="btn btn-outline btn-sm" onclick="openSendWelfareMessage()">
                   <i class="ph ph-paper-plane-tilt"></i> Bulk Message
                 </button>
@@ -352,7 +409,7 @@ $nonWelfareMembers = $db->query(
                     <th>Date</th>
                     <th>Reference</th>
                     <th>Notif. Sent</th>
-                    <th>Receipt</th>
+                    <th class="no-print">Receipt</th>
                   </tr>
                 </thead>
                 <tbody id="contribTbody">
@@ -378,12 +435,12 @@ $nonWelfareMembers = $db->query(
                         </span>
                       <?php endif; ?>
                     </td>
-                    <td>
+                    <td class="no-print">
                       <div style="display:flex;gap:6px;">
                         <button class="btn btn-outline btn-sm" title="View Receipt" onclick='openWelfareReceiptModal(<?= htmlspecialchars(json_encode($c), ENT_QUOTES, "UTF-8") ?>)'>
                           <i class="ph ph-receipt"></i>
                         </button>
-                        <button class="btn btn-outline btn-sm" onclick="confirmDeleteContrib('<?= $c['id'] ?>')" style="color:#DC2626;border-color:#FECACA;background:#FEF2F2;" title="Delete Contribution">
+                        <button class="btn btn-danger-soft btn-sm" onclick="confirmDeleteContrib('<?= $c['id'] ?>')" title="Delete Contribution">
                           <i class="ph ph-trash"></i>
                         </button>
                       </div>
@@ -429,6 +486,102 @@ $nonWelfareMembers = $db->query(
           </div>
         </div>
 
+        <!-- EXPENSES TAB -->
+        <div id="welfareExpensesTab" style="display:none;">
+          <!-- Breakdown cards for expenses -->
+          <div class="grid-2 no-print" style="margin-bottom:24px;">
+            <div class="stat-card">
+              <div class="accent-bar" style="background:#EF4444;"></div>
+              <div class="label">Total Expenses</div>
+              <div class="value" style="font-size:28px;">GH₵<?= number_format($welfare_stats['total_expenses'], 2) ?></div>
+              <div class="change" style="color:#EF4444;">Recorded this month</div>
+              <div class="icon-bg" style="background:#FEE2E2;">
+                <i class="ph ph-trend-down" style="color:#EF4444;font-size:20px;"></i>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="accent-bar" style="background:#6366F1;"></div>
+              <div class="label">Transactions</div>
+              <div class="value"><?= $welfare_stats['expenses_count'] ?></div>
+              <div class="change" style="color:#6366F1;">Total expenses count</div>
+              <div class="icon-bg" style="background:#E0E7FF;">
+                <i class="ph ph-receipt" style="color:#6366F1;font-size:20px;"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <div class="no-print" style="padding:16px 20px;border-bottom:1px solid #EDE8DF;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div class="search-wrap" style="max-width:280px;">
+                  <i class="ph ph-magnifying-glass"></i>
+                  <input class="search-input" id="expenseSearch" placeholder="Search expenses…" oninput="filterExpenses()" style="width:280px;">
+                </div>
+                <input type="date" id="expenseDateFilter" class="form-control" style="width:140px;padding:8px 12px;font-size:13px;" onchange="filterExpenses()" title="Filter by specific date">
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-outline btn-sm" onclick="window.print()">
+                  <i class="ph ph-printer"></i> Print
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="openModal('recordWelfareExpenseModal')">+ Record Expense</button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table id="expenseTable">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Beneficiary</th>
+                    <th>Amount</th>
+                    <th>Description</th>
+                    <th class="no-print">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="expenseTbody">
+                  <?php if (count($welfare_expenses) > 0): ?>
+                    <?php foreach ($welfare_expenses as $e): ?>
+                    <tr data-date="<?= $e['expense_date'] ?>">
+                      <td style="font-size:12px;color:var(--muted);"><?= date('M j, Y', strtotime($e['expense_date'])) ?></td>
+                      <td><span class="badge badge-gray"><?= htmlspecialchars($e['category_name']) ?></span></td>
+                      <td>
+                        <?php if ($e['recipient_type'] === 'Member'): ?>
+                          <div style="font-weight:500;"><?= htmlspecialchars($e['first_name'] . ' ' . $e['last_name']) ?></div>
+                          <div style="font-size:11px;color:var(--muted);"><?= $e['member_code'] ?></div>
+                        <?php else: ?>
+                          <div style="font-weight:500;"><?= htmlspecialchars($e['recipient_name']) ?></div>
+                          <div style="font-size:11px;color:var(--muted);">External</div>
+                        <?php endif; ?>
+                      </td>
+                      <td style="font-weight:600;color:#EF4444;">GH₵ <?= number_format($e['amount'], 2) ?></td>
+                      <td style="font-size:13px;"><?= htmlspecialchars($e['description']) ?></td>
+                      <td class="no-print">
+                        <div style="display:flex;gap:6px;">
+                          <?php if (in_array($_SESSION['user_data']['role'], ['Administrator', 'Finance Secretary'])): ?>
+                          <button class="btn btn-outline btn-sm" onclick='openEditExpenseModal(<?= htmlspecialchars(json_encode($e), ENT_QUOTES, "UTF-8") ?>)' title="Edit Expense">
+                            <i class="ph ph-pencil"></i>
+                          </button>
+                          <button class="btn btn-danger-soft btn-sm" onclick="confirmDeleteExpense('<?= $e['id'] ?>')" title="Delete Expense">
+                            <i class="ph ph-trash"></i>
+                          </button>
+                          <?php else: ?>
+                          <span style="font-size:11px;color:var(--muted);">No access</span>
+                          <?php endif; ?>
+                        </div>
+                      </td>
+                    </tr>
+                    <?php endforeach; ?>
+                  <?php else: ?>
+                    <tr>
+                      <td colspan="6" style="text-align:center;padding:20px;color:var(--muted);">No expenses recorded this month.</td>
+                    </tr>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
       </div><!-- /content -->
     </div><!-- /page -->
 
@@ -447,10 +600,33 @@ $nonWelfareMembers = $db->query(
     <input type="hidden" name="contribution_id" id="deleteContribId">
   </form>
 
+  <form method="POST" action="handlers/welfare_handler.php" id="deleteExpenseForm" style="display:none;">
+    <?= csrfField() ?>
+    <input type="hidden" name="action" value="delete_welfare_expense">
+    <input type="hidden" name="expense_id" id="deleteExpenseId">
+  </form>
+
+
   <?php require_once 'includes/modals/welfare_modals.php'; ?>
 
   <script src="assets/js/main.js"></script>
   <script>
+  /* ---- CSV Exporters ---- */
+  function exportWelfareMembers() {
+    const search = encodeURIComponent(document.getElementById('welfareSearch').value);
+    const family = encodeURIComponent(document.getElementById('welfareFamilyFilter').value);
+    const status = encodeURIComponent(document.getElementById('welfareStatusFilter').value);
+    const month  = encodeURIComponent('<?= $filterMonth ?>');
+    window.location.href = `export_welfare_members.php?month=${month}&search=${search}&family=${family}&status=${status}`;
+  }
+
+  function exportWelfareContributions() {
+    const search = encodeURIComponent(document.getElementById('contribSearch').value);
+    const family = encodeURIComponent(document.getElementById('contribFamilyFilter').value);
+    const month  = encodeURIComponent('<?= $filterMonth ?>');
+    window.location.href = `export_welfare_contributions.php?month=${month}&search=${search}&family=${family}`;
+  }
+
   /* ---- Filter update ---- */
   function updateWelfareFilter() {
     const y = document.getElementById('welfareYearSelect').value;
@@ -462,19 +638,28 @@ $nonWelfareMembers = $db->query(
   function switchWelfareTab(tab) {
     const membersTab = document.getElementById('welfareMembersTab');
     const contribTab = document.getElementById('welfareContribTab');
+    const expensesTab = document.getElementById('welfareExpensesTab');
     const btnM = document.getElementById('tabMembersBtn');
     const btnC = document.getElementById('tabContribBtn');
+    const btnE = document.getElementById('tabExpensesBtn');
+
+    membersTab.style.display = 'none';
+    contribTab.style.display = 'none';
+    expensesTab.style.display = 'none';
+    
+    btnM.classList.remove('active');
+    btnC.classList.remove('active');
+    btnE.classList.remove('active');
 
     if (tab === 'members') {
       membersTab.style.display = '';
-      contribTab.style.display = 'none';
       btnM.classList.add('active');
-      btnC.classList.remove('active');
-    } else {
-      membersTab.style.display = 'none';
+    } else if (tab === 'contributions') {
       contribTab.style.display = '';
-      btnM.classList.remove('active');
       btnC.classList.add('active');
+    } else if (tab === 'expenses') {
+      expensesTab.style.display = '';
+      btnE.classList.add('active');
     }
   }
 
@@ -541,6 +726,35 @@ $nonWelfareMembers = $db->query(
       function() {
         document.getElementById('deleteContribId').value = id;
         document.getElementById('deleteContribForm').submit();
+      },
+      'danger'
+    );
+  }
+
+  /* ---- Expenses search ---- */
+  function filterExpenses() {
+    const q = document.getElementById('expenseSearch').value.toLowerCase();
+    const filterDate = document.getElementById('expenseDateFilter').value;
+    
+    document.querySelectorAll('#expenseTbody tr').forEach(row => {
+      const text = row.textContent.toLowerCase();
+      const rowDate = row.getAttribute('data-date');
+      
+      const matchQ = text.includes(q);
+      const matchDate = filterDate ? (rowDate === filterDate) : true;
+      
+      row.style.display = (matchQ && matchDate) ? '' : 'none';
+    });
+  }
+
+  function confirmDeleteExpense(id) {
+    showConfirmModal(
+      'Delete Expense',
+      'Are you sure you want to delete this expense record? The associated ledger entries will also be removed. This action cannot be undone.',
+      'Delete',
+      function() {
+        document.getElementById('deleteExpenseId').value = id;
+        document.getElementById('deleteExpenseForm').submit();
       },
       'danger'
     );

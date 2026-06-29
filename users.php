@@ -113,7 +113,7 @@ $users = $stmt->fetchAll();
                         <i class="ph ph-pencil-simple"></i>
                       </button>
                       <?php if ($u['id'] != $currentUser['id']): ?>
-                      <button class="btn btn-sm" style="background:#FEF2F2; color:#DC2626; border:1px solid #FECACA;" 
+                      <button class="btn btn-danger-soft btn-sm" 
                         onclick="confirmDeleteUser(<?= $u['id'] ?>, '<?= htmlspecialchars(addslashes($u['name'])) ?>')">
                         <i class="ph ph-trash"></i>
                       </button>

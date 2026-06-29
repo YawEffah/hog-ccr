@@ -11,14 +11,14 @@ $currentUser = $currentUser ?? [
 ];
 ?>
 <!-- SIDEBAR -->
-<aside id="sidebar">
+<aside id="sidebar" class="no-print">
   <div class="sidebar-logo">
     <div class="logo-wrap">
       <img src="assets/images/logo.png" alt="Logo" class="logo">
     </div>
     <span>
       <h1>House of Grace</h1>
-      <p>CCR Management</p>
+      <p>CCR Community</p>
     </span>
   </div>
 

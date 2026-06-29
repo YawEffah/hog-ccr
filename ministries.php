@@ -177,7 +177,7 @@ foreach ($rawMinistries as $m) {
               <div style="display:flex;gap:6px;">
                 <button class="btn btn-outline btn-sm" onclick="openMinistryBulkMessage('<?= $m['id'] ?>', '<?= htmlspecialchars(addslashes($m['name'])) ?>', '<?= $m['icon'] ?>', <?= $m['count'] ?>)" title="Message Ministry"><i class="ph ph-chat-centered-dots"></i></button>
                 <button class="btn btn-outline btn-sm" onclick="manageMinistry('<?= $m['id'] ?>')">Manage</button>
-                <button class="btn btn-outline btn-sm" onclick="confirmDeleteMinistry('<?= $m['id'] ?>', '<?= htmlspecialchars(addslashes($m['name'])) ?>')" style="color:#DC2626;border-color:#FECACA;background:#FEF2F2;" title="Delete Ministry">
+                <button class="btn btn-danger-soft btn-sm" onclick="confirmDeleteMinistry('<?= $m['id'] ?>', '<?= htmlspecialchars(addslashes($m['name'])) ?>')" title="Delete Ministry">
                   <i class="ph ph-trash"></i>
                 </button>
               </div>
@@ -303,6 +303,13 @@ foreach ($rawMinistries as $m) {
         },
         'danger'
       );
+    }
+
+    function downloadMinistryReport() {
+      const id = document.getElementById('edit_mId').value;
+      if (id) {
+        window.location.href = `export_ministry_report.php?id=${id}`;
+      }
     }
   </script>
 </body>

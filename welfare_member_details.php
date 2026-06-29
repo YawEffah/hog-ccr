@@ -43,11 +43,27 @@ $stmt = $db->prepare("
 $currentMonth = date('Y-m');
 $stmt->execute([$currentMonth, $welfare_id]);
 $member = $stmt->fetch();
-
 if (!$member) {
     header('Location: welfare.php');
     exit;
 }
+
+// Calculate dynamic expected months and arrears
+$monthlyAmount = (float)$member['monthly_amount'];
+$totalPaid     = (float)$member['total_paid'];
+
+// Calculate differences in months since enrollment
+$enrolTime    = strtotime($member['enrol_date']);
+$enrolYear    = (int)date('Y', $enrolTime);
+$enrolMonth   = (int)date('m', $enrolTime);
+$currentYear  = (int)date('Y');
+$currentMonthNum = (int)date('m');
+
+$diffMonths = (($currentYear - $enrolYear) * 12) + ($currentMonthNum - $enrolMonth) + 1;
+$expectedMonths = max(0, $diffMonths);
+$expectedAmount = $expectedMonths * $monthlyAmount;
+
+$arrears = max(0.00, $expectedAmount - $totalPaid);
 
 $rawName  = $member['first_name'] . ' ' . $member['last_name'];
 $name     = htmlspecialchars($rawName);
@@ -254,6 +270,14 @@ if ($filterMonth === 'all') {
                   <div style="font-size:11px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Last Payment</div>
                   <div style="font-weight:500;"><?= $member['last_payment_date'] ? date('M j, Y', strtotime($member['last_payment_date'])) : 'Never' ?></div>
                 </div>
+                <div>
+                  <div style="font-size:11px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Current Arrears</div>
+                  <div style="font-weight:700;color:#DC2626;font-size:18px;">GH₵ <?= number_format($arrears, 2) ?></div>
+                </div>
+                <div>
+                  <div style="font-size:11px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Monthly Contribution Target</div>
+                  <div style="font-weight:500;font-size:16px;">GH₵ <?= number_format($monthlyAmount, 2) ?></div>
+                </div>
               </div>
             </div>
           </div>
@@ -438,9 +462,8 @@ if ($filterMonth === 'all') {
                           onclick='openWelfareReceiptModal(<?= htmlspecialchars(json_encode($receiptObj), ENT_QUOTES, "UTF-8") ?>)'>
                           <i class="ph ph-receipt"></i>
                         </button>
-                        <button class="btn btn-sm" title="Delete Contribution"
-                          onclick="confirmDeleteContrib('<?= $c['id'] ?>')"
-                          style="background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;">
+                        <button class="btn btn-danger-soft btn-sm" title="Delete Contribution"
+                          onclick="confirmDeleteContrib('<?= $c['id'] ?>')">
                           <i class="ph ph-trash"></i>
                         </button>
                       </div>
