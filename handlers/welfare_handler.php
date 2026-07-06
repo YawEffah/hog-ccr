@@ -296,7 +296,7 @@ if ($action === 'send_welfare_messages') {
             }
             if (($channel === 'email' || $channel === 'both') && !empty($r['email'])) {
                 $html = buildWelfareBulkEmailHtml($name, $personalised);
-                if (sendEmail($r['email'], $name, 'House of Grace CCR — Welfare Message', $html)) $ok = true;
+                if (sendEmail($r['email'], $name, 'Adom Fie CCR Community — Welfare Message', $html)) $ok = true;
             }
 
             $ok ? $sent++ : $failed++;

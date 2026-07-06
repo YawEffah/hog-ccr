@@ -253,7 +253,7 @@ $nonWelfareMembers = $db->query(
           <div class="print-only-header" style="display: none; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px;">
             <div style="display: flex; justify-content: space-between; align-items: flex-end;">
               <div>
-                <h1 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-size: 28px; color: #1E3A8A;">CCR House of Grace</h1>
+                <h1 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-size: 28px; color: #1E3A8A;">Adom Fie CCR Community</h1>
                 <h2 style="margin: 5px 0 0 0; font-size: 18px; color: #4B5563;">Welfare Members Roster</h2>
               </div>
               <div style="text-align: right; font-size: 12px; color: #6B7280;">
@@ -360,7 +360,7 @@ $nonWelfareMembers = $db->query(
           <div class="print-only-header" style="display: none; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px;">
             <div style="display: flex; justify-content: space-between; align-items: flex-end;">
               <div>
-                <h1 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-size: 28px; color: #1E3A8A;">CCR House of Grace</h1>
+                <h1 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-size: 28px; color: #1E3A8A;">Adom Fie CCR Community</h1>
                 <h2 style="margin: 5px 0 0 0; font-size: 18px; color: #4B5563;">Welfare Contributions Log</h2>
               </div>
               <div style="text-align: right; font-size: 12px; color: #6B7280;">

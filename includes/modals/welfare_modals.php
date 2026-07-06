@@ -299,7 +299,7 @@
         
         <!-- Church Branding -->
         <div style="text-align: center; margin-bottom: 24px;">
-          <div style="font-size: 20px; font-weight: 800; color: #0D9488; letter-spacing: -0.5px;">HOUSE OF GRACE CCR</div>
+          <div style="font-size: 20px; font-weight: 800; color: #0D9488; letter-spacing: -0.5px;">ADOM FIE CCR COMMUNITY</div>
           <div style="font-size: 11px; color: #0F766E; font-weight: 700; text-transform: uppercase; margin-top: 4px; letter-spacing: 1px;">Welfare Scheme Contribution</div>
         </div>
 
@@ -656,9 +656,9 @@
 
   /* ---- Bulk message modal ---- */
   const bulkMessageTemplates = {
-    all:    'Dear [Name], this is a message from the House of Grace CCR Welfare Team. God bless you. \u2014 Welfare Team',
-    arrears:'Dear [Name], this is a friendly reminder that your welfare contribution for this month is still outstanding. Kindly make payment at your earliest convenience. Thank you. \u2014 House of Grace CCR Welfare',
-    date:   'Dear [Name], your welfare contribution of [Amount] has been received. We appreciate your faithfulness. God bless you. \u2014 House of Grace CCR Welfare',
+    all:    'Dear [Name], this is a message from the ADOM FIE CCR COMMUNITY Welfare Team. God bless you. \u2014 Welfare Team',
+    arrears:'Dear [Name], this is a friendly reminder that your welfare contribution for this month is still outstanding. Kindly make payment at your earliest convenience. Thank you. \u2014 ADOM FIE CCR COMMUNITY Welfare',
+    date:   'Dear [Name], your welfare contribution of [Amount] has been received. We appreciate your faithfulness. God bless you. \u2014 ADOM FIE CCR COMMUNITY Welfare',
   };
 
   function onBulkAudienceChange(audience) {

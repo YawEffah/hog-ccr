@@ -485,7 +485,7 @@ if ($filterMonth === 'all') {
        ═══════════════════════════════════════════════════════ -->
   <div id="print-statement">
     <div class="print-header">
-      <div class="print-church">HOUSE OF GRACE CCR</div>
+      <div class="print-church">ADOM FIE CCR COMMUNITY</div>
       <div class="print-sub">Welfare Scheme</div>
       <div class="print-title"><?= htmlspecialchars($periodLabel) ?></div>
     </div>

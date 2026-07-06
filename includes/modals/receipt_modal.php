@@ -12,7 +12,7 @@
         
         <!-- Church Branding -->
         <div style="text-align: center; margin-bottom: 24px;">
-          <div style="font-size: 20px; font-weight: 800; color: var(--deep); letter-spacing: -0.5px;">HOUSE OF GRACE CCR</div>
+          <div style="font-size: 20px; font-weight: 800; color: var(--deep); letter-spacing: -0.5px;">ADOM FIE CCR COMMUNITY</div>
           <div style="font-size: 11px; color: var(--gold); font-weight: 700; text-transform: uppercase; margin-top: 4px; letter-spacing: 1px;">Official Weekly Summary</div>
         </div>
 

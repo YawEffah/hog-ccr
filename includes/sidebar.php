@@ -17,8 +17,8 @@ $currentUser = $currentUser ?? [
       <img src="assets/images/logo.png" alt="Logo" class="logo">
     </div>
     <span>
-      <h1>House of Grace</h1>
-      <p>CCR Community</p>
+      <h1>Adom Fie CCR</h1>
+      <p>Community</p>
     </span>
   </div>
 

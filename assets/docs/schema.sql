@@ -1,5 +1,5 @@
 -- ============================================================
---  HOG-CCR Management System — MySQL Database Schema
+--  Adom Fie CCR Community Management System — MySQL Database Schema
 --  Database: hog_ccr
 --  Run this file once to create all tables.
 --  Compatible with MySQL 5.7+ / MariaDB 10.3+

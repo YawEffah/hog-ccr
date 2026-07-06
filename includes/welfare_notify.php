@@ -67,7 +67,7 @@ function buildWelfareMessage(string $name, float $amount, string $date, string $
     $ref       = $reference ?: 'N/A';
     return "Dear {$name}, your welfare contribution of GH\u{20B5} {$formatted} on {$date} (Ref: {$ref}) has been received. "
          . "Total Contribution: GH\u{20B5} {$formattedTotal}. Arrears: GH\u{20B5} {$formattedArrears}. "
-         . "God bless you. — House of Grace CCR";
+         . "God bless you. — Adom Fie CCR Community";
 }
 
 /**
@@ -154,12 +154,12 @@ function sendWelfareWelcomeMessage(array $member, float $monthlyAmount): bool
     <div style="font-family:'DM Sans',Arial,sans-serif;max-width:540px;margin:0 auto;border:1px solid #99F6E4;border-radius:12px;overflow:hidden;">
       <div style="background:#0D9488;padding:40px 32px;text-align:center;">
         <h1 style="color:#ffffff;font-size:24px;margin:0;">Welcome to Welfare Scheme</h1>
-        <p style="color:#CCFBF1;font-size:14px;margin:8px 0 0;">House of Grace CCR</p>
+        <p style="color:#CCFBF1;font-size:14px;margin:8px 0 0;">Adom Fie CCR Community</p>
       </div>
       <div style="padding:32px;">
         <p style="color:#475569;font-size:15px;">Dear <strong>{$name}</strong>,</p>
         <p style="color:#475569;font-size:15px;line-height:1.6;">
-          We are pleased to inform you that you have been successfully enrolled in the House of Grace CCR Welfare Scheme. This scheme is designed to support our members in times of need.
+          We are pleased to inform you that you have been successfully enrolled in the Adom Fie CCR Community Welfare Scheme. This scheme is designed to support our members in times of need.
         </p>
         <div style="background:#F0FDFA;border-radius:8px;padding:20px;margin:24px 0;text-align:center;border:1px solid #99F6E4;">
           <p style="margin:0;color:#0F766E;font-size:13px;text-transform:uppercase;letter-spacing:1px;">Monthly Contribution</p>
@@ -170,11 +170,11 @@ function sendWelfareWelcomeMessage(array $member, float $monthlyAmount): bool
         </p>
         <p style="margin-top:28px;font-size:14px;color:#94A3B8;">
           Blessings, <br>
-          <strong>House of Grace CCR Welfare Team</strong>
+          <strong>Adom Fie CCR Community Welfare Team</strong>
         </p>
       </div>
       <div style="background:#F8FAFC;padding:16px 32px;text-align:center;font-size:11px;color:#94A3B8;">
-        &copy; {$year} House of Grace CCR Welfare. All rights reserved.
+        &copy; {$year} Adom Fie CCR Community Welfare. All rights reserved.
       </div>
     </div>
     HTML;
@@ -184,14 +184,14 @@ function sendWelfareWelcomeMessage(array $member, float $monthlyAmount): bool
         $emailSent = sendEmail(
             $member['email'],
             $member['name'],
-            'Welcome to House of Grace CCR Welfare Scheme!',
+            'Welcome to Adom Fie CCR Community Welfare Scheme!',
             $html
         );
     }
 
     $smsSent = false;
     if (!empty($member['phone'])) {
-        $smsMsg = "Welcome to House of Grace CCR Welfare Scheme, {$member['name']}! Your monthly contribution is set to GH₵ {$amt}. God bless you.";
+        $smsMsg = "Welcome to Adom Fie CCR Community Welfare Scheme, {$member['name']}! Your monthly contribution is set to GH₵ {$amt}. God bless you.";
         $smsSent = sendSMS($member['phone'], $smsMsg);
     }
 
@@ -215,18 +215,18 @@ function buildWelfareBulkEmailHtml(string $name, string $message): string
     <div style="font-family:'DM Sans',Arial,sans-serif;max-width:540px;margin:0 auto;border:1px solid #99F6E4;border-radius:12px;overflow:hidden;">
       <div style="background:#0D9488;padding:28px 32px;text-align:center;">
         <h1 style="color:#ffffff;font-size:22px;margin:0;">Welfare Message</h1>
-        <p style="color:#CCFBF1;font-size:13px;margin:4px 0 0;">House of Grace CCR</p>
+        <p style="color:#CCFBF1;font-size:13px;margin:4px 0 0;">Adom Fie CCR Community</p>
       </div>
       <div style="padding:32px;">
         <p style="color:#475569;font-size:14px;">Dear <strong>{$safeName}</strong>,</p>
         <p style="color:#475569;font-size:15px;line-height:1.7;">{$safeMessage}</p>
         <p style="margin-top:28px;font-size:13px;color:#94A3B8;">
           Blessings,<br>
-          <strong>House of Grace CCR Welfare Team</strong>
+          <strong>Adom Fie CCR Community Welfare Team</strong>
         </p>
       </div>
       <div style="background:#F8FAFC;padding:16px 32px;text-align:center;font-size:11px;color:#94A3B8;">
-        &copy; {$year} House of Grace CCR Welfare. All rights reserved.
+        &copy; {$year} Adom Fie CCR Community Welfare. All rights reserved.
       </div>
     </div>
     HTML;
