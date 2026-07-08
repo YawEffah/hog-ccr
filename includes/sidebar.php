@@ -42,10 +42,7 @@ $currentUser = $currentUser ?? [
       <i class="ph ph-hand-heart"></i>
       Welfare
     </a>
-    <a href="attendance.php" class="nav-item <?= $activePage === 'attendance' ? 'active' : '' ?>">
-      <i class="ph ph-clipboard-text"></i>
-      Attendance
-    </a>
+
 
     <div class="nav-section-label">Administration</div>
     <a href="finance.php" class="nav-item <?= $activePage === 'finance' ? 'active' : '' ?>">

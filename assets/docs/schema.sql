@@ -174,13 +174,16 @@ CREATE TABLE IF NOT EXISTS announcements (
 CREATE TABLE IF NOT EXISTS attendance_sessions (
   id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   session_type VARCHAR(100)  NOT NULL,
+  ministry_id  INT UNSIGNED  NULL,
   session_date DATE          NOT NULL,
   session_time TIME,
   recorded_by  INT UNSIGNED  NULL,
   created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uniq_session (session_type, session_date),
+  UNIQUE KEY uniq_session (session_type, session_date, ministry_id),
   CONSTRAINT fk_session_admin FOREIGN KEY (recorded_by)
-    REFERENCES admins(id) ON DELETE SET NULL
+    REFERENCES admins(id) ON DELETE SET NULL,
+  CONSTRAINT fk_session_ministry FOREIGN KEY (ministry_id)
+    REFERENCES ministries(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- ─────────────────────────────────────────────

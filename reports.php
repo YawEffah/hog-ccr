@@ -52,12 +52,10 @@ $minStmt = $db->prepare(
   "SELECT name, 
             (SELECT COUNT(*) FROM attendance_records ar 
              JOIN attendance_sessions s ON ar.session_id = s.id
-             JOIN member_ministries mm ON ar.member_id = mm.member_id 
-             WHERE mm.ministry_id = min.id AND ar.status='Present' AND DATE_FORMAT(s.session_date, '%Y-%m') = ?) as present_count,
+             WHERE s.ministry_id = min.id AND ar.status='Present' AND DATE_FORMAT(s.session_date, '%Y-%m') = ?) as present_count,
             (SELECT COUNT(*) FROM attendance_records ar 
              JOIN attendance_sessions s ON ar.session_id = s.id
-             JOIN member_ministries mm ON ar.member_id = mm.member_id 
-             WHERE mm.ministry_id = min.id AND DATE_FORMAT(s.session_date, '%Y-%m') = ?) as total_count,
+             WHERE s.ministry_id = min.id AND DATE_FORMAT(s.session_date, '%Y-%m') = ?) as total_count,
             bg_color
      FROM ministries min
      LIMIT 6"

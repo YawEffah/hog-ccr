@@ -61,6 +61,7 @@
       <div class="tabs" style="margin-bottom:20px;border-bottom:1px solid var(--border);">
         <div class="tab active" onclick="switchMTab(this, 'mOverview')">Overview</div>
         <div class="tab" onclick="switchMTab(this, 'mMembers')">Members</div>
+        <div class="tab" onclick="switchMTab(this, 'mAttendancePane')">Attendance</div>
         <div class="tab" onclick="switchMTab(this, 'mHistory')">History</div>
         <div class="tab" onclick="switchMTab(this, 'mEdit')">Edit Info</div>
       </div>
@@ -89,12 +90,12 @@
         <div style="margin-bottom:20px;">
           <div style="font-size:13px;font-weight:600;margin-bottom:12px;">Attendance Trend</div>
           <div style="height:100px;display:flex;align-items:flex-end;gap:8px;padding-bottom:20px;" id="mChart">
-            <div style="flex:1;background:var(--primary);height:60%;border-radius:4px 4px 0 0;"></div>
-            <div style="flex:1;background:var(--primary);height:80%;border-radius:4px 4px 0 0;"></div>
-            <div style="flex:1;background:var(--primary);height:40%;border-radius:4px 4px 0 0;"></div>
-            <div style="flex:1;background:var(--primary);height:90%;border-radius:4px 4px 0 0;"></div>
-            <div style="flex:1;background:var(--primary);height:75%;border-radius:4px 4px 0 0;"></div>
-            <div style="flex:1;background:var(--deep);height:85%;border-radius:4px 4px 0 0;"></div>
+            <div style="flex:1;background:#1E40AF;height:60%;border-radius:4px 4px 0 0;"></div>
+            <div style="flex:1;background:#F87171;height:80%;border-radius:4px 4px 0 0;"></div>
+            <div style="flex:1;background:#1E40AF;height:40%;border-radius:4px 4px 0 0;"></div>
+            <div style="flex:1;background:#F87171;height:90%;border-radius:4px 4px 0 0;"></div>
+            <div style="flex:1;background:#F87171;height:75%;border-radius:4px 4px 0 0;"></div>
+            <div style="flex:1;background:#1E40AF;height:85%;border-radius:4px 4px 0 0;"></div>
           </div>
         </div>
       </div>
@@ -114,6 +115,94 @@
               <!-- Populated via JS -->
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Attendance Tab -->
+      <div id="mAttendancePane" class="tab-pane" style="display:none;">
+        <!-- Attendance Stats -->
+        <div class="grid-3" style="gap:12px;margin-bottom:20px;">
+          <div style="background:#ECFDF5;padding:14px;border-radius:10px;border:1px solid rgba(16,185,129,0.15);text-align:center;">
+            <div style="font-size:10px;color:#059669;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Present</div>
+            <div style="font-size:22px;font-weight:700;color:#059669;" id="attPresent">0</div>
+          </div>
+          <div style="background:#FEF2F2;padding:14px;border-radius:10px;border:1px solid rgba(239,68,68,0.15);text-align:center;">
+            <div style="font-size:10px;color:#DC2626;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Absent</div>
+            <div style="font-size:22px;font-weight:700;color:#DC2626;" id="attAbsent">0</div>
+          </div>
+          <div style="background:var(--gold-pale);padding:14px;border-radius:10px;border:1px solid rgba(200,170,110,0.2);text-align:center;">
+            <div style="font-size:10px;color:var(--gold);text-transform:uppercase;font-weight:600;margin-bottom:4px;">Avg Rate</div>
+            <div style="font-size:22px;font-weight:700;color:var(--gold);" id="attRate">0%</div>
+          </div>
+        </div>
+
+        <!-- Record Attendance Button -->
+        <button class="btn btn-primary btn-sm" id="attShowFormBtn" onclick="toggleAttRecordForm()" style="margin-bottom:16px;">
+          <i class="ph ph-clipboard-text"></i> Record Attendance
+        </button>
+
+        <!-- Record Attendance Form (hidden by default) -->
+        <div id="attRecordForm" style="display:none;margin-bottom:20px;">
+          <form action="handlers/attendance_handler.php" method="POST" id="ministryAttForm">
+            <?= csrfField() ?>
+            <input type="hidden" name="action" value="record_ministry_attendance">
+            <input type="hidden" name="ministry_id" id="att_ministryId">
+
+            <div style="background:#FAFAF8;border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <div style="font-size:14px;font-weight:600;color:var(--deep2);">Record Attendance</div>
+                <button type="button" class="btn btn-outline btn-sm" onclick="toggleAttRecordForm()" style="padding:4px 10px;">
+                  <i class="ph ph-x"></i>
+                </button>
+              </div>
+
+              <div class="grid-3" style="gap:12px;margin-bottom:14px;">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" style="font-size:12px;">Session Type</label>
+                  <select class="form-control" name="session_type" required style="font-size:13px;padding:8px 10px;">
+                    <option value="Ministry Meeting">Ministry Meeting</option>
+                    <option value="Practice">Practice</option>
+                    <option value="Bible Study">Bible Study</option>
+                    <option value="Rehearsal">Rehearsal</option>
+                    <option value="Special">Special</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" style="font-size:12px;">Date</label>
+                  <input type="date" class="form-control" name="session_date" value="<?= date('Y-m-d') ?>" required style="font-size:13px;padding:8px 10px;">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" style="font-size:12px;">Time</label>
+                  <input type="time" class="form-control" name="session_time" value="<?= date('H:i') ?>" style="font-size:13px;padding:8px 10px;">
+                </div>
+              </div>
+
+              <div style="margin-bottom:12px;">
+                <label class="form-label" style="font-size:12px;">Mark Present Members</label>
+                <div class="search-wrap" style="margin-bottom:8px;">
+                  <i class="ph ph-magnifying-glass"></i>
+                  <input class="search-input" placeholder="Search members…" id="attMemberSearch" oninput="filterAttMembers()" style="width:100%;">
+                </div>
+                <label style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--gold-pale);border-radius:8px;cursor:pointer;margin-bottom:8px;border:1px dashed var(--gold);">
+                  <span style="font-size:12px;font-weight:600;color:var(--gold);">Select All</span>
+                  <input type="checkbox" id="attMarkAllChk" onchange="toggleAttMarkAll(this)">
+                </label>
+                <div id="attMemberList" style="display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto;padding-right:4px;">
+                  <!-- Populated via JS -->
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="width:100%;">
+                <i class="ph ph-check-circle"></i> Save Attendance
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Recent Sessions -->
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px;">Recent Sessions</div>
+        <div id="attRecentSessions" style="display:flex;flex-direction:column;gap:10px;">
+          <!-- Populated via JS -->
         </div>
       </div>
 
