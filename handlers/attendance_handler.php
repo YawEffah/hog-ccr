@@ -74,7 +74,7 @@ if ($action === 'record_ministry_attendance') {
         $checkInTime = $sessionTime ?: date('H:i:s');
 
         foreach ($allMemberIds as $mid) {
-            if (in_array($mid, $presentSet, true)) {
+            if (in_array((int)$mid, $presentSet, true)) {
                 $recStmt->execute([$sessionId, $mid, 'Present', $checkInTime]);
             } else {
                 $recStmt->execute([$sessionId, $mid, 'Absent', null]);

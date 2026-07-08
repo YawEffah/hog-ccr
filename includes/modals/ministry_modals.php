@@ -199,10 +199,42 @@
           </form>
         </div>
 
-        <!-- Recent Sessions -->
-        <div style="font-size:13px;font-weight:600;margin-bottom:12px;">Recent Sessions</div>
-        <div id="attRecentSessions" style="display:flex;flex-direction:column;gap:10px;">
-          <!-- Populated via JS -->
+        <!-- Attendance Records -->
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px;">Attendance Records</div>
+        
+        <!-- Filters -->
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+          <input type="date" id="filterAttDate" class="form-control" style="font-size:12px;padding:6px 10px;flex:1;min-width:110px;" onchange="fetchAttendanceRecords()">
+          <select id="filterAttType" class="form-control" style="font-size:12px;padding:6px 10px;flex:1;min-width:130px;" onchange="fetchAttendanceRecords()">
+            <option value="">All Session Types</option>
+            <option value="Ministry Meeting">Ministry Meeting</option>
+            <option value="Practice">Practice</option>
+            <option value="Bible Study">Bible Study</option>
+            <option value="Rehearsal">Rehearsal</option>
+            <option value="Special">Special</option>
+          </select>
+          <select id="filterAttMember" class="form-control" style="font-size:12px;padding:6px 10px;flex:1;min-width:140px;" onchange="fetchAttendanceRecords()">
+            <option value="">All Members</option>
+            <!-- Populated via JS -->
+          </select>
+          <button class="btn btn-outline btn-sm" onclick="clearAttFilters()" style="padding:6px 10px;" title="Clear Filters"><i class="ph ph-x"></i></button>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive" style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
+          <table style="width:100%;font-size:12px;text-align:left;border-collapse:collapse;">
+            <thead style="background:#F8FAFC;position:sticky;top:0;z-index:1;">
+              <tr>
+                <th style="padding:10px 12px;border-bottom:1px solid var(--border);">Date</th>
+                <th style="padding:10px 12px;border-bottom:1px solid var(--border);">Type</th>
+                <th style="padding:10px 12px;border-bottom:1px solid var(--border);">Member</th>
+                <th style="padding:10px 12px;border-bottom:1px solid var(--border);">Status</th>
+              </tr>
+            </thead>
+            <tbody id="attRecordsTable">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
         </div>
       </div>
 

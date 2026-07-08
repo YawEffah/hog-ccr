@@ -160,6 +160,20 @@ foreach ($rawMinistries as $m) {
     $attStmt->execute([$m['id']]);
     $avgAtt = round((float)$attStmt->fetchColumn() ?: 0);
 
+    // Total aggregated attendance stats
+    $aggStmt = $db->prepare("
+        SELECT 
+            SUM(CASE WHEN r.status = 'Present' THEN 1 ELSE 0 END) as total_present,
+            SUM(CASE WHEN r.status = 'Absent' THEN 1 ELSE 0 END) as total_absent
+        FROM attendance_sessions s
+        JOIN attendance_records r ON s.id = r.session_id
+        WHERE s.ministry_id = ?
+    ");
+    $aggStmt->execute([$m['id']]);
+    $aggRow = $aggStmt->fetch(PDO::FETCH_ASSOC);
+    $totalPresent = (int)$aggRow['total_present'];
+    $totalAbsent = (int)$aggRow['total_absent'];
+
     $ministry_details[$m['id']] = [
         'id'               => $m['id'],
         'icon'             => $m['icon'],
@@ -170,6 +184,8 @@ foreach ($rawMinistries as $m) {
         'head_name'        => $m['head_name'] ? $m['head_name'] . " (" . $m['head_code'] . ")" : '',
         'count'            => $m['total_count'],
         'att'              => $avgAtt . '%',
+        'total_present'    => $totalPresent,
+        'total_absent'     => $totalAbsent,
         'sessions'         => $sessionCount,
         'members'          => $formattedMembers,
         'ministry_members' => $ministryMembers,
@@ -334,9 +350,8 @@ foreach ($rawMinistries as $m) {
       document.getElementById('att_ministryId').value = id;
 
       // Stats
-      const latestSession = m.recent_sessions && m.recent_sessions.length > 0 ? m.recent_sessions[0] : null;
-      document.getElementById('attPresent').textContent = latestSession ? latestSession.present : '0';
-      document.getElementById('attAbsent').textContent = latestSession ? latestSession.absent : '0';
+      document.getElementById('attPresent').textContent = m.total_present || '0';
+      document.getElementById('attAbsent').textContent = m.total_absent || '0';
       document.getElementById('attRate').textContent = m.att;
 
       // Member checklist
@@ -361,30 +376,64 @@ foreach ($rawMinistries as $m) {
       document.getElementById('attRecordForm').style.display = 'none';
       document.getElementById('attShowFormBtn').style.display = 'inline-flex';
 
-      // Recent sessions
-      const sessionsList = document.getElementById('attRecentSessions');
-      const sessions = m.recent_sessions || [];
-      if (sessions.length > 0) {
-        sessionsList.innerHTML = sessions.map(s => `
-          <div style="background:#F1F5F9;border-radius:10px;padding:14px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-              <div>
-                <div style="font-weight:600;font-size:13px;color:var(--deep2);">${s.type}</div>
-                <div style="font-size:11px;color:var(--muted);">${s.date} · ${s.time}</div>
-              </div>
-              <span class="badge badge-green" style="font-size:11px;">${s.present}/${s.total}</span>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;font-size:11px;color:var(--mid);">
-              <div style="flex:1;height:5px;border-radius:10px;background:#EDE8DF;overflow:hidden;">
-                <div style="height:100%;width:${s.pct}%;background:var(--gold);border-radius:10px;"></div>
-              </div>
-              <span>${s.pct}%</span>
-            </div>
-          </div>
-        `).join('');
+      // Populate member filter dropdown
+      const filterMember = document.getElementById('filterAttMember');
+      if (members.length > 0) {
+        filterMember.innerHTML = '<option value="">All Members</option>' + members.map(mem => `<option value="${mem.id}">${mem.name} (${mem.code})</option>`).join('');
       } else {
-        sessionsList.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">No attendance sessions recorded yet</div>';
+        filterMember.innerHTML = '<option value="">All Members</option>';
       }
+
+      // Initial fetch of records
+      clearAttFilters(true); // true = skip fetching, just clear
+      fetchAttendanceRecords();
+    }
+
+    async function fetchAttendanceRecords() {
+      const ministryId = document.getElementById('att_ministryId').value;
+      const date = document.getElementById('filterAttDate').value;
+      const type = document.getElementById('filterAttType').value;
+      const memberId = document.getElementById('filterAttMember').value;
+
+      const tbody = document.getElementById('attRecordsTable');
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted);">Loading records...</td></tr>';
+
+      try {
+        const res = await fetch(`ajax/get_attendance_records.php?ministry_id=${ministryId}&date=${date}&session_type=${encodeURIComponent(type)}&member_id=${memberId}`);
+        const data = await res.json();
+        
+        // Update stats
+        if (data.stats) {
+          document.getElementById('attPresent').textContent = data.stats.present;
+          document.getElementById('attAbsent').textContent = data.stats.absent;
+          document.getElementById('attRate').textContent = data.stats.rate;
+        }
+
+        const records = data.records || [];
+        if (records.length > 0) {
+          tbody.innerHTML = records.map(r => `
+            <tr>
+              <td style="padding:10px 12px;border-bottom:1px solid var(--border);">${r.date}</td>
+              <td style="padding:10px 12px;border-bottom:1px solid var(--border);">${r.type}</td>
+              <td style="padding:10px 12px;border-bottom:1px solid var(--border);font-weight:500;">${r.member} <span style="color:var(--muted);font-size:11px;">(${r.code})</span></td>
+              <td style="padding:10px 12px;border-bottom:1px solid var(--border);">
+                <span class="badge ${r.status === 'Present' ? 'badge-green' : 'badge-red'}">${r.status}</span>
+              </td>
+            </tr>
+          `).join('');
+        } else {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted);">No records found matching filters.</td></tr>';
+        }
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted);">Error loading records.</td></tr>';
+      }
+    }
+
+    function clearAttFilters(skipFetch = false) {
+      document.getElementById('filterAttDate').value = '';
+      document.getElementById('filterAttType').value = '';
+      document.getElementById('filterAttMember').value = '';
+      if (!skipFetch) fetchAttendanceRecords();
     }
 
     function toggleAttRecordForm() {
