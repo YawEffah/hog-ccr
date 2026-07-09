@@ -1,17 +1,17 @@
-<!-- Add Ministry Modal -->
-<div class="modal-overlay" id="addMinistryModal">
+<!-- Add Family Modal -->
+<div class="modal-overlay" id="addFamilyModal">
   <div class="modal">
     <div class="modal-header">
-      <h3>Create New Ministry</h3>
-      <button class="close-btn" onclick="closeModal('addMinistryModal')"><i class="ph ph-x"></i></button>
+      <h3>Create New Family</h3>
+      <button class="close-btn" onclick="closeModal('addFamilyModal')"><i class="ph ph-x"></i></button>
     </div>
-    <form action="handlers/ministry_handler.php" method="POST" id="addMinistryForm">
+    <form action="handlers/family_handler.php" method="POST" id="addFamilyForm">
       <?= csrfField() ?>
-      <input type="hidden" name="action" value="add_ministry">
+      <input type="hidden" name="action" value="add_family">
       <div class="modal-body">
         <div class="form-group">
-          <label class="form-label">Ministry Name</label>
-          <input class="form-control" name="name" placeholder="e.g. Media Ministry" required>
+          <label class="form-label">Family Name</label>
+          <input class="form-control" name="name" placeholder="e.g. Media Family" required>
         </div>
         <div class="form-group">
           <label class="form-label">Purpose/Description</label>
@@ -34,25 +34,25 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline" onclick="closeModal('addMinistryModal')">Cancel</button>
-        <button type="submit" class="btn btn-primary">Create Ministry</button>
+        <button type="button" class="btn btn-outline" onclick="closeModal('addFamilyModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Family</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- Manage Ministry Modal -->
-<div class="modal-overlay" id="manageMinistryModal">
+<!-- Manage Family Modal -->
+<div class="modal-overlay" id="manageFamilyModal">
   <div class="modal" style="max-width:700px;">
     <div class="modal-header">
       <div style="display:flex;align-items:center;gap:12px;">
-        <div class="ministry-icon" id="mIcon" style="width:40px;height:40px;font-size:20px;margin-bottom:0;">🎵</div>
+        <div class="family-icon" id="mIcon" style="width:40px;height:40px;font-size:20px;margin-bottom:0;">🎵</div>
         <div>
-          <h3 id="mTitle">Music Ministry</h3>
+          <h3 id="mTitle">Music Family</h3>
           <div style="font-size:12px;color:var(--muted);" id="mSubtitle">Worship & praise team</div>
         </div>
       </div>
-      <button class="close-btn" onclick="closeModal('manageMinistryModal')"><i class="ph ph-x"></i></button>
+      <button class="close-btn" onclick="closeModal('manageFamilyModal')"><i class="ph ph-x"></i></button>
     </div>
     <div class="modal-body" style="padding-top:0;">
       <div class="tabs" style="margin-bottom:20px;border-bottom:1px solid var(--border);">
@@ -100,7 +100,7 @@
       <!-- Members Tab -->
       <div id="mMembers" class="tab-pane" style="display:none;">
         <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
-          <button class="btn btn-primary btn-sm" onclick="openEnrolMinistryMember()"><i class="ph ph-plus"></i> Enrol Member</button>
+          <button class="btn btn-primary btn-sm" onclick="openEnrolFamilyMember()"><i class="ph ph-plus"></i> Enrol Member</button>
         </div>
         <div class="table-responsive">
           <table style="width:100%;font-size:13px;">
@@ -144,10 +144,10 @@
 
         <!-- Record Attendance Form (hidden by default) -->
         <div id="attRecordForm" style="display:none;margin-bottom:20px;">
-          <form action="handlers/attendance_handler.php" method="POST" id="ministryAttForm">
+          <form action="handlers/attendance_handler.php" method="POST" id="familyAttForm">
             <?= csrfField() ?>
-            <input type="hidden" name="action" value="record_ministry_attendance">
-            <input type="hidden" name="ministry_id" id="att_ministryId">
+            <input type="hidden" name="action" value="record_family_attendance">
+            <input type="hidden" name="family_id" id="att_familyId">
 
             <div style="background:#FAFAF8;border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
@@ -161,7 +161,7 @@
                 <div class="form-group" style="margin-bottom:0;">
                   <label class="form-label" style="font-size:12px;">Session Type</label>
                   <select class="form-control" name="session_type" required style="font-size:13px;padding:8px 10px;">
-                    <option value="Ministry Meeting">Ministry Meeting</option>
+                    <option value="Family Meeting">Family Meeting</option>
                     <option value="Practice">Practice</option>
                     <option value="Bible Study">Bible Study</option>
                     <option value="Rehearsal">Rehearsal</option>
@@ -208,7 +208,7 @@
           <input type="date" id="filterAttDate" class="form-control" style="font-size:12px;padding:6px 10px;flex:1;min-width:110px;" onchange="fetchAttendanceRecords()">
           <select id="filterAttType" class="form-control" style="font-size:12px;padding:6px 10px;flex:1;min-width:130px;" onchange="fetchAttendanceRecords()">
             <option value="">All Session Types</option>
-            <option value="Ministry Meeting">Ministry Meeting</option>
+            <option value="Family Meeting">Family Meeting</option>
             <option value="Practice">Practice</option>
             <option value="Bible Study">Bible Study</option>
             <option value="Rehearsal">Rehearsal</option>
@@ -248,12 +248,12 @@
 
       <!-- Edit Tab -->
       <div id="mEdit" class="tab-pane" style="display:none;">
-        <form action="handlers/ministry_handler.php" method="POST" id="editMinistryForm">
+        <form action="handlers/family_handler.php" method="POST" id="editFamilyForm">
           <?= csrfField() ?>
-          <input type="hidden" name="action" value="edit_ministry">
-          <input type="hidden" name="ministry_id" id="edit_mId">
+          <input type="hidden" name="action" value="edit_family">
+          <input type="hidden" name="family_id" id="edit_mId">
           <div class="form-group">
-            <label class="form-label">Ministry Name</label>
+            <label class="form-label">Family Name</label>
             <input class="form-control" name="name" id="edit_mName" required>
           </div>
           <div class="form-group">
@@ -280,8 +280,8 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('manageMinistryModal')">Close</button>
-      <button class="btn btn-primary" onclick="downloadMinistryReport()">Download Report</button>
+      <button class="btn btn-outline" onclick="closeModal('manageFamilyModal')">Close</button>
+      <button class="btn btn-primary" onclick="downloadFamilyReport()">Download Report</button>
     </div>
   </div>
 </div>
@@ -353,23 +353,23 @@
   });
 </script>
 
-<!-- Send Ministry Message Modal -->
-<div class="modal-overlay" id="sendMinistryMessageModal">
+<!-- Send Family Message Modal -->
+<div class="modal-overlay" id="sendFamilyMessageModal">
   <div class="modal" style="max-width:540px;">
     <div class="modal-header">
-      <h3 id="bulkMsgTitle">Send Ministry Message</h3>
-      <button class="close-btn" onclick="closeModal('sendMinistryMessageModal')"><i class="ph ph-x"></i></button>
+      <h3 id="bulkMsgTitle">Send Family Message</h3>
+      <button class="close-btn" onclick="closeModal('sendFamilyMessageModal')"><i class="ph ph-x"></i></button>
     </div>
-    <form action="handlers/ministry_handler.php" method="POST" id="sendMinistryBulkForm">
+    <form action="handlers/family_handler.php" method="POST" id="sendFamilyBulkForm">
       <?= csrfField() ?>
-      <input type="hidden" name="action" value="send_ministry_bulk_message">
-      <input type="hidden" name="ministry_id" id="bulkMsgMinId">
+      <input type="hidden" name="action" value="send_family_bulk_message">
+      <input type="hidden" name="family_id" id="bulkMsgMinId">
       
       <div class="modal-body">
         <div style="background:var(--deep-pale); border-radius:12px; padding:16px; display:flex; align-items:center; gap:14px; border:1px solid rgba(46,45,123,0.1); margin-bottom:20px;">
           <div id="bulkMsgIcon" style="font-size:24px; width:48px; height:48px; display:flex; align-items:center; justify-content:center; border-radius:10px; background:white;">✝️</div>
           <div>
-            <div id="bulkMsgMinName" style="font-weight:700; color:var(--deep); font-size:16px;">Ministry Name</div>
+            <div id="bulkMsgMinName" style="font-weight:700; color:var(--deep); font-size:16px;">Family Name</div>
             <div style="font-size:12px; color:var(--muted);"><span id="bulkMsgCount">0</span> active members will receive this message</div>
           </div>
         </div>
@@ -395,7 +395,7 @@
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline" onclick="closeModal('sendMinistryMessageModal')">Cancel</button>
+        <button type="button" class="btn btn-outline" onclick="closeModal('sendFamilyMessageModal')">Cancel</button>
         <button type="submit" class="btn btn-primary">
           <i class="ph ph-paper-plane-tilt"></i> Send Broadcast
         </button>
@@ -404,17 +404,17 @@
   </div>
 </div>
 
-<!-- Enrol Ministry Member Modal -->
-<div class="modal-overlay" id="enrolMinistryMemberModal">
+<!-- Enrol Family Member Modal -->
+<div class="modal-overlay" id="enrolFamilyMemberModal">
   <div class="modal" style="max-width:500px;">
     <div class="modal-header">
-      <h3>Enrol Member in Ministry</h3>
-      <button class="close-btn" onclick="closeModal('enrolMinistryMemberModal')"><i class="ph ph-x"></i></button>
+      <h3>Enrol Member in Family</h3>
+      <button class="close-btn" onclick="closeModal('enrolFamilyMemberModal')"><i class="ph ph-x"></i></button>
     </div>
-    <form action="handlers/ministry_handler.php" method="POST" id="enrolMinistryMemberForm">
+    <form action="handlers/family_handler.php" method="POST" id="enrolFamilyMemberForm">
       <?= csrfField() ?>
-      <input type="hidden" name="action" value="enrol_ministry_member">
-      <input type="hidden" name="ministry_id" id="enrol_ministryId">
+      <input type="hidden" name="action" value="enrol_family_member">
+      <input type="hidden" name="family_id" id="enrol_familyId">
       <div class="modal-body">
         <div class="form-group" style="position: relative;">
           <label class="form-label">Select Member</label>
@@ -442,14 +442,14 @@
         </div>
 
         <div style="background:#F1F5F9;border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;margin-top:10px;margin-bottom:14px;">
-          <input type="checkbox" id="sendMinistryWelcome" name="send_welcome" checked style="width:16px;height:16px;cursor:pointer;">
-          <label for="sendMinistryWelcome" style="font-size:13px;font-weight:600;cursor:pointer;color:var(--deep2);display:block;">
+          <input type="checkbox" id="sendFamilyWelcome" name="send_welcome" checked style="width:16px;height:16px;cursor:pointer;">
+          <label for="sendFamilyWelcome" style="font-size:13px;font-weight:600;cursor:pointer;color:var(--deep2);display:block;">
             Send welcome message automatically
           </label>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline" onclick="closeModal('enrolMinistryMemberModal')">Cancel</button>
+        <button type="button" class="btn btn-outline" onclick="closeModal('enrolFamilyMemberModal')">Cancel</button>
         <button type="submit" class="btn btn-primary">
           <i class="ph ph-hand-heart"></i> Enrol Member
         </button>
@@ -458,17 +458,17 @@
   </div>
 </div>
 
-<!-- Edit Ministry Member Modal -->
-<div class="modal-overlay" id="editMinistryMemberModal">
+<!-- Edit Family Member Modal -->
+<div class="modal-overlay" id="editFamilyMemberModal">
   <div class="modal" style="max-width:500px;">
     <div class="modal-header">
       <h3>Edit Enrolled Member</h3>
-      <button class="close-btn" onclick="closeModal('editMinistryMemberModal')"><i class="ph ph-x"></i></button>
+      <button class="close-btn" onclick="closeModal('editFamilyMemberModal')"><i class="ph ph-x"></i></button>
     </div>
-    <form action="handlers/ministry_handler.php" method="POST" id="editMinistryMemberForm">
+    <form action="handlers/family_handler.php" method="POST" id="editFamilyMemberForm">
       <?= csrfField() ?>
-      <input type="hidden" name="action" value="edit_ministry_member">
-      <input type="hidden" name="ministry_id" id="edit_min_ministryId">
+      <input type="hidden" name="action" value="edit_family_member">
+      <input type="hidden" name="family_id" id="edit_min_familyId">
       <input type="hidden" name="member_id" id="edit_min_memberId">
       <div class="modal-body">
         <div class="form-group">
@@ -494,7 +494,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline" onclick="closeModal('editMinistryMemberModal')">Cancel</button>
+        <button type="button" class="btn btn-outline" onclick="closeModal('editFamilyMemberModal')">Cancel</button>
         <button type="submit" class="btn btn-primary">
           <i class="ph ph-floppy-disk"></i> Save Changes
         </button>

@@ -1,7 +1,7 @@
 <?php
 /**
- * Ministry Handler — Add & Edit Ministries
- * POST actions: add_ministry | edit_ministry
+ * Family Handler — Add & Edit Families
+ * POST actions: add_family | edit_family
  */
 require_once '../includes/auth.php';
 requireAuth();
@@ -12,9 +12,9 @@ verifyCsrf();
 
 $action   = $_POST['action'] ?? '';
 $db       = getDB();
-$redirect = '../ministries.php';
+$redirect = '../families.php';
 
-if ($action === 'add_ministry') {
+if ($action === 'add_family') {
     $name        = trim($_POST['name']        ?? '');
     $description = trim($_POST['description'] ?? '');
     $icon        = trim($_POST['icon']        ?? '✝️');
@@ -26,19 +26,19 @@ if ($action === 'add_ministry') {
 
     try {
         $db->prepare(
-            "INSERT INTO ministries (slug, name, description, meeting_time, icon, bg_color) VALUES (?, ?, ?, ?, ?, ?)"
+            "INSERT INTO families (slug, name, description, meeting_time, icon, bg_color) VALUES (?, ?, ?, ?, ?, ?)"
         )->execute([$slug, $name, $description ?: null, $meetingTime ?: null, $icon, $bgColor]);
 
-        logActivity("Created ministry: {$name}", 'ministries');
-        redirect($redirect . '?success=ministry_added');
+        logActivity("Created family: {$name}", 'families');
+        redirect($redirect . '?success=family_added');
     } catch (PDOException $e) {
-        error_log('add_ministry: ' . $e->getMessage());
+        error_log('add_family: ' . $e->getMessage());
         redirect($redirect . '?error=db_error');
     }
 }
 
-if ($action === 'edit_ministry') {
-    $id          = (int)($_POST['ministry_id'] ?? 0);
+if ($action === 'edit_family') {
+    $id          = (int)($_POST['family_id'] ?? 0);
     $name        = trim($_POST['name']         ?? '');
     $description = trim($_POST['description']  ?? '');
     $icon        = trim($_POST['icon']         ?? '✝️');
@@ -49,80 +49,80 @@ if ($action === 'edit_ministry') {
 
     try {
         $db->prepare(
-            "UPDATE ministries SET name=?, description=?, meeting_time=?, icon=?, slug=? WHERE id=?"
+            "UPDATE families SET name=?, description=?, meeting_time=?, icon=?, slug=? WHERE id=?"
         )->execute([$name, $description ?: null, $meetingTime ?: null, $icon, $newSlug, $id]);
 
-        logActivity("Updated ministry: {$name}", 'ministries');
-        redirect($redirect . '?success=ministry_updated');
+        logActivity("Updated family: {$name}", 'families');
+        redirect($redirect . '?success=family_updated');
     } catch (PDOException $e) {
-        error_log('edit_ministry: ' . $e->getMessage());
+        error_log('edit_family: ' . $e->getMessage());
         redirect($redirect . '?error=db_error');
     }
 }
 
-if ($action === 'delete_ministry') {
-    $id = (int)($_POST['ministry_id'] ?? 0);
+if ($action === 'delete_family') {
+    $id = (int)($_POST['family_id'] ?? 0);
 
     if (!$id) redirect($redirect . '?error=missing_fields');
 
     // Guard: prevent deletion if members are still assigned
-    $count = $db->prepare("SELECT COUNT(*) FROM member_ministries WHERE ministry_id = ?");
+    $count = $db->prepare("SELECT COUNT(*) FROM member_families WHERE family_id = ?");
     $count->execute([$id]);
     if ((int)$count->fetchColumn() > 0) {
-        redirect($redirect . '?error=ministry_has_members');
+        redirect($redirect . '?error=family_has_members');
     }
 
     try {
-        $nameRow = $db->prepare("SELECT name FROM ministries WHERE id = ?");
+        $nameRow = $db->prepare("SELECT name FROM families WHERE id = ?");
         $nameRow->execute([$id]);
         $mName = $nameRow->fetchColumn() ?: 'Unknown';
 
-        $db->prepare("DELETE FROM ministries WHERE id = ?")->execute([$id]);
+        $db->prepare("DELETE FROM families WHERE id = ?")->execute([$id]);
 
-        logActivity("Deleted ministry: {$mName}", 'ministries');
-        redirect($redirect . '?success=ministry_deleted');
+        logActivity("Deleted family: {$mName}", 'families');
+        redirect($redirect . '?success=family_deleted');
     } catch (PDOException $e) {
-        error_log('delete_ministry: ' . $e->getMessage());
+        error_log('delete_family: ' . $e->getMessage());
         redirect($redirect . '?error=db_error');
     }
 }
 
-if ($action === 'send_ministry_bulk_message') {
-    $ministryId = (int)($_POST['ministry_id'] ?? 0);
+if ($action === 'send_family_bulk_message') {
+    $familyId = (int)($_POST['family_id'] ?? 0);
     $subject    = trim($_POST['subject']      ?? '');
     $message    = trim($_POST['message']      ?? '');
     $channel    = $_POST['channel']           ?? 'both';
 
-    if (!$ministryId || !$message) {
+    if (!$familyId || !$message) {
         redirect($redirect . '?error=missing_fields');
     }
 
-    $result = broadcastMinistryMessage($ministryId, $subject, $message, $channel);
+    $result = broadcastFamilyMessage($familyId, $subject, $message, $channel);
 
-    logActivity("Broadcast to {$result['ministry']}: {$result['sent']} sent, {$result['failed']} failed", 'ministries');
+    logActivity("Broadcast to {$result['family']}: {$result['sent']} sent, {$result['failed']} failed", 'families');
     redirect($redirect . "?success=messages_sent&sent={$result['sent']}&failed={$result['failed']}");
 }
 
-if ($action === 'enrol_ministry_member') {
-    $ministryId = (int)($_POST['ministry_id'] ?? 0);
+if ($action === 'enrol_family_member') {
+    $familyId = (int)($_POST['family_id'] ?? 0);
     $memberId   = (int)($_POST['member_id']   ?? 0);
     $role       = trim($_POST['role']         ?? 'Member');
     $enrolDate  = date('Y-m-d'); // Auto-capture enrol date
     $notes      = trim($_POST['notes']        ?? '');
     $adminId    = $_SESSION['admin_id']       ?? null;
 
-    if (!$ministryId || !$memberId) {
+    if (!$familyId || !$memberId) {
         redirect($redirect . '?error=missing_fields');
     }
 
     try {
         $stmt = $db->prepare(
-            "INSERT INTO member_ministries (member_id, ministry_id, role, enrol_date, notes, enrolled_by) 
+            "INSERT INTO member_families (member_id, family_id, role, enrol_date, notes, enrolled_by) 
              VALUES (?, ?, ?, ?, ?, ?) 
              ON DUPLICATE KEY UPDATE 
              role = VALUES(role), enrol_date = VALUES(enrol_date), notes = VALUES(notes), enrolled_by = VALUES(enrolled_by)"
         );
-        $stmt->execute([$memberId, $ministryId, $role, $enrolDate, $notes, $adminId]);
+        $stmt->execute([$memberId, $familyId, $role, $enrolDate, $notes, $adminId]);
 
         // Send Welcome Message
         if (isset($_POST['send_welcome'])) {
@@ -130,8 +130,8 @@ if ($action === 'enrol_ministry_member') {
             $memRow->execute([$memberId]);
             $member = $memRow->fetch(PDO::FETCH_ASSOC);
 
-            $minRow = $db->prepare("SELECT name FROM ministries WHERE id = ?");
-            $minRow->execute([$ministryId]);
+            $minRow = $db->prepare("SELECT name FROM families WHERE id = ?");
+            $minRow->execute([$familyId]);
             $minName = $minRow->fetchColumn();
 
             if ($member && $minName) {
@@ -141,50 +141,50 @@ if ($action === 'enrol_ministry_member') {
             }
         }
 
-        logActivity("Enrolled member ID {$memberId} in ministry ID {$ministryId}", 'ministries');
+        logActivity("Enrolled member ID {$memberId} in family ID {$familyId}", 'families');
         redirect($redirect . '?success=member_enrolled');
     } catch (PDOException $e) {
-        error_log('enrol_ministry_member: ' . $e->getMessage());
+        error_log('enrol_family_member: ' . $e->getMessage());
         redirect($redirect . '?error=db_error');
     }
 }
 
-if ($action === 'remove_ministry_member') {
-    $ministryId = (int)($_POST['ministry_id'] ?? 0);
+if ($action === 'remove_family_member') {
+    $familyId = (int)($_POST['family_id'] ?? 0);
     $memberId   = (int)($_POST['member_id']   ?? 0);
 
-    if (!$ministryId || !$memberId) {
+    if (!$familyId || !$memberId) {
         redirect($redirect . '?error=missing_fields');
     }
 
     try {
-        $db->prepare("DELETE FROM member_ministries WHERE member_id = ? AND ministry_id = ?")->execute([$memberId, $ministryId]);
-        logActivity("Removed member ID {$memberId} from ministry ID {$ministryId}", 'ministries');
+        $db->prepare("DELETE FROM member_families WHERE member_id = ? AND family_id = ?")->execute([$memberId, $familyId]);
+        logActivity("Removed member ID {$memberId} from family ID {$familyId}", 'families');
         redirect($redirect . '?success=member_removed');
     } catch (PDOException $e) {
-        error_log('remove_ministry_member: ' . $e->getMessage());
+        error_log('remove_family_member: ' . $e->getMessage());
         redirect($redirect . '?error=db_error');
     }
 }
 
-if ($action === 'edit_ministry_member') {
-    $ministryId = (int)($_POST['ministry_id'] ?? 0);
+if ($action === 'edit_family_member') {
+    $familyId = (int)($_POST['family_id'] ?? 0);
     $memberId   = (int)($_POST['member_id']   ?? 0);
     $role       = trim($_POST['role']         ?? 'Member');
     $notes      = trim($_POST['notes']        ?? '');
 
-    if (!$ministryId || !$memberId) {
+    if (!$familyId || !$memberId) {
         redirect($redirect . '?error=missing_fields');
     }
 
     try {
-        $stmt = $db->prepare("UPDATE member_ministries SET role = ?, notes = ? WHERE member_id = ? AND ministry_id = ?");
-        $stmt->execute([$role, $notes, $memberId, $ministryId]);
+        $stmt = $db->prepare("UPDATE member_families SET role = ?, notes = ? WHERE member_id = ? AND family_id = ?");
+        $stmt->execute([$role, $notes, $memberId, $familyId]);
 
-        logActivity("Updated member ID {$memberId} in ministry ID {$ministryId}", 'ministries');
+        logActivity("Updated member ID {$memberId} in family ID {$familyId}", 'families');
         redirect($redirect . '?success=member_updated');
     } catch (PDOException $e) {
-        error_log('edit_ministry_member: ' . $e->getMessage());
+        error_log('edit_family_member: ' . $e->getMessage());
         redirect($redirect . '?error=db_error');
     }
 }

@@ -91,11 +91,9 @@ if ($action === 'fetch_welfare_recipients') {
     }
 }
 
-// ── ENROL MEMBER ──────────────────────────────────────────────────────────────
 if ($action === 'enrol_welfare') {
     $memberId      = (int)($_POST['member_id']      ?? 0);
     $enrolDate     = $_POST['enrol_date']           ?? date('Y-m-d');
-    $familyGroup   = $_POST['family_group']         ?? null;
     $monthlyAmount = (float)($_POST['monthly_amount'] ?? 0);
     $notes         = trim($_POST['notes']           ?? '');
 
@@ -104,6 +102,13 @@ if ($action === 'enrol_welfare') {
     }
 
     try {
+        // Automatically fetch the member's family
+        $famStmt = $db->prepare(
+            "SELECT f.name FROM member_families mf JOIN families f ON mf.family_id = f.id WHERE mf.member_id = ? LIMIT 1"
+        );
+        $famStmt->execute([$memberId]);
+        $familyGroup = $famStmt->fetchColumn() ?: null;
+
         $stmt = $db->prepare(
             "INSERT INTO welfare_members (member_id, enrol_date, family_group, monthly_amount, notes, enrolled_by)
              VALUES (?, ?, ?, ?, ?, ?)"

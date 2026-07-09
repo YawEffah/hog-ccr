@@ -32,26 +32,50 @@ if (!$successMsg && !$errorMsg) {
 
 $db = getDB();
 $filterMonth = $_GET['month'] ?? date('Y-m');
-// Ensure format is valid (YYYY-MM), else fallback
-if (!preg_match('/^\d{4}-\d{2}$/', $filterMonth)) {
+// Ensure format is valid (YYYY-MM or YYYY-all), else fallback
+if (!preg_match('/^\d{4}-(\d{2}|all)$/', $filterMonth)) {
     $filterMonth = date('Y-m');
 }
 
-// ── Finance Statistics ───────────────────────────────────────────────────────
-$statsStmt = $db->prepare(
-    "SELECT 
-        SUM(CASE WHEN type='Tithe' THEN amount ELSE 0 END) as tithes,
-        SUM(CASE WHEN type='Offering' THEN amount ELSE 0 END) as offerings,
-        SUM(CASE WHEN type='Donation' THEN amount ELSE 0 END) as donations,
-        SUM(amount) as total
-     FROM finance_transactions 
-     WHERE DATE_FORMAT(transaction_date, '%Y-%m') = ?"
-);
-$statsStmt->execute([$filterMonth]);
-$rawStats = $statsStmt->fetch();
+$isAllMonths = false;
+$filterYear = '';
+if (strpos($filterMonth, '-all') !== false) {
+    $isAllMonths = true;
+    $filterYear = explode('-', $filterMonth)[0];
+}
 
-$targetStmt = $db->prepare("SELECT target_amount FROM finance_targets WHERE DATE_FORMAT(target_month, '%Y-%m') = ?");
-$targetStmt->execute([$filterMonth]);
+// ── Finance Statistics ───────────────────────────────────────────────────────
+if ($isAllMonths) {
+    $statsStmt = $db->prepare(
+        "SELECT 
+            SUM(CASE WHEN type='Tithe' THEN amount ELSE 0 END) as tithes,
+            SUM(CASE WHEN type='Offering' THEN amount ELSE 0 END) as offerings,
+            SUM(CASE WHEN type='Donation' THEN amount ELSE 0 END) as donations,
+            SUM(amount) as total
+         FROM finance_transactions 
+         WHERE DATE_FORMAT(transaction_date, '%Y') = ?"
+    );
+    $statsStmt->execute([$filterYear]);
+    $rawStats = $statsStmt->fetch();
+
+    $targetStmt = $db->prepare("SELECT SUM(target_amount) FROM finance_targets WHERE DATE_FORMAT(target_month, '%Y') = ?");
+    $targetStmt->execute([$filterYear]);
+} else {
+    $statsStmt = $db->prepare(
+        "SELECT 
+            SUM(CASE WHEN type='Tithe' THEN amount ELSE 0 END) as tithes,
+            SUM(CASE WHEN type='Offering' THEN amount ELSE 0 END) as offerings,
+            SUM(CASE WHEN type='Donation' THEN amount ELSE 0 END) as donations,
+            SUM(amount) as total
+         FROM finance_transactions 
+         WHERE DATE_FORMAT(transaction_date, '%Y-%m') = ?"
+    );
+    $statsStmt->execute([$filterMonth]);
+    $rawStats = $statsStmt->fetch();
+
+    $targetStmt = $db->prepare("SELECT target_amount FROM finance_targets WHERE DATE_FORMAT(target_month, '%Y-%m') = ?");
+    $targetStmt->execute([$filterMonth]);
+}
 $monthlyTarget = (float)$targetStmt->fetchColumn() ?: 10000;
 
 $totalIncome = (float)($rawStats['total'] ?? 0);
@@ -65,14 +89,25 @@ $finance_stats = [
 ];
 
 // ── Recent Transactions ──────────────────────────────────────────────────────
-$txnStmt = $db->prepare(
-    "SELECT t.* 
-     FROM finance_transactions t
-     WHERE DATE_FORMAT(t.transaction_date, '%Y-%m') = ?
-     ORDER BY t.transaction_date DESC, t.created_at DESC
-     LIMIT 100"
-);
-$txnStmt->execute([$filterMonth]);
+if ($isAllMonths) {
+    $txnStmt = $db->prepare(
+        "SELECT t.* 
+         FROM finance_transactions t
+         WHERE DATE_FORMAT(t.transaction_date, '%Y') = ?
+         ORDER BY t.transaction_date DESC, t.created_at DESC
+         LIMIT 100"
+    );
+    $txnStmt->execute([$filterYear]);
+} else {
+    $txnStmt = $db->prepare(
+        "SELECT t.* 
+         FROM finance_transactions t
+         WHERE DATE_FORMAT(t.transaction_date, '%Y-%m') = ?
+         ORDER BY t.transaction_date DESC, t.created_at DESC
+         LIMIT 100"
+    );
+    $txnStmt->execute([$filterMonth]);
+}
 $rawTxns = $txnStmt->fetchAll();
 
 $typeBadges = [
@@ -97,13 +132,23 @@ $transactions = array_map(function($t) use ($typeBadges) {
 }, $rawTxns);
 
 // ── Income Breakdown ─────────────────────────────────────────────────────────
-$breakdownStmt = $db->prepare(
-    "SELECT type, SUM(amount) as total 
-     FROM finance_transactions 
-     WHERE DATE_FORMAT(transaction_date, '%Y-%m') = ?
-     GROUP BY type"
-);
-$breakdownStmt->execute([$filterMonth]);
+if ($isAllMonths) {
+    $breakdownStmt = $db->prepare(
+        "SELECT type, SUM(amount) as total 
+         FROM finance_transactions 
+         WHERE DATE_FORMAT(transaction_date, '%Y') = ?
+         GROUP BY type"
+    );
+    $breakdownStmt->execute([$filterYear]);
+} else {
+    $breakdownStmt = $db->prepare(
+        "SELECT type, SUM(amount) as total 
+         FROM finance_transactions 
+         WHERE DATE_FORMAT(transaction_date, '%Y-%m') = ?
+         GROUP BY type"
+    );
+    $breakdownStmt->execute([$filterMonth]);
+}
 $rawBreakdown = $breakdownStmt->fetchAll();
 
 $breakdownColors = [
@@ -159,6 +204,7 @@ $income_breakdown = array_map(function($b) use ($totalIncome, $breakdownColors) 
           ?>
           <div style="display:flex;gap:8px;">
             <select class="form-control" style="width:120px;padding:8px 12px;" id="financeMonthSelect" onchange="updateFinanceFilter()">
+              <option value="all" <?= $currentM === 'all' ? 'selected' : '' ?>>All Months</option>
               <?php foreach($monthsList as $num => $name): ?>
                 <option value="<?= $num ?>" <?= $currentM === $num ? 'selected' : '' ?>><?= $name ?></option>
               <?php endforeach; ?>

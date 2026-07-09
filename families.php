@@ -1,35 +1,35 @@
 <?php
 /**
- * Ministries & Groups Page
+ * Families & Groups Page
  */
 require_once 'includes/auth.php';
 requireAuth();
 require_once 'includes/db.php';
 require_once 'includes/helpers.php';
 
-$pageTitle  = 'Ministries';
-$activePage = 'ministries';
+$pageTitle  = 'Families';
+$activePage = 'families';
 
 $successMsg = flash('success');
 $errorMsg   = flash('error');
 
 $db = getDB();
 
-// ── Ministries List with Member Counts ───────────────────────────────────────
+// ── Families List with Member Counts ───────────────────────────────────────
 $minStmt = $db->query(
     "SELECT min.*, 
-            (SELECT COUNT(*) FROM member_ministries WHERE ministry_id = min.id) as total_count,
-            (SELECT COUNT(*) FROM member_ministries mm JOIN members m ON mm.member_id = m.id WHERE mm.ministry_id = min.id AND m.status='Active') as active_count
-     FROM ministries min
+            (SELECT COUNT(*) FROM member_families WHERE family_id = min.id) as total_count,
+            (SELECT COUNT(*) FROM member_families mm JOIN members m ON mm.member_id = m.id WHERE mm.family_id = min.id AND m.status='Active') as active_count
+     FROM families min
      ORDER BY min.name ASC"
 );
-$rawMinistries = $minStmt->fetchAll();
+$rawFamilies = $minStmt->fetchAll();
 
 // ── All Members for Search suggestions ───────────────────────────────────────
 $allMembers = $db->query("SELECT id, first_name, last_name, member_code FROM members ORDER BY last_name ASC")->fetchAll();
 
-$ministries = array_map(function($m) use ($db) {
-    // Get average attendance for this ministry (from ministry-scoped sessions)
+$families = array_map(function($m) use ($db) {
+    // Get average attendance for this family (from family-scoped sessions)
     $attStmt = $db->prepare("
         SELECT AVG(present_count / total_possible * 100) as avg_att
         FROM (
@@ -38,7 +38,7 @@ $ministries = array_map(function($m) use ($db) {
                    COUNT(r.id) as total_possible
             FROM attendance_sessions s
             JOIN attendance_records r ON s.id = r.session_id
-            WHERE s.ministry_id = ?
+            WHERE s.family_id = ?
             GROUP BY s.id
         ) as session_stats
     ");
@@ -56,13 +56,13 @@ $ministries = array_map(function($m) use ($db) {
         'active_count'   => $m['active_count'],
         'attendance_avg' => round($avgAtt)
     ];
-}, $rawMinistries);
+}, $rawFamilies);
 
 // ── Detail data for the "Manage" modal ───────────────────────────────────────
-$ministry_details = [];
-foreach ($rawMinistries as $m) {
+$family_details = [];
+foreach ($rawFamilies as $m) {
     // Fetch members (for Members tab)
-    $memStmt = $db->prepare("SELECT m.id, m.first_name, m.last_name, mm.enrol_date, mm.role, mm.notes, m.status FROM members m JOIN member_ministries mm ON m.id = mm.member_id WHERE mm.ministry_id = ? ORDER BY mm.enrol_date DESC, m.last_name ASC LIMIT 100");
+    $memStmt = $db->prepare("SELECT m.id, m.first_name, m.last_name, mm.enrol_date, mm.role, mm.notes, m.status FROM members m JOIN member_families mm ON m.id = mm.member_id WHERE mm.family_id = ? ORDER BY mm.enrol_date DESC, m.last_name ASC LIMIT 100");
     $memStmt->execute([$m['id']]);
     $members = $memStmt->fetchAll();
 
@@ -78,16 +78,16 @@ foreach ($rawMinistries as $m) {
         ];
     }, $members);
 
-    // Fetch ministry members for attendance checklist (id, name, code)
+    // Fetch family members for attendance checklist (id, name, code)
     $attMemStmt = $db->prepare(
         "SELECT m.id, m.first_name, m.last_name, m.member_code
          FROM members m
-         JOIN member_ministries mm ON m.id = mm.member_id
-         WHERE mm.ministry_id = ? AND m.status != 'Affiliate Community Member'
+         JOIN member_families mm ON m.id = mm.member_id
+         WHERE mm.family_id = ? AND m.status != 'Affiliate Community Member'
          ORDER BY m.last_name ASC"
     );
     $attMemStmt->execute([$m['id']]);
-    $ministryMembers = array_map(function($mem) {
+    $familyMembers = array_map(function($mem) {
         return [
             'id'   => $mem['id'],
             'name' => $mem['first_name'] . ' ' . $mem['last_name'],
@@ -95,12 +95,12 @@ foreach ($rawMinistries as $m) {
         ];
     }, $attMemStmt->fetchAll());
 
-    // Fetch session count (ministry-scoped)
-    $sessStmt = $db->prepare("SELECT COUNT(*) FROM attendance_sessions WHERE ministry_id = ?");
+    // Fetch session count (family-scoped)
+    $sessStmt = $db->prepare("SELECT COUNT(*) FROM attendance_sessions WHERE family_id = ?");
     $sessStmt->execute([$m['id']]);
     $sessionCount = (int)$sessStmt->fetchColumn();
 
-    // Fetch recent sessions (last 5, ministry-scoped)
+    // Fetch recent sessions (last 5, family-scoped)
     $recentStmt = $db->prepare("
         SELECT s.id, s.session_type, s.session_date, s.session_time,
                SUM(CASE WHEN r.status = 'Present' THEN 1 ELSE 0 END) as present_count,
@@ -108,7 +108,7 @@ foreach ($rawMinistries as $m) {
                COUNT(r.id) as total_count
         FROM attendance_sessions s
         LEFT JOIN attendance_records r ON s.id = r.session_id
-        WHERE s.ministry_id = ?
+        WHERE s.family_id = ?
         GROUP BY s.id
         ORDER BY s.session_date DESC, s.session_time DESC
         LIMIT 5
@@ -127,13 +127,13 @@ foreach ($rawMinistries as $m) {
         ];
     }, $recentStmt->fetchAll());
 
-    // Fetch trend (last 6 sessions, ministry-scoped)
+    // Fetch trend (last 6 sessions, family-scoped)
     $trendStmt = $db->prepare("
         SELECT s.session_type,
                (SUM(CASE WHEN r.status = 'Present' THEN 1 ELSE 0 END) / COUNT(r.id) * 100) as pct
         FROM attendance_sessions s
         JOIN attendance_records r ON s.id = r.session_id
-        WHERE s.ministry_id = ?
+        WHERE s.family_id = ?
         GROUP BY s.id
         ORDER BY s.session_date DESC
         LIMIT 6
@@ -144,7 +144,7 @@ foreach ($rawMinistries as $m) {
         return ['pct' => round($r['pct']), 'type' => $r['session_type']];
     }, $trendRows));
 
-    // Calculate avg attendance for modal (ministry-scoped)
+    // Calculate avg attendance for modal (family-scoped)
     $attStmt = $db->prepare("
         SELECT AVG(present_count / total_possible * 100) as avg_att
         FROM (
@@ -153,7 +153,7 @@ foreach ($rawMinistries as $m) {
                    COUNT(r.id) as total_possible
             FROM attendance_sessions s
             JOIN attendance_records r ON s.id = r.session_id
-            WHERE s.ministry_id = ?
+            WHERE s.family_id = ?
             GROUP BY s.id
         ) as session_stats
     ");
@@ -167,14 +167,14 @@ foreach ($rawMinistries as $m) {
             SUM(CASE WHEN r.status = 'Absent' THEN 1 ELSE 0 END) as total_absent
         FROM attendance_sessions s
         JOIN attendance_records r ON s.id = r.session_id
-        WHERE s.ministry_id = ?
+        WHERE s.family_id = ?
     ");
     $aggStmt->execute([$m['id']]);
     $aggRow = $aggStmt->fetch(PDO::FETCH_ASSOC);
     $totalPresent = (int)$aggRow['total_present'];
     $totalAbsent = (int)$aggRow['total_absent'];
 
-    $ministry_details[$m['id']] = [
+    $family_details[$m['id']] = [
         'id'               => $m['id'],
         'icon'             => $m['icon'],
         'bg'               => $m['bg_color'],
@@ -187,7 +187,7 @@ foreach ($rawMinistries as $m) {
         'total_absent'     => $totalAbsent,
         'sessions'         => $sessionCount,
         'members'          => $formattedMembers,
-        'ministry_members' => $ministryMembers,
+        'family_members' => $familyMembers,
         'recent_sessions'  => $recentSessions,
         'history'          => [],
         'chart_data'       => $chartData
@@ -206,17 +206,17 @@ foreach ($rawMinistries as $m) {
   <!-- MAIN CONTENT -->
   <main id="main">
 
-    <div id="page-ministries" class="page">
+    <div id="page-families" class="page">
       <div class="topbar">
         <div style="display:flex;align-items:center;">
           <button class="mobile-toggle" onclick="toggleSidebar()">
             <i class="ph ph-list"></i>
           </button>
-          <div class="topbar-title">Ministries & Groups</div>
+          <div class="topbar-title">Families & Groups</div>
         </div>
         <div class="topbar-actions">
 
-          <button class="btn btn-primary btn-sm" onclick="openModal('addMinistryModal')">+ New Ministry</button>
+          <button class="btn btn-primary btn-sm" onclick="openModal('addFamilyModal')">+ New Family</button>
         </div>
       </div>
 
@@ -224,7 +224,7 @@ foreach ($rawMinistries as $m) {
 
       <div class="content">
         <div class="grid-3" style="margin-bottom:24px;">
-          <?php foreach ($ministries as $m): ?>
+          <?php foreach ($families as $m): ?>
           <div class="ministry-card">
             <div class="ministry-icon" style="background:<?= $m['bg_color'] ?>;"><?= $m['icon'] ?></div>
             <div
@@ -234,10 +234,10 @@ foreach ($rawMinistries as $m) {
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <span class="badge badge-blue"><?= $m['count'] ?> members</span>
               <div style="display:flex;gap:6px;">
-                <button class="btn btn-outline btn-sm" onclick="openMinistryAttendance('<?= $m['id'] ?>')" title="Mark Attendance"><i class="ph ph-clipboard-text"></i></button>
-                <button class="btn btn-outline btn-sm" onclick="openMinistryBulkMessage('<?= $m['id'] ?>', '<?= htmlspecialchars(addslashes($m['name'])) ?>', '<?= $m['icon'] ?>', <?= $m['count'] ?>)" title="Message Ministry"><i class="ph ph-chat-centered-dots"></i></button>
-                <button class="btn btn-outline btn-sm" onclick="manageMinistry('<?= $m['id'] ?>')">Manage</button>
-                <button class="btn btn-danger-soft btn-sm" onclick="confirmDeleteMinistry('<?= $m['id'] ?>', '<?= htmlspecialchars(addslashes($m['name'])) ?>')" title="Delete Ministry">
+                <button class="btn btn-outline btn-sm" onclick="openFamilyAttendance('<?= $m['id'] ?>')" title="Mark Attendance"><i class="ph ph-clipboard-text"></i></button>
+                <button class="btn btn-outline btn-sm" onclick="openFamilyBulkMessage('<?= $m['id'] ?>', '<?= htmlspecialchars(addslashes($m['name'])) ?>', '<?= $m['icon'] ?>', <?= $m['count'] ?>)" title="Message Family"><i class="ph ph-chat-centered-dots"></i></button>
+                <button class="btn btn-outline btn-sm" onclick="manageFamily('<?= $m['id'] ?>')">Manage</button>
+                <button class="btn btn-danger-soft btn-sm" onclick="confirmDeleteFamily('<?= $m['id'] ?>', '<?= htmlspecialchars(addslashes($m['name'])) ?>')" title="Delete Family">
                   <i class="ph ph-trash"></i>
                 </button>
               </div>
@@ -255,24 +255,24 @@ foreach ($rawMinistries as $m) {
   </main>
 
   <!-- Hidden delete form -->
-  <form method="POST" action="handlers/ministry_handler.php" id="deleteMinistryForm" style="display:none;">
+  <form method="POST" action="handlers/family_handler.php" id="deleteFamilyForm" style="display:none;">
     <?= csrfField() ?>
-    <input type="hidden" name="action" value="delete_ministry">
-    <input type="hidden" name="ministry_id" id="deleteMinistryId">
+    <input type="hidden" name="action" value="delete_family">
+    <input type="hidden" name="family_id" id="deleteFamilyId">
   </form>
 
-  <form method="POST" action="handlers/ministry_handler.php" id="removeMinistryMemberForm" style="display:none;">
+  <form method="POST" action="handlers/family_handler.php" id="removeFamilyMemberForm" style="display:none;">
     <?= csrfField() ?>
-    <input type="hidden" name="action" value="remove_ministry_member">
-    <input type="hidden" name="ministry_id" id="removeMinId">
+    <input type="hidden" name="action" value="remove_family_member">
+    <input type="hidden" name="family_id" id="removeMinId">
     <input type="hidden" name="member_id" id="removeMemId">
   </form>
 
-  <?php require_once 'includes/modals/ministry_modals.php'; ?>
+  <?php require_once 'includes/modals/family_modals.php'; ?>
 
   <script src="assets/js/main.js"></script>
   <script>
-    const mData = <?php echo json_encode($ministry_details); ?>;
+    const mData = <?php echo json_encode($family_details); ?>;
     const allMembersData = <?php echo json_encode(array_map(function($m) {
         return [
             'id' => $m['id'],
@@ -281,10 +281,10 @@ foreach ($rawMinistries as $m) {
         ];
     }, $allMembers)); ?>;
 
-    const defaultData = { id: 0, icon: '✝️', bg: 'var(--gold-pale)', title: 'Ministry', desc: 'Description', meeting_time: '', count: 0, att: '0%', sessions: 0, members: [], ministry_members: [], recent_sessions: [], history: [], chart_data: [] };
+    const defaultData = { id: 0, icon: '✝️', bg: 'var(--gold-pale)', title: 'Family', desc: 'Description', meeting_time: '', count: 0, att: '0%', sessions: 0, members: [], family_members: [], recent_sessions: [], history: [], chart_data: [] };
 
-    function manageMinistry(id, openTab) {
-      const m = mData[id] || { ...defaultData, title: 'Ministry' };
+    function manageFamily(id, openTab) {
+      const m = mData[id] || { ...defaultData, title: 'Family' };
 
       document.getElementById('mIcon').textContent = m.icon;
       document.getElementById('mIcon').style.background = m.bg;
@@ -298,7 +298,7 @@ foreach ($rawMinistries as $m) {
       const chart = document.getElementById('mChart');
       if (m.chart_data && m.chart_data.length > 0) {
         chart.innerHTML = m.chart_data.map((data) => {
-          const bg = data.type === 'Ministry Meeting' ? '#1E40AF' : '#F87171';
+          const bg = data.type === 'Family Meeting' ? '#1E40AF' : '#F87171';
           return `<div style="flex:1;background:${bg};height:${Math.max(10, data.pct)}%;border-radius:4px 4px 0 0;" title="${data.pct}% Attendance (${data.type})"></div>`;
         }).join('');
       } else {
@@ -319,8 +319,8 @@ foreach ($rawMinistries as $m) {
           <td style="padding:8px;color:var(--muted);">${mem.r}</td>
           <td style="padding:8px;color:var(--muted);">${mem.d}</td>
           <td style="padding:8px;text-align:right;">
-             <button type="button" class="btn-icon" style="color:var(--gold);" onclick="openEditMinistryMember('${mem.minId}', '${mem.mId}')" title="Edit Role"><i class="ph ph-pencil-simple"></i></button>
-             <button type="button" class="btn-icon" style="color:#DC2626;" onclick="confirmRemoveMinistryMember('${mem.minId}', '${mem.mId}', '${mem.n}')" title="Remove Member"><i class="ph ph-trash"></i></button>
+             <button type="button" class="btn-icon" style="color:var(--gold);" onclick="openEditFamilyMember('${mem.minId}', '${mem.mId}')" title="Edit Role"><i class="ph ph-pencil-simple"></i></button>
+             <button type="button" class="btn-icon" style="color:#DC2626;" onclick="confirmRemoveFamilyMember('${mem.minId}', '${mem.mId}', '${mem.n}')" title="Remove Member"><i class="ph ph-trash"></i></button>
           </td>
         </tr>
       `).join('') : '<tr><td colspan="4" style="padding:20px;text-align:center;color:var(--muted);">No members assigned</td></tr>';
@@ -330,14 +330,14 @@ foreach ($rawMinistries as $m) {
 
       // Reset Tabs — open the specified tab or default to Overview
       const targetPane = openTab || 'mOverview';
-      document.querySelectorAll('#manageMinistryModal .tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('#manageMinistryModal .tab-pane').forEach(p => {
+      document.querySelectorAll('#manageFamilyModal .tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('#manageFamilyModal .tab-pane').forEach(p => {
         p.style.display = 'none';
         p.classList.remove('active');
       });
 
       // Activate correct tab button
-      const tabs = document.querySelectorAll('#manageMinistryModal .tab');
+      const tabs = document.querySelectorAll('#manageFamilyModal .tab');
       const paneIds = ['mOverview', 'mMembers', 'mAttendancePane', 'mHistory', 'mEdit'];
       const tabIdx = paneIds.indexOf(targetPane);
       if (tabIdx >= 0 && tabs[tabIdx]) tabs[tabIdx].classList.add('active');
@@ -347,16 +347,16 @@ foreach ($rawMinistries as $m) {
       pane.style.display = 'block';
       pane.classList.add('active');
 
-      openModal('manageMinistryModal');
+      openModal('manageFamilyModal');
     }
 
-    function openMinistryAttendance(id) {
-      manageMinistry(id, 'mAttendancePane');
+    function openFamilyAttendance(id) {
+      manageFamily(id, 'mAttendancePane');
     }
 
     function populateAttendanceTab(id, m) {
-      // Set ministry_id in the attendance form
-      document.getElementById('att_ministryId').value = id;
+      // Set family_id in the attendance form
+      document.getElementById('att_familyId').value = id;
 
       // Stats
       document.getElementById('attPresent').textContent = m.total_present || '0';
@@ -365,7 +365,7 @@ foreach ($rawMinistries as $m) {
 
       // Member checklist
       const attList = document.getElementById('attMemberList');
-      const members = m.ministry_members || [];
+      const members = m.family_members || [];
       if (members.length > 0) {
         attList.innerHTML = members.map(mem => `
           <label class="att-row" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#F1F5F9;border-radius:8px;cursor:pointer;">
@@ -374,7 +374,7 @@ foreach ($rawMinistries as $m) {
           </label>
         `).join('');
       } else {
-        attList.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">No members assigned to this ministry</div>';
+        attList.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">No members assigned to this family</div>';
       }
 
       // Reset select all checkbox
@@ -399,7 +399,7 @@ foreach ($rawMinistries as $m) {
     }
 
     async function fetchAttendanceRecords() {
-      const ministryId = document.getElementById('att_ministryId').value;
+      const familyId = document.getElementById('att_familyId').value;
       const date = document.getElementById('filterAttDate').value;
       const type = document.getElementById('filterAttType').value;
       const memberId = document.getElementById('filterAttMember').value;
@@ -408,7 +408,7 @@ foreach ($rawMinistries as $m) {
       tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted);">Loading records...</td></tr>';
 
       try {
-        const res = await fetch(`ajax/get_attendance_records.php?ministry_id=${ministryId}&date=${date}&session_type=${encodeURIComponent(type)}&member_id=${memberId}`);
+        const res = await fetch(`ajax/get_attendance_records.php?family_id=${familyId}&date=${date}&session_type=${encodeURIComponent(type)}&member_id=${memberId}`);
         const data = await res.json();
         
         // Update stats
@@ -475,17 +475,17 @@ foreach ($rawMinistries as $m) {
       });
     }
 
-    function openMinistryBulkMessage(id, name, icon, count) {
+    function openFamilyBulkMessage(id, name, icon, count) {
       document.getElementById('bulkMsgMinId').value = id;
       document.getElementById('bulkMsgMinName').textContent = name;
       document.getElementById('bulkMsgIcon').textContent = icon;
       document.getElementById('bulkMsgCount').textContent = count;
       
-      openModal('sendMinistryMessageModal');
+      openModal('sendFamilyMessageModal');
     }
 
     function switchMTab(el, paneId) {
-      const modal = document.getElementById('manageMinistryModal');
+      const modal = document.getElementById('manageFamilyModal');
       modal.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       modal.querySelectorAll('.tab-pane').forEach(p => {
         p.style.display = 'none';
@@ -498,55 +498,55 @@ foreach ($rawMinistries as $m) {
       setTimeout(() => pane.classList.add('active'), 10);
     }
 
-    function confirmDeleteMinistry(id, name) {
+    function confirmDeleteFamily(id, name) {
       showConfirmModal(
-        'Delete Ministry',
-        'Are you sure you want to delete the "' + name + '" ministry? This cannot be undone, and will only succeed if the ministry has 0 members assigned.',
+        'Delete Family',
+        'Are you sure you want to delete the "' + name + '" family? This cannot be undone, and will only succeed if the family has 0 members assigned.',
         'Delete',
         function() {
-          document.getElementById('deleteMinistryId').value = id;
-          document.getElementById('deleteMinistryForm').submit();
+          document.getElementById('deleteFamilyId').value = id;
+          document.getElementById('deleteFamilyForm').submit();
         },
         'danger'
       );
     }
 
-    function confirmRemoveMinistryMember(minId, memId, name) {
-      if(confirm('Are you sure you want to remove ' + name + ' from this ministry?')) {
+    function confirmRemoveFamilyMember(minId, memId, name) {
+      if(confirm('Are you sure you want to remove ' + name + ' from this family?')) {
          document.getElementById('removeMinId').value = minId;
          document.getElementById('removeMemId').value = memId;
-         document.getElementById('removeMinistryMemberForm').submit();
+         document.getElementById('removeFamilyMemberForm').submit();
       }
     }
 
-    function openEnrolMinistryMember() {
+    function openEnrolFamilyMember() {
       const minId = document.getElementById('edit_mId').value;
       if (!minId) return;
-      document.getElementById('enrol_ministryId').value = minId;
+      document.getElementById('enrol_familyId').value = minId;
       document.getElementById('enrol_mHeadDisplay').value = '';
       document.getElementById('enrol_mHeadId').value = '';
-      openModal('enrolMinistryMemberModal');
+      openModal('enrolFamilyMemberModal');
     }
 
-    function openEditMinistryMember(minId, mId) {
+    function openEditFamilyMember(minId, mId) {
       const minData = mData[minId];
       if (!minData) return;
       const mem = minData.members.find(x => x.mId == mId);
       if (!mem) return;
 
-      document.getElementById('edit_min_ministryId').value = minId;
+      document.getElementById('edit_min_familyId').value = minId;
       document.getElementById('edit_min_memberId').value = mId;
       document.getElementById('edit_min_memberName').value = mem.n;
       document.getElementById('edit_min_role').value = mem.r;
       document.getElementById('edit_min_notes').value = mem.notes || '';
 
-      openModal('editMinistryMemberModal');
+      openModal('editFamilyMemberModal');
     }
 
-    function downloadMinistryReport() {
+    function downloadFamilyReport() {
       const id = document.getElementById('edit_mId').value;
       if (id) {
-        window.location.href = `export_ministry_report.php?id=${id}`;
+        window.location.href = `export_family_report.php?id=${id}`;
       }
     }
   </script>

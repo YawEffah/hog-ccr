@@ -70,6 +70,8 @@ $stmt = $db->prepare(
     "SELECT m.*,
             (SELECT GROUP_CONCAT(min.name SEPARATOR ', ') FROM member_ministries mm JOIN ministries min ON mm.ministry_id = min.id WHERE mm.member_id = m.id) AS ministry_name,
             (SELECT GROUP_CONCAT(ministry_id) FROM member_ministries WHERE member_id = m.id) as ministry_ids,
+            (SELECT GROUP_CONCAT(fam.name SEPARATOR ', ') FROM member_families mf JOIN families fam ON mf.family_id = fam.id WHERE mf.member_id = m.id) AS family_name,
+            (SELECT GROUP_CONCAT(family_id) FROM member_families WHERE member_id = m.id) as family_ids,
             (SELECT GROUP_CONCAT(sacrament) FROM member_sacraments WHERE member_id = m.id) as sacraments,
             (SELECT GROUP_CONCAT(sacrament) FROM member_sacraments_needed WHERE member_id = m.id) as sacraments_needed,
             (SELECT GROUP_CONCAT(programme) FROM member_programmes WHERE member_id = m.id) as programmes
@@ -123,6 +125,8 @@ $members = array_map(function($m, $i) use ($avatarPalette, $statusBadge, $minist
         'next_of_kin_phone'    => $m['next_of_kin_phone'] ?? '',
         'ministries'           => $ministries,
         'ministry_ids'         => $m['ministry_ids'] ? array_map('intval', explode(',', $m['ministry_ids'])) : [],
+        'families'             => $m['family_name'] ? explode(', ', $m['family_name']) : [],
+        'family_ids'           => $m['family_ids'] ? array_map('intval', explode(',', $m['family_ids'])) : [],
         'status'               => $m['status'],
         'status_class'         => $statusBadge[$m['status']] ?? 'badge-gray',
         'joined'               => $m['joined_date'] ? date('M Y', strtotime($m['joined_date'])) : '—',
@@ -147,8 +151,9 @@ $member_stats = [
     'female' => (int)$db->query("SELECT COUNT(*) FROM members WHERE gender='Female'")->fetchColumn(),
 ];
 
-// Ministries for dropdown
+// Ministries and Families for dropdown
 $ministries = $db->query("SELECT id, name FROM ministries ORDER BY name")->fetchAll();
+$families = $db->query("SELECT id, name FROM families ORDER BY name")->fetchAll();
 
 ?>
 <!DOCTYPE html>
@@ -423,6 +428,7 @@ $ministries = $db->query("SELECT id, name FROM ministries ORDER BY name")->fetch
         status:               m.status,
         photo_path:           m.photo_path || '',
         ministries:           m.ministry_ids,
+        families:             m.family_ids,
         sacraments_needed:    m.sacraments_needed,
         programmes:           m.programmes,
         notes:                m.notes || ''

@@ -36,6 +36,7 @@ if ($action === 'add_member') {
     $nokAddress     = trim($_POST['next_of_kin_address']  ?? '');
     $nokPhone       = trim($_POST['next_of_kin_phone']    ?? '');
     $ministries     = $_POST['ministries']           ?? [];
+    $families       = $_POST['families']             ?? [];
     $status         = $_POST['status']               ?? 'Active';
     $joined         = $_POST['joined_date']          ?? date('Y-m-d');
     $sacramentsNeeded = $_POST['sacraments_needed']  ?? [];
@@ -79,6 +80,14 @@ if ($action === 'add_member') {
             $minStmt = $db->prepare("INSERT IGNORE INTO member_ministries (member_id, ministry_id, role, enrol_date) VALUES (?, ?, 'Member', CURRENT_DATE)");
             foreach ($ministries as $mId) {
                 if ((int)$mId > 0) $minStmt->execute([$memberId, (int)$mId]);
+            }
+        }
+
+        // Insert families
+        if (!empty($families)) {
+            $famStmt = $db->prepare("INSERT IGNORE INTO member_families (member_id, family_id, role, enrol_date) VALUES (?, ?, 'Member', CURRENT_DATE)");
+            foreach ($families as $fId) {
+                if ((int)$fId > 0) $famStmt->execute([$memberId, (int)$fId]);
             }
         }
 
@@ -142,6 +151,7 @@ if ($action === 'edit_member') {
     $nokAddress     = trim($_POST['next_of_kin_address']  ?? '');
     $nokPhone       = trim($_POST['next_of_kin_phone']    ?? '');
     $ministries     = $_POST['ministries']           ?? [];
+    $families       = $_POST['families']             ?? [];
     $status         = $_POST['status']               ?? 'Active';
     $sacramentsNeeded = $_POST['sacraments_needed']  ?? [];
     $programmes     = $_POST['programmes']           ?? [];
@@ -206,6 +216,28 @@ if ($action === 'edit_member') {
             $minStmt = $db->prepare("INSERT IGNORE INTO member_ministries (member_id, ministry_id, role, enrol_date) VALUES (?, ?, 'Member', CURRENT_DATE)");
             foreach ($toAddMins as $mId) {
                 if ($mId > 0) $minStmt->execute([$memberId, $mId]);
+            }
+        }
+
+        // Sync families safely
+        $currentFamsStmt = $db->prepare("SELECT family_id FROM member_families WHERE member_id = ?");
+        $currentFamsStmt->execute([$memberId]);
+        $existingFams = $currentFamsStmt->fetchAll(PDO::FETCH_COLUMN);
+        $newFams = array_map('intval', $families);
+        
+        $toAddFams = array_diff($newFams, $existingFams);
+        $toRemoveFams = array_diff($existingFams, $newFams);
+
+        if (!empty($toRemoveFams)) {
+            $placeholders = implode(',', array_fill(0, count($toRemoveFams), '?'));
+            $delParams = array_merge([$memberId], $toRemoveFams);
+            $db->prepare("DELETE FROM member_families WHERE member_id = ? AND family_id IN ($placeholders)")->execute($delParams);
+        }
+
+        if (!empty($toAddFams)) {
+            $famStmt = $db->prepare("INSERT IGNORE INTO member_families (member_id, family_id, role, enrol_date) VALUES (?, ?, 'Member', CURRENT_DATE)");
+            foreach ($toAddFams as $fId) {
+                if ($fId > 0) $famStmt->execute([$memberId, $fId]);
             }
         }
 

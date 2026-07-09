@@ -17,9 +17,16 @@ $db = getDB();
 
 // ── Filter Month Logic ───────────────────────────────────────────────────────
 $filterMonth = $_GET['month'] ?? date('Y-m');
-// Ensure format is valid (YYYY-MM), else fallback
-if (!preg_match('/^\d{4}-\d{2}$/', $filterMonth)) {
+// Ensure format is valid (YYYY-MM or YYYY-all), else fallback
+if (!preg_match('/^\d{4}-(\d{2}|all)$/', $filterMonth)) {
     $filterMonth = date('Y-m');
+}
+
+$isAllMonths = false;
+$filterYear = '';
+if (strpos($filterMonth, '-all') !== false) {
+    $isAllMonths = true;
+    $filterYear = explode('-', $filterMonth)[0];
 }
 
 // ── Welfare Statistics ───────────────────────────────────────────────────────
@@ -30,27 +37,50 @@ $welfare_stats = [
     'pending'          => 0
 ];
 
-$stmtCollected = $db->prepare("SELECT SUM(amount) FROM welfare_contributions WHERE DATE_FORMAT(payment_date, '%Y-%m') = ?");
-$stmtCollected->execute([$filterMonth]);
-$welfare_stats['collected_month'] = number_format((float)$stmtCollected->fetchColumn(), 2);
+if ($isAllMonths) {
+    $stmtCollected = $db->prepare("SELECT SUM(amount) FROM welfare_contributions WHERE DATE_FORMAT(payment_date, '%Y') = ?");
+    $stmtCollected->execute([$filterYear]);
+    $welfare_stats['collected_month'] = number_format((float)$stmtCollected->fetchColumn(), 2);
 
-$stmtActive = $db->prepare("SELECT COUNT(DISTINCT welfare_id) FROM welfare_contributions WHERE DATE_FORMAT(payment_date, '%Y-%m') = ?");
-$stmtActive->execute([$filterMonth]);
-$welfare_stats['active_payers'] = (int)$stmtActive->fetchColumn();
+    $stmtActive = $db->prepare("SELECT COUNT(DISTINCT welfare_id) FROM welfare_contributions WHERE DATE_FORMAT(payment_date, '%Y') = ?");
+    $stmtActive->execute([$filterYear]);
+    $welfare_stats['active_payers'] = (int)$stmtActive->fetchColumn();
+} else {
+    $stmtCollected = $db->prepare("SELECT SUM(amount) FROM welfare_contributions WHERE DATE_FORMAT(payment_date, '%Y-%m') = ?");
+    $stmtCollected->execute([$filterMonth]);
+    $welfare_stats['collected_month'] = number_format((float)$stmtCollected->fetchColumn(), 2);
+
+    $stmtActive = $db->prepare("SELECT COUNT(DISTINCT welfare_id) FROM welfare_contributions WHERE DATE_FORMAT(payment_date, '%Y-%m') = ?");
+    $stmtActive->execute([$filterMonth]);
+    $welfare_stats['active_payers'] = (int)$stmtActive->fetchColumn();
+}
 
 $welfare_stats['pending'] = max(0, $welfare_stats['total_members'] - $welfare_stats['active_payers']);
 
 // ── Welfare Members Roster ───────────────────────────────────────────────────
-$membersStmt = $db->prepare(
-    "SELECT wm.*, m.first_name, m.last_name, m.member_code, m.phone, m.email,
-            (SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id) as total_paid,
-            (SELECT payment_date FROM welfare_contributions WHERE welfare_id = wm.id ORDER BY payment_date DESC LIMIT 1) as last_payment_date,
-            (SELECT COUNT(*) FROM welfare_contributions WHERE welfare_id = wm.id AND DATE_FORMAT(payment_date, '%Y-%m') = ?) as paid_in_filter_month
-     FROM welfare_members wm
-     JOIN members m ON wm.member_id = m.id
-     ORDER BY m.last_name ASC"
-);
-$membersStmt->execute([$filterMonth]);
+if ($isAllMonths) {
+    $membersStmt = $db->prepare(
+        "SELECT wm.*, m.first_name, m.last_name, m.member_code, m.phone, m.email,
+                (SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id) as total_paid,
+                (SELECT payment_date FROM welfare_contributions WHERE welfare_id = wm.id ORDER BY payment_date DESC LIMIT 1) as last_payment_date,
+                (SELECT COUNT(*) FROM welfare_contributions WHERE welfare_id = wm.id AND DATE_FORMAT(payment_date, '%Y') = ?) as paid_in_filter_month
+         FROM welfare_members wm
+         JOIN members m ON wm.member_id = m.id
+         ORDER BY m.last_name ASC"
+    );
+    $membersStmt->execute([$filterYear]);
+} else {
+    $membersStmt = $db->prepare(
+        "SELECT wm.*, m.first_name, m.last_name, m.member_code, m.phone, m.email,
+                (SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id) as total_paid,
+                (SELECT payment_date FROM welfare_contributions WHERE welfare_id = wm.id ORDER BY payment_date DESC LIMIT 1) as last_payment_date,
+                (SELECT COUNT(*) FROM welfare_contributions WHERE welfare_id = wm.id AND DATE_FORMAT(payment_date, '%Y-%m') = ?) as paid_in_filter_month
+         FROM welfare_members wm
+         JOIN members m ON wm.member_id = m.id
+         ORDER BY m.last_name ASC"
+    );
+    $membersStmt->execute([$filterMonth]);
+}
 $rawWelfareMembers = $membersStmt->fetchAll();
 
 // Map for display
@@ -89,15 +119,27 @@ $welfare_members = array_map(function($wm) use ($db) {
 }, $rawWelfareMembers);
 
 // ── Contribution Log ─────────────────────────────────────────────────────────
-$contribStmt = $db->prepare(
-    "SELECT wc.*, m.first_name, m.last_name, m.member_code, wm.family_group
-     FROM welfare_contributions wc
-     JOIN welfare_members wm ON wc.welfare_id = wm.id
-     JOIN members m ON wm.member_id = m.id
-     WHERE DATE_FORMAT(wc.payment_date, '%Y-%m') = ?
-     ORDER BY wc.payment_date DESC, wc.created_at DESC"
-);
-$contribStmt->execute([$filterMonth]);
+if ($isAllMonths) {
+    $contribStmt = $db->prepare(
+        "SELECT wc.*, m.first_name, m.last_name, m.member_code, wm.family_group
+         FROM welfare_contributions wc
+         JOIN welfare_members wm ON wc.welfare_id = wm.id
+         JOIN members m ON wm.member_id = m.id
+         WHERE DATE_FORMAT(wc.payment_date, '%Y') = ?
+         ORDER BY wc.payment_date DESC, wc.created_at DESC"
+    );
+    $contribStmt->execute([$filterYear]);
+} else {
+    $contribStmt = $db->prepare(
+        "SELECT wc.*, m.first_name, m.last_name, m.member_code, wm.family_group
+         FROM welfare_contributions wc
+         JOIN welfare_members wm ON wc.welfare_id = wm.id
+         JOIN members m ON wm.member_id = m.id
+         WHERE DATE_FORMAT(wc.payment_date, '%Y-%m') = ?
+         ORDER BY wc.payment_date DESC, wc.created_at DESC"
+    );
+    $contribStmt->execute([$filterMonth]);
+}
 $rawContribs = $contribStmt->fetchAll();
 
 $welfare_contributions = array_map(function($c) {
@@ -115,17 +157,31 @@ $welfare_contributions = array_map(function($c) {
 }, $rawContribs);
 
 // ── Welfare Expenses ──────────────────────────────────────────────────────────
-$expenseStmt = $db->prepare(
-    "SELECT e.*, c.name as category_name, c.code as category_code, a.name as asset_name, a.code as asset_code, 
-            m.first_name, m.last_name, m.member_code
-     FROM welfare_expenses e
-     JOIN welfare_accounts c ON e.category_id = c.id
-     JOIN welfare_accounts a ON e.asset_account_id = a.id
-     LEFT JOIN members m ON e.recipient_member_id = m.id
-     WHERE DATE_FORMAT(e.expense_date, '%Y-%m') = ?
-     ORDER BY e.expense_date DESC, e.created_at DESC"
-);
-$expenseStmt->execute([$filterMonth]);
+if ($isAllMonths) {
+    $expenseStmt = $db->prepare(
+        "SELECT e.*, c.name as category_name, c.code as category_code, a.name as asset_name, a.code as asset_code, 
+                m.first_name, m.last_name, m.member_code
+         FROM welfare_expenses e
+         JOIN welfare_accounts c ON e.category_id = c.id
+         JOIN welfare_accounts a ON e.asset_account_id = a.id
+         LEFT JOIN members m ON e.recipient_member_id = m.id
+         WHERE DATE_FORMAT(e.expense_date, '%Y') = ?
+         ORDER BY e.expense_date DESC, e.created_at DESC"
+    );
+    $expenseStmt->execute([$filterYear]);
+} else {
+    $expenseStmt = $db->prepare(
+        "SELECT e.*, c.name as category_name, c.code as category_code, a.name as asset_name, a.code as asset_code, 
+                m.first_name, m.last_name, m.member_code
+         FROM welfare_expenses e
+         JOIN welfare_accounts c ON e.category_id = c.id
+         JOIN welfare_accounts a ON e.asset_account_id = a.id
+         LEFT JOIN members m ON e.recipient_member_id = m.id
+         WHERE DATE_FORMAT(e.expense_date, '%Y-%m') = ?
+         ORDER BY e.expense_date DESC, e.created_at DESC"
+    );
+    $expenseStmt->execute([$filterMonth]);
+}
 $welfare_expenses = $expenseStmt->fetchAll();
 
 $welfare_stats['total_expenses'] = array_sum(array_column($welfare_expenses, 'amount'));
@@ -173,6 +229,7 @@ $nonWelfareMembers = $db->query(
           ?>
           <div style="display:flex;gap:8px;">
             <select class="form-control" style="width:120px;padding:8px 12px;" id="welfareMonthSelect" onchange="updateWelfareFilter()">
+              <option value="all" <?= $currentM === 'all' ? 'selected' : '' ?>>All Months</option>
               <?php foreach($monthsList as $num => $name): ?>
                 <option value="<?= $num ?>" <?= $currentM === $num ? 'selected' : '' ?>><?= $name ?></option>
               <?php endforeach; ?>

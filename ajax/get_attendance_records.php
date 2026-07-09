@@ -6,26 +6,37 @@ require_once '../includes/db.php';
 header('Content-Type: application/json');
 
 $ministryId = (int)($_GET['ministry_id'] ?? 0);
+$familyId = (int)($_GET['family_id'] ?? 0);
 $sessionType = trim($_GET['session_type'] ?? '');
 $date = trim($_GET['date'] ?? '');
 $memberId = (int)($_GET['member_id'] ?? 0);
 
-if (!$ministryId) {
+if (!$ministryId && !$familyId) {
     echo json_encode([]);
     exit;
 }
 
 $db = getDB();
 
-$baseQuery = "
-    FROM attendance_records r
-    JOIN attendance_sessions s ON r.session_id = s.id
-    JOIN members m ON r.member_id = m.id
-    WHERE s.ministry_id = ?
-";
+if ($ministryId) {
+    $baseQuery = "
+        FROM attendance_records r
+        JOIN attendance_sessions s ON r.session_id = s.id
+        JOIN members m ON r.member_id = m.id
+        WHERE s.ministry_id = ?
+    ";
+    $params = [$ministryId];
+} else {
+    $baseQuery = "
+        FROM attendance_records r
+        JOIN attendance_sessions s ON r.session_id = s.id
+        JOIN members m ON r.member_id = m.id
+        WHERE s.family_id = ?
+    ";
+    $params = [$familyId];
+}
 
 $whereClause = "";
-$params = [$ministryId];
 
 if ($sessionType !== '') {
     $whereClause .= " AND s.session_type = ?";

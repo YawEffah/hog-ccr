@@ -29,17 +29,7 @@
         </div>
 
         <div class="grid-2" style="gap:16px;">
-          <div class="form-group">
-            <label class="form-label">Family Group</label>
-            <select class="form-control" name="family_group" required>
-              <option value="">Select Group...</option>
-              <option value="Prudence">Prudence</option>
-              <option value="Temperance">Temperance</option>
-              <option value="Fortitude">Fortitude</option>
-              <option value="Justice">Justice</option>
-            </select>
-          </div>
-          <div class="form-group">
+          <div class="form-group" style="grid-column: span 2;">
             <label class="form-label">Monthly Contribution (GH₵)</label>
             <input type="number" step="0.01" class="form-control" name="monthly_amount" placeholder="e.g. 20.00"
               required>
