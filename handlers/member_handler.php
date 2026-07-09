@@ -76,7 +76,7 @@ if ($action === 'add_member') {
 
         // Insert ministries
         if (!empty($ministries)) {
-            $minStmt = $db->prepare("INSERT IGNORE INTO member_ministries (member_id, ministry_id) VALUES (?, ?)");
+            $minStmt = $db->prepare("INSERT IGNORE INTO member_ministries (member_id, ministry_id, role, enrol_date) VALUES (?, ?, 'Member', CURRENT_DATE)");
             foreach ($ministries as $mId) {
                 if ((int)$mId > 0) $minStmt->execute([$memberId, (int)$mId]);
             }
@@ -187,12 +187,25 @@ if ($action === 'edit_member') {
             $status
         ], $photoArgs, [$memberId]));
 
-        // Sync ministries
-        $db->prepare("DELETE FROM member_ministries WHERE member_id = ?")->execute([$memberId]);
-        if (!empty($ministries)) {
-            $minStmt = $db->prepare("INSERT IGNORE INTO member_ministries (member_id, ministry_id) VALUES (?, ?)");
-            foreach ($ministries as $mId) {
-                if ((int)$mId > 0) $minStmt->execute([$memberId, (int)$mId]);
+        // Sync ministries safely
+        $currentMinsStmt = $db->prepare("SELECT ministry_id FROM member_ministries WHERE member_id = ?");
+        $currentMinsStmt->execute([$memberId]);
+        $existingMins = $currentMinsStmt->fetchAll(PDO::FETCH_COLUMN);
+        $newMins = array_map('intval', $ministries);
+        
+        $toAddMins = array_diff($newMins, $existingMins);
+        $toRemoveMins = array_diff($existingMins, $newMins);
+
+        if (!empty($toRemoveMins)) {
+            $placeholders = implode(',', array_fill(0, count($toRemoveMins), '?'));
+            $delParams = array_merge([$memberId], $toRemoveMins);
+            $db->prepare("DELETE FROM member_ministries WHERE member_id = ? AND ministry_id IN ($placeholders)")->execute($delParams);
+        }
+
+        if (!empty($toAddMins)) {
+            $minStmt = $db->prepare("INSERT IGNORE INTO member_ministries (member_id, ministry_id, role, enrol_date) VALUES (?, ?, 'Member', CURRENT_DATE)");
+            foreach ($toAddMins as $mId) {
+                if ($mId > 0) $minStmt->execute([$memberId, $mId]);
             }
         }
 

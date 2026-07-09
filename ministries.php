@@ -66,15 +66,19 @@ $ministries = array_map(function($m) use ($db) {
 $ministry_details = [];
 foreach ($rawMinistries as $m) {
     // Fetch members (for Members tab)
-    $memStmt = $db->prepare("SELECT first_name, last_name, joined_date, status FROM members m JOIN member_ministries mm ON m.id = mm.member_id WHERE mm.ministry_id = ? ORDER BY joined_date DESC LIMIT 20");
+    $memStmt = $db->prepare("SELECT m.id, m.first_name, m.last_name, mm.enrol_date, mm.role, mm.notes, m.status FROM members m JOIN member_ministries mm ON m.id = mm.member_id WHERE mm.ministry_id = ? ORDER BY mm.enrol_date DESC, m.last_name ASC LIMIT 100");
     $memStmt->execute([$m['id']]);
     $members = $memStmt->fetchAll();
 
-    $formattedMembers = array_map(function($mem) {
+    $formattedMembers = array_map(function($mem) use ($m) {
         return [
+            'mId' => $mem['id'],
+            'minId' => $m['id'],
             'n' => $mem['first_name'] . ' ' . $mem['last_name'],
-            'r' => $mem['status'],
-            'd' => $mem['joined_date'] ? date('M Y', strtotime($mem['joined_date'])) : 'N/A'
+            'r' => $mem['role'] ?? 'Member',
+            'd' => $mem['enrol_date'] ? date('M Y', strtotime($mem['enrol_date'])) : 'N/A',
+            'raw_d' => $mem['enrol_date'] ?? '',
+            'notes' => $mem['notes'] ?? ''
         ];
     }, $members);
 
@@ -262,6 +266,13 @@ foreach ($rawMinistries as $m) {
     <input type="hidden" name="ministry_id" id="deleteMinistryId">
   </form>
 
+  <form method="POST" action="handlers/ministry_handler.php" id="removeMinistryMemberForm" style="display:none;">
+    <?= csrfField() ?>
+    <input type="hidden" name="action" value="remove_ministry_member">
+    <input type="hidden" name="ministry_id" id="removeMinId">
+    <input type="hidden" name="member_id" id="removeMemId">
+  </form>
+
   <?php require_once 'includes/modals/ministry_modals.php'; ?>
 
   <script src="assets/js/main.js"></script>
@@ -313,8 +324,12 @@ foreach ($rawMinistries as $m) {
           <td style="padding:8px;font-weight:500;">${mem.n}</td>
           <td style="padding:8px;color:var(--muted);">${mem.r}</td>
           <td style="padding:8px;color:var(--muted);">${mem.d}</td>
+          <td style="padding:8px;text-align:right;">
+             <button type="button" class="btn-icon" style="color:var(--gold);" onclick="openEditMinistryMember('${mem.minId}', '${mem.mId}')" title="Edit Role"><i class="ph ph-pencil-simple"></i></button>
+             <button type="button" class="btn-icon" style="color:#DC2626;" onclick="confirmRemoveMinistryMember('${mem.minId}', '${mem.mId}', '${mem.n}')" title="Remove Member"><i class="ph ph-trash"></i></button>
+          </td>
         </tr>
-      `).join('') : '<tr><td colspan="3" style="padding:20px;text-align:center;color:var(--muted);">No members assigned</td></tr>';
+      `).join('') : '<tr><td colspan="4" style="padding:20px;text-align:center;color:var(--muted);">No members assigned</td></tr>';
 
       // Populate Attendance Tab
       populateAttendanceTab(id, m);
@@ -500,6 +515,38 @@ foreach ($rawMinistries as $m) {
         },
         'danger'
       );
+    }
+
+    function confirmRemoveMinistryMember(minId, memId, name) {
+      if(confirm('Are you sure you want to remove ' + name + ' from this ministry?')) {
+         document.getElementById('removeMinId').value = minId;
+         document.getElementById('removeMemId').value = memId;
+         document.getElementById('removeMinistryMemberForm').submit();
+      }
+    }
+
+    function openEnrolMinistryMember() {
+      const minId = document.getElementById('edit_mId').value;
+      if (!minId) return;
+      document.getElementById('enrol_ministryId').value = minId;
+      document.getElementById('enrol_mHeadDisplay').value = '';
+      document.getElementById('enrol_mHeadId').value = '';
+      openModal('enrolMinistryMemberModal');
+    }
+
+    function openEditMinistryMember(minId, mId) {
+      const minData = mData[minId];
+      if (!minData) return;
+      const mem = minData.members.find(x => x.mId == mId);
+      if (!mem) return;
+
+      document.getElementById('edit_min_ministryId').value = minId;
+      document.getElementById('edit_min_memberId').value = mId;
+      document.getElementById('edit_min_memberName').value = mem.n;
+      document.getElementById('edit_min_role').value = mem.r;
+      document.getElementById('edit_min_notes').value = mem.notes || '';
+
+      openModal('editMinistryMemberModal');
     }
 
     function downloadMinistryReport() {

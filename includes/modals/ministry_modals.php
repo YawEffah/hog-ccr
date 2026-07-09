@@ -102,6 +102,9 @@
 
       <!-- Members Tab -->
       <div id="mMembers" class="tab-pane" style="display:none;">
+        <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+          <button class="btn btn-primary btn-sm" onclick="openEnrolMinistryMember()"><i class="ph ph-plus"></i> Enrol Member</button>
+        </div>
         <div class="table-responsive">
           <table style="width:100%;font-size:13px;">
             <thead style="background:var(--bg-light);text-align:left;">
@@ -109,6 +112,7 @@
                 <th style="padding:8px;">Member</th>
                 <th style="padding:8px;">Role</th>
                 <th style="padding:8px;">Joined</th>
+                <th style="padding:8px;text-align:right;">Action</th>
               </tr>
             </thead>
             <tbody id="mMembersList">
@@ -401,6 +405,105 @@
         <button type="button" class="btn btn-outline" onclick="closeModal('sendMinistryMessageModal')">Cancel</button>
         <button type="submit" class="btn btn-primary">
           <i class="ph ph-paper-plane-tilt"></i> Send Broadcast
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Enrol Ministry Member Modal -->
+<div class="modal-overlay" id="enrolMinistryMemberModal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <h3>Enrol Member in Ministry</h3>
+      <button class="close-btn" onclick="closeModal('enrolMinistryMemberModal')"><i class="ph ph-x"></i></button>
+    </div>
+    <form action="handlers/ministry_handler.php" method="POST" id="enrolMinistryMemberForm">
+      <?= csrfField() ?>
+      <input type="hidden" name="action" value="enrol_ministry_member">
+      <input type="hidden" name="ministry_id" id="enrol_ministryId">
+      <div class="modal-body">
+        <div class="form-group" style="position: relative;">
+          <label class="form-label">Select Member</label>
+          <input class="form-control" id="enrol_mHeadDisplay" name="member_display"
+            placeholder="Search member by name or ID..." oninput="filterMHeads(this.value, 'enrol')" autocomplete="off" required>
+          <input type="hidden" name="member_id" id="enrol_mHeadId" required>
+          <div id="enrol_mHeadSuggestions" class="search-suggestions" style="display:none;"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <select class="form-control" name="role" required>
+            <option value="Member">Member</option>
+            <option value="Leader">Leader</option>
+            <option value="Assistant Leader">Assistant Leader</option>
+            <option value="Secretary">Secretary</option>
+            <option value="Treasurer">Treasurer</option>
+            <option value="Patron">Patron</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Notes (Optional)</label>
+          <textarea class="form-control" name="notes" rows="2" placeholder="Any remarks…" style="resize:none;"></textarea>
+        </div>
+
+        <div style="background:#F1F5F9;border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;margin-top:10px;margin-bottom:14px;">
+          <input type="checkbox" id="sendMinistryWelcome" name="send_welcome" checked style="width:16px;height:16px;cursor:pointer;">
+          <label for="sendMinistryWelcome" style="font-size:13px;font-weight:600;cursor:pointer;color:var(--deep2);display:block;">
+            Send welcome message automatically
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('enrolMinistryMemberModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">
+          <i class="ph ph-hand-heart"></i> Enrol Member
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Ministry Member Modal -->
+<div class="modal-overlay" id="editMinistryMemberModal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <h3>Edit Enrolled Member</h3>
+      <button class="close-btn" onclick="closeModal('editMinistryMemberModal')"><i class="ph ph-x"></i></button>
+    </div>
+    <form action="handlers/ministry_handler.php" method="POST" id="editMinistryMemberForm">
+      <?= csrfField() ?>
+      <input type="hidden" name="action" value="edit_ministry_member">
+      <input type="hidden" name="ministry_id" id="edit_min_ministryId">
+      <input type="hidden" name="member_id" id="edit_min_memberId">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Member</label>
+          <input class="form-control" id="edit_min_memberName" readonly style="background:#F1F5F9;">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <select class="form-control" name="role" id="edit_min_role" required>
+            <option value="Member">Member</option>
+            <option value="Leader">Leader</option>
+            <option value="Assistant Leader">Assistant Leader</option>
+            <option value="Secretary">Secretary</option>
+            <option value="Treasurer">Treasurer</option>
+            <option value="Patron">Patron</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Notes (Optional)</label>
+          <textarea class="form-control" name="notes" id="edit_min_notes" rows="2" placeholder="Any remarks…" style="resize:none;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('editMinistryMemberModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">
+          <i class="ph ph-floppy-disk"></i> Save Changes
         </button>
       </div>
     </form>
