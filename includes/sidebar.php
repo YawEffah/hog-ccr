@@ -17,8 +17,8 @@ $currentUser = $currentUser ?? [
       <img src="assets/images/logo.png" alt="Logo" class="logo">
     </div>
     <span>
-      <h1>House of Grace</h1>
-      <p>CCR Community</p>
+      <h1>Adom Fie CCR</h1>
+      <p>Community</p>
     </span>
   </div>
 
@@ -38,14 +38,15 @@ $currentUser = $currentUser ?? [
       <i class="ph ph-heart"></i>
       Ministries
     </a>
+    <a href="families.php" class="nav-item <?= $activePage === 'families' ? 'active' : '' ?>">
+      <i class="ph ph-users-three"></i>
+      Families
+    </a>
     <a href="welfare.php" class="nav-item <?= $activePage === 'welfare' ? 'active' : '' ?>">
       <i class="ph ph-hand-heart"></i>
       Welfare
     </a>
-    <a href="attendance.php" class="nav-item <?= $activePage === 'attendance' ? 'active' : '' ?>">
-      <i class="ph ph-clipboard-text"></i>
-      Attendance
-    </a>
+
 
     <div class="nav-section-label">Administration</div>
     <a href="finance.php" class="nav-item <?= $activePage === 'finance' ? 'active' : '' ?>">

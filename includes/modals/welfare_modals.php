@@ -29,17 +29,7 @@
         </div>
 
         <div class="grid-2" style="gap:16px;">
-          <div class="form-group">
-            <label class="form-label">Family Group</label>
-            <select class="form-control" name="family_group" required>
-              <option value="">Select Group...</option>
-              <option value="Prudence">Prudence</option>
-              <option value="Temperance">Temperance</option>
-              <option value="Fortitude">Fortitude</option>
-              <option value="Justice">Justice</option>
-            </select>
-          </div>
-          <div class="form-group">
+          <div class="form-group" style="grid-column: span 2;">
             <label class="form-label">Monthly Contribution (GH₵)</label>
             <input type="number" step="0.01" class="form-control" name="monthly_amount" placeholder="e.g. 20.00"
               required>
@@ -299,7 +289,7 @@
         
         <!-- Church Branding -->
         <div style="text-align: center; margin-bottom: 24px;">
-          <div style="font-size: 20px; font-weight: 800; color: #0D9488; letter-spacing: -0.5px;">HOUSE OF GRACE CCR</div>
+          <div style="font-size: 20px; font-weight: 800; color: #0D9488; letter-spacing: -0.5px;">ADOM FIE CCR COMMUNITY</div>
           <div style="font-size: 11px; color: #0F766E; font-weight: 700; text-transform: uppercase; margin-top: 4px; letter-spacing: 1px;">Welfare Scheme Contribution</div>
         </div>
 
@@ -404,7 +394,7 @@
             <select class="form-control" name="expense_account" required>
               <option value="">Select Category...</option>
               <?php
-                $expenses = $db->query("SELECT code, name FROM welfare_accounts WHERE type = 'Expense' ORDER BY code")->fetchAll();
+                $expenses = $db->query("SELECT code, name FROM finance_accounts WHERE type = 'Expense' ORDER BY code")->fetchAll();
                 foreach($expenses as $exp):
               ?>
               <option value="<?= $exp['code'] ?>"><?= htmlspecialchars($exp['name']) ?></option>
@@ -415,7 +405,7 @@
             <label class="form-label">Paid From (Asset)</label>
             <select class="form-control" name="asset_account" required>
               <?php
-                $assets = $db->query("SELECT code, name FROM welfare_accounts WHERE type = 'Asset' AND name LIKE 'Cash%' ORDER BY code")->fetchAll();
+                $assets = $db->query("SELECT code, name FROM finance_accounts WHERE type = 'Asset' AND name LIKE 'Cash%' ORDER BY code")->fetchAll();
                 foreach($assets as $ast):
               ?>
               <option value="<?= $ast['code'] ?>"><?= htmlspecialchars($ast['name']) ?></option>
@@ -656,9 +646,9 @@
 
   /* ---- Bulk message modal ---- */
   const bulkMessageTemplates = {
-    all:    'Dear [Name], this is a message from the House of Grace CCR Welfare Team. God bless you. \u2014 Welfare Team',
-    arrears:'Dear [Name], this is a friendly reminder that your welfare contribution for this month is still outstanding. Kindly make payment at your earliest convenience. Thank you. \u2014 House of Grace CCR Welfare',
-    date:   'Dear [Name], your welfare contribution of [Amount] has been received. We appreciate your faithfulness. God bless you. \u2014 House of Grace CCR Welfare',
+    all:    'Dear [Name], this is a message from the ADOM FIE CCR COMMUNITY Welfare Team. God bless you. \u2014 Welfare Team',
+    arrears:'Dear [Name], this is a friendly reminder that your welfare contribution for this month is still outstanding. Kindly make payment at your earliest convenience. Thank you. \u2014 ADOM FIE CCR COMMUNITY Welfare',
+    date:   'Dear [Name], your welfare contribution of [Amount] has been received. We appreciate your faithfulness. God bless you. \u2014 ADOM FIE CCR COMMUNITY Welfare',
   };
 
   function onBulkAudienceChange(audience) {

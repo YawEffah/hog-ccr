@@ -27,8 +27,8 @@ $accountsStmt = $db->prepare("
     SUM(CASE WHEN l.transaction_date <= LAST_DAY(STR_TO_DATE(CONCAT(?, '-01'), '%Y-%m-%d')) THEN l.credit ELSE 0 END) as total_credit,
     SUM(CASE WHEN YEAR(l.transaction_date) = ? AND l.transaction_date <= LAST_DAY(STR_TO_DATE(CONCAT(?, '-01'), '%Y-%m-%d')) THEN l.debit ELSE 0 END) as ytd_debit,
     SUM(CASE WHEN YEAR(l.transaction_date) = ? AND l.transaction_date <= LAST_DAY(STR_TO_DATE(CONCAT(?, '-01'), '%Y-%m-%d')) THEN l.credit ELSE 0 END) as ytd_credit
-    FROM welfare_accounts a
-    LEFT JOIN welfare_ledger l ON a.id = l.account_id
+    FROM finance_accounts a
+    LEFT JOIN finance_ledger l ON a.id = l.account_id
     GROUP BY a.id
 ");
 $accountsStmt->execute([$filterMonth, $filterMonth, $currentYear, $filterMonth, $currentYear, $filterMonth]);
@@ -69,8 +69,8 @@ $prevYearEnd = ($currentYear - 1) . '-12-31';
 $openStmt = $db->prepare("
     SELECT a.code, 
            SUM(l.debit) - SUM(l.credit) as bal 
-    FROM welfare_accounts a 
-    JOIN welfare_ledger l ON a.id = l.account_id 
+    FROM finance_accounts a 
+    JOIN finance_ledger l ON a.id = l.account_id 
     WHERE l.transaction_date <= ? 
       AND a.type IN ('Asset')
     GROUP BY a.code

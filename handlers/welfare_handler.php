@@ -91,11 +91,9 @@ if ($action === 'fetch_welfare_recipients') {
     }
 }
 
-// ── ENROL MEMBER ──────────────────────────────────────────────────────────────
 if ($action === 'enrol_welfare') {
     $memberId      = (int)($_POST['member_id']      ?? 0);
     $enrolDate     = $_POST['enrol_date']           ?? date('Y-m-d');
-    $familyGroup   = $_POST['family_group']         ?? null;
     $monthlyAmount = (float)($_POST['monthly_amount'] ?? 0);
     $notes         = trim($_POST['notes']           ?? '');
 
@@ -104,6 +102,13 @@ if ($action === 'enrol_welfare') {
     }
 
     try {
+        // Automatically fetch the member's family
+        $famStmt = $db->prepare(
+            "SELECT f.name FROM member_families mf JOIN families f ON mf.family_id = f.id WHERE mf.member_id = ? LIMIT 1"
+        );
+        $famStmt->execute([$memberId]);
+        $familyGroup = $famStmt->fetchColumn() ?: null;
+
         $stmt = $db->prepare(
             "INSERT INTO welfare_members (member_id, enrol_date, family_group, monthly_amount, notes, enrolled_by)
              VALUES (?, ?, ?, ?, ?, ?)"
@@ -189,16 +194,16 @@ if ($action === 'record_welfare_payment') {
 
         // Auto-post to Ledger
         $assetCode = ($method === 'Cash') ? '1010' : '1000';
-        $assetAccountId = $db->query("SELECT id FROM welfare_accounts WHERE code = '$assetCode'")->fetchColumn();
-        $revenueAccountId = $db->query("SELECT id FROM welfare_accounts WHERE code = '4000'")->fetchColumn();
+        $assetAccountId = $db->query("SELECT id FROM finance_accounts WHERE code = '$assetCode'")->fetchColumn();
+        $revenueAccountId = $db->query("SELECT id FROM finance_accounts WHERE code = '4000'")->fetchColumn();
         $desc = "Subscription from {$name}";
 
         if ($assetAccountId && $revenueAccountId) {
             // Debit Asset (Cash/Bank)
-            $db->prepare("INSERT INTO welfare_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
+            $db->prepare("INSERT INTO finance_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
                ->execute([$payDate, $assetAccountId, $desc, $amount, 0, $reference ?: null, $_SESSION['user_id']]);
             // Credit Revenue (Subscription)
-            $db->prepare("INSERT INTO welfare_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
+            $db->prepare("INSERT INTO finance_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
                ->execute([$payDate, $revenueAccountId, $desc, 0, $amount, $reference ?: null, $_SESSION['user_id']]);
         }
 
@@ -296,7 +301,7 @@ if ($action === 'send_welfare_messages') {
             }
             if (($channel === 'email' || $channel === 'both') && !empty($r['email'])) {
                 $html = buildWelfareBulkEmailHtml($name, $personalised);
-                if (sendEmail($r['email'], $name, 'House of Grace CCR — Welfare Message', $html)) $ok = true;
+                if (sendEmail($r['email'], $name, 'Adom Fie CCR Community — Welfare Message', $html)) $ok = true;
             }
 
             $ok ? $sent++ : $failed++;
@@ -428,8 +433,8 @@ if ($action === 'record_welfare_expense') {
     }
 
     try {
-        $expenseId = $db->query("SELECT id FROM welfare_accounts WHERE code = '$expenseCode'")->fetchColumn();
-        $assetId   = $db->query("SELECT id FROM welfare_accounts WHERE code = '$assetCode'")->fetchColumn();
+        $expenseId = $db->query("SELECT id FROM finance_accounts WHERE code = '$expenseCode'")->fetchColumn();
+        $assetId   = $db->query("SELECT id FROM finance_accounts WHERE code = '$assetCode'")->fetchColumn();
 
         if (!$expenseId || !$assetId) {
             redirect($redirect . '?error=invalid_data');
@@ -446,11 +451,11 @@ if ($action === 'record_welfare_expense') {
         $db->prepare("UPDATE welfare_expenses SET reference_no = ? WHERE id = ?")->execute([$refNo, $expId]);
 
         // Debit Expense
-        $db->prepare("INSERT INTO welfare_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
+        $db->prepare("INSERT INTO finance_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
            ->execute([$date, $expenseId, $desc, $amount, 0, $refNo, $_SESSION['user_id']]);
 
         // Credit Asset
-        $db->prepare("INSERT INTO welfare_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
+        $db->prepare("INSERT INTO finance_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
            ->execute([$date, $assetId, $desc, 0, $amount, $refNo, $_SESSION['user_id']]);
 
         $db->commit();
@@ -487,8 +492,8 @@ if ($action === 'edit_welfare_expense') {
     }
 
     try {
-        $expenseId = $db->query("SELECT id FROM welfare_accounts WHERE code = '$expenseCode'")->fetchColumn();
-        $assetId   = $db->query("SELECT id FROM welfare_accounts WHERE code = '$assetCode'")->fetchColumn();
+        $expenseId = $db->query("SELECT id FROM finance_accounts WHERE code = '$expenseCode'")->fetchColumn();
+        $assetId   = $db->query("SELECT id FROM finance_accounts WHERE code = '$assetCode'")->fetchColumn();
 
         if (!$expenseId || !$assetId) {
             redirect($redirect . '?error=invalid_data');
@@ -502,14 +507,14 @@ if ($action === 'edit_welfare_expense') {
         $refNo = 'WEXP-' . $id;
 
         // Delete old ledger entries and recreate
-        $db->prepare("DELETE FROM welfare_ledger WHERE reference_no = ?")->execute([$refNo]);
+        $db->prepare("DELETE FROM finance_ledger WHERE reference_no = ?")->execute([$refNo]);
 
         // Debit Expense
-        $db->prepare("INSERT INTO welfare_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
+        $db->prepare("INSERT INTO finance_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
            ->execute([$date, $expenseId, $desc, $amount, 0, $refNo, $_SESSION['user_id']]);
 
         // Credit Asset
-        $db->prepare("INSERT INTO welfare_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
+        $db->prepare("INSERT INTO finance_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
            ->execute([$date, $assetId, $desc, 0, $amount, $refNo, $_SESSION['user_id']]);
 
         $db->commit();
@@ -538,7 +543,7 @@ if ($action === 'delete_welfare_expense') {
         
         $db->prepare("DELETE FROM welfare_expenses WHERE id = ?")->execute([$id]);
         $refNo = 'WEXP-' . $id;
-        $db->prepare("DELETE FROM welfare_ledger WHERE reference_no = ?")->execute([$refNo]);
+        $db->prepare("DELETE FROM finance_ledger WHERE reference_no = ?")->execute([$refNo]);
 
         $db->commit();
 

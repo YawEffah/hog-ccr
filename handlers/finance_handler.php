@@ -48,6 +48,32 @@ if ($action === 'add_transaction') {
         ]);
         $txnId = (int)$db->lastInsertId();
 
+        // Double-entry accounting automation
+        $typeToAccMap = [
+            'Tithe' => '4200',
+            'Offering' => '4300',
+            'Donation' => '4400',
+            'Pledge' => '4500',
+            'Project Contribution' => '4600',
+            'Welfare' => '4000'
+        ];
+        $revenueCode = $typeToAccMap[$type] ?? '4300';
+        $revenueId = $db->query("SELECT id FROM finance_accounts WHERE code = '$revenueCode'")->fetchColumn();
+        $cashId = $db->query("SELECT id FROM finance_accounts WHERE code = '1000'")->fetchColumn();
+
+        if ($revenueId && $cashId) {
+            $ledgerRef = "FIN-TXN-$txnId";
+            $desc = "Receipt: $type" . ($notes ? " - $notes" : "");
+            
+            // Debit Cash
+            $db->prepare("INSERT INTO finance_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
+               ->execute([$date, $cashId, $desc, $amount, 0, $ledgerRef, $_SESSION['user_id']]);
+            
+            // Credit Revenue
+            $db->prepare("INSERT INTO finance_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
+               ->execute([$date, $revenueId, $desc, 0, $amount, $ledgerRef, $_SESSION['user_id']]);
+        }
+
         // Send receipt email / SMS to admins
         if ($sendReceipt) {
             $txnData = [
@@ -130,6 +156,9 @@ if ($action === 'delete_transaction') {
         $txn = $row->fetch();
 
         $db->prepare("DELETE FROM finance_transactions WHERE id = ?")->execute([$txnId]);
+        
+        // Also delete from ledger
+        $db->prepare("DELETE FROM finance_ledger WHERE reference_no = ?")->execute(["FIN-TXN-$txnId"]);
 
         if ($txn) {
             logActivity('Deleted ' . $txn['type'] . ' transaction of ' . formatGhc($txn['amount']), 'finance');

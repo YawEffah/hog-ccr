@@ -1,6 +1,6 @@
 {
     "name": "hog-ccr/management",
-    "description": "House of Grace CCR Church Management System",
+    "description": "Adom Fie CCR Community Management System",
     "type": "project",
     "require": {
         "php": ">=8.0",

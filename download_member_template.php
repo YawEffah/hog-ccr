@@ -186,7 +186,7 @@ $sectionStyle = [
 ];
 $labelStyle = ['font' => ['bold' => true]];
 
-$instrSheet->setCellValue('A1', 'HOG-CCR Bulk Member Import — Instructions');
+$instrSheet->setCellValue('A1', 'Adom Fie CCR Community Bulk Member Import — Instructions');
 $instrSheet->mergeCells('A1:B1');
 $instrSheet->getStyle('A1')->applyFromArray($titleStyle);
 $instrSheet->getRowDimension(1)->setRowHeight(28);
@@ -248,7 +248,7 @@ foreach ($rows as [$row, $label, $value, $isSection, $isData]) {
 $spreadsheet->setActiveSheetIndex(0);
 
 // ── Stream download ────────────────────────────────────
-$filename = 'HOG_CCR_Member_Import_Template.xlsx';
+$filename = 'AdomFie_CCR_Member_Import_Template.xlsx';
 
 try {
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

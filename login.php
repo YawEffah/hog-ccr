@@ -1,7 +1,7 @@
 <?php
 /**
  * Login Page
- * Secure, database-backed authentication for HOG-CCR
+ * Secure, database-backed authentication for Adom Fie CCR Community
  */
 
 require_once 'includes/auth.php';
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login | House of Grace CCR</title>
+  <title>Login | Adom Fie CCR Community</title>
   <link rel="icon" type="image/png" href="assets/images/logo.png">
   <link
     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap"
@@ -370,7 +370,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="login-header">
         <img src="assets/images/logo.png" alt="Logo" class="login-logo">
         <h1>Welcome Back</h1>
-        <p>Adomfie (HOG) CCR Community Mgmt. System</p>
+        <p>Adom Fie CCR Community Mgmt. System</p>
       </div>
 
       <?php if ($error): ?>
@@ -417,7 +417,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </form>
 
       <div class="login-footer">
-        &copy; <?= date('Y') ?> Adomfie (HOG) CCR Community. All rights reserved.
+        &copy; <?= date('Y') ?> Adom Fie CCR Community. All rights reserved.
       </div>
     </div>
   </div>

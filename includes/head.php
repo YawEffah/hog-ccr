@@ -7,7 +7,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?php echo isset($pageTitle) ? $pageTitle : 'Dashboard'; ?> | CCR House of Grace</title>
+  <title><?php echo isset($pageTitle) ? $pageTitle : 'Dashboard'; ?> | Adom Fie CCR Community</title>
   <link rel="icon" type="image/png" href="assets/images/logo.png">
   <!-- Tailwind CSS (Unused but kept per original structure if needed by backend, though plan suggested removal, I will follow the plan's recommendation to remove it to reduce overhead) -->
   <link

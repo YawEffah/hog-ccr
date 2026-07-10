@@ -209,6 +209,17 @@
               </div>
             </div>
             <div class="form-group">
+              <label class="form-label">Families</label>
+              <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:4px;">
+                <?php foreach ($families as $f): ?>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                    <input type="checkbox" name="families[]" value="<?= $f['id'] ?>">
+                    <?= htmlspecialchars($f['name']) ?>
+                  </label>
+                <?php endforeach; ?>
+              </div>
+            </div>
+            <div class="form-group">
               <label class="form-label">Other Groups (Religious / Social — inside or outside the church)</label>
               <textarea class="form-control" name="group_memberships" rows="2"
                 placeholder="e.g. CDA, Knights of Marshall, KNUST Alumni Association…"
@@ -420,6 +431,17 @@
               </div>
             </div>
             <div class="form-group">
+              <label class="form-label">Families</label>
+              <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:4px;" id="editFamiliesWrap">
+                <?php foreach ($families as $f): ?>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                    <input type="checkbox" name="families[]" value="<?= $f['id'] ?>" class="edit-family-cb">
+                    <?= htmlspecialchars($f['name']) ?>
+                  </label>
+                <?php endforeach; ?>
+              </div>
+            </div>
+            <div class="form-group">
               <label class="form-label">Other Groups (Religious / Social)</label>
               <textarea class="form-control" name="group_memberships" id="editGroupMemberships" rows="2"
                 placeholder="e.g. CDA, Knights of Marshall…" style="resize:none;"></textarea>
@@ -579,6 +601,11 @@ function openEditModal(m) {
   // Ministries
   document.querySelectorAll('.edit-ministry-cb').forEach(cb => {
     cb.checked = Array.isArray(m.ministries) && m.ministries.includes(parseInt(cb.value));
+  });
+
+  // Families
+  document.querySelectorAll('.edit-family-cb').forEach(cb => {
+    cb.checked = Array.isArray(m.families) && m.families.includes(parseInt(cb.value));
   });
 
   // Sacraments needed

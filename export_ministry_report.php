@@ -44,9 +44,7 @@ $attStmt = $db->prepare("
                COUNT(r.id) as total_possible
         FROM attendance_sessions s
         JOIN attendance_records r ON s.id = r.session_id
-        JOIN members m ON r.member_id = m.id
-        JOIN member_ministries mm ON m.id = mm.member_id
-        WHERE mm.ministry_id = ?
+        WHERE s.ministry_id = ?
         GROUP BY s.id
     ) as session_stats
 ");
@@ -74,8 +72,7 @@ $sessHistoryStmt = $db->prepare("
            COUNT(r.id) as total_count
     FROM attendance_sessions s
     JOIN attendance_records r ON s.id = r.session_id
-    JOIN member_ministries mm ON r.member_id = mm.member_id
-    WHERE mm.ministry_id = ?
+    WHERE s.ministry_id = ?
     GROUP BY s.id
     ORDER BY s.session_date DESC
 ");

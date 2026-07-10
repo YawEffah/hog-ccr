@@ -1,5 +1,5 @@
 -- ============================================================
---  HOG-CCR Management System — MySQL Database Schema
+--  Adom Fie CCR Community Management System — MySQL Database Schema
 --  Database: hog_ccr
 --  Run this file once to create all tables.
 --  Compatible with MySQL 5.7+ / MariaDB 10.3+
@@ -174,13 +174,16 @@ CREATE TABLE IF NOT EXISTS announcements (
 CREATE TABLE IF NOT EXISTS attendance_sessions (
   id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   session_type VARCHAR(100)  NOT NULL,
+  ministry_id  INT UNSIGNED  NULL,
   session_date DATE          NOT NULL,
   session_time TIME,
   recorded_by  INT UNSIGNED  NULL,
   created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uniq_session (session_type, session_date),
+  UNIQUE KEY uniq_session (session_type, session_date, ministry_id),
   CONSTRAINT fk_session_admin FOREIGN KEY (recorded_by)
-    REFERENCES admins(id) ON DELETE SET NULL
+    REFERENCES admins(id) ON DELETE SET NULL,
+  CONSTRAINT fk_session_ministry FOREIGN KEY (ministry_id)
+    REFERENCES ministries(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- ─────────────────────────────────────────────
@@ -267,15 +270,16 @@ CREATE TABLE IF NOT EXISTS welfare_contributions (
 -- ─────────────────────────────────────────────
 -- 13. WELFARE LEDGER
 -- ─────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS welfare_accounts (
+CREATE TABLE IF NOT EXISTS finance_accounts (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   code VARCHAR(20) NOT NULL UNIQUE,
   name VARCHAR(150) NOT NULL,
   type ENUM('Asset', 'Liability', 'Equity', 'Revenue', 'Expense') NOT NULL,
+  fund ENUM('General', 'Welfare') DEFAULT 'General',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
-CREATE TABLE IF NOT EXISTS welfare_ledger (
+CREATE TABLE IF NOT EXISTS finance_ledger (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   transaction_date DATE NOT NULL,
   account_id INT UNSIGNED NOT NULL,
@@ -285,7 +289,7 @@ CREATE TABLE IF NOT EXISTS welfare_ledger (
   reference_no VARCHAR(100),
   created_by INT UNSIGNED NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_wl_account FOREIGN KEY (account_id) REFERENCES welfare_accounts(id) ON DELETE CASCADE,
+  CONSTRAINT fk_wl_account FOREIGN KEY (account_id) REFERENCES finance_accounts(id) ON DELETE CASCADE,
   CONSTRAINT fk_wl_admin FOREIGN KEY (created_by) REFERENCES admins(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 

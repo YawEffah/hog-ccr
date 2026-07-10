@@ -353,7 +353,7 @@ function sendFinanceReceipt(array $recipient, array $txn): bool
     $html = <<<HTML
     <div style="font-family:'DM Sans',Arial,sans-serif;max-width:540px;margin:0 auto;border:1px solid #EDE8DF;border-radius:12px;overflow:hidden;">
       <div style="background:#2E2D7B;padding:28px 32px;text-align:center;">
-        <h1 style="color:#ffffff;font-size:22px;margin:0;">House of Grace CCR</h1>
+        <h1 style="color:#ffffff;font-size:22px;margin:0;">Adom Fie CCR Community</h1>
         <p style="color:#B0A090;font-size:13px;margin:4px 0 0;">Weekly Finance Summary</p>
       </div>
       <div style="padding:32px;">
@@ -384,11 +384,11 @@ function sendFinanceReceipt(array $recipient, array $txn): bool
           </tr>
         </table>
         <p style="margin-top:28px;font-size:13px;color:#94A3B8;">
-          System generated summary. — House of Grace CCR Administration
+          System generated summary. — Adom Fie CCR Community Administration
         </p>
       </div>
       <div style="background:#F8FAFC;padding:16px 32px;text-align:center;font-size:11px;color:#94A3B8;">
-        &copy; {$year} House of Grace CCR. All rights reserved.
+        &copy; {$year} Adom Fie CCR Community. All rights reserved.
       </div>
     </div>
     HTML;
@@ -406,7 +406,7 @@ function sendFinanceReceipt(array $recipient, array $txn): bool
     $smsSent = false;
     if (!empty($recipient['phone'])) {
         $smsAmount = number_format((float)$txn['amount'], 2);
-        $smsMsg = "Dear {$name}, a new weekly summary of GHS {$smsAmount} has been recorded for {$type} ({$week}). - House of Grace CCR";
+        $smsMsg = "Dear {$name}, a new weekly summary of GHS {$smsAmount} has been recorded for {$type} ({$week}). - Adom Fie CCR Community";
         $smsSent = sendSMS($recipient['phone'], $smsMsg);
     }
 
@@ -434,7 +434,7 @@ function sendWelfareEmail(array $member, float $amount, string $date, string $re
     <div style="font-family:'DM Sans',Arial,sans-serif;max-width:540px;margin:0 auto;border:1px solid #99F6E4;border-radius:12px;overflow:hidden;">
       <div style="background:#0D9488;padding:28px 32px;text-align:center;">
         <h1 style="color:#ffffff;font-size:22px;margin:0;">Welfare Contribution</h1>
-        <p style="color:#CCFBF1;font-size:13px;margin:4px 0 0;">House of Grace CCR</p>
+        <p style="color:#CCFBF1;font-size:13px;margin:4px 0 0;">Adom Fie CCR Community</p>
       </div>
       <div style="padding:32px;">
         <p style="color:#475569;font-size:14px;">Dear <strong>{$name}</strong>,</p>
@@ -468,7 +468,7 @@ function sendWelfareEmail(array $member, float $amount, string $date, string $re
           </tr>
         </table>
         <p style="margin-top:28px;font-size:13px;color:#94A3B8;">
-          God bless you. — House of Grace CCR Welfare Team
+          God bless you. — Adom Fie CCR Community Welfare Team
         </p>
       </div>
     </div>
@@ -496,13 +496,13 @@ function sendWelcomeMessage(array $member): bool
     $html = <<<HTML
     <div style="font-family:'DM Sans',Arial,sans-serif;max-width:540px;margin:0 auto;border:1px solid #EDE8DF;border-radius:12px;overflow:hidden;">
       <div style="background:#2E2D7B;padding:40px 32px;text-align:center;">
-        <h1 style="color:#ffffff;font-size:24px;margin:0;">Welcome to House of Grace CCR!</h1>
+        <h1 style="color:#ffffff;font-size:24px;margin:0;">Welcome to Adom Fie CCR Community!</h1>
         <p style="color:#B0A090;font-size:14px;margin:8px 0 0;">We're so blessed to have you with us</p>
       </div>
       <div style="padding:32px;">
         <p style="color:#475569;font-size:15px;">Dear <strong>{$name}</strong>,</p>
         <p style="color:#475569;font-size:15px;line-height:1.6;">
-          On behalf of the entire congregation, we welcome you to House of Grace CCR family. We believe your presence here is not by accident and we look forward to growing together in faith.
+          On behalf of the entire congregation, we welcome you to Adom Fie CCR Community family. We believe your presence here is not by accident and we look forward to growing together in faith.
         </p>
         <div style="background:#F8FAFC;border-radius:8px;padding:20px;margin:24px 0;text-align:center;">
           <p style="margin:0;color:#64748B;font-size:13px;text-transform:uppercase;letter-spacing:1px;">Your Official Member ID</p>
@@ -513,11 +513,11 @@ function sendWelcomeMessage(array $member): bool
         </p>
         <p style="margin-top:28px;font-size:14px;color:#94A3B8;">
           Blessings, <br>
-          <strong>House of Grace CCR Administration</strong>
+          <strong>Adom Fie CCR Community Administration</strong>
         </p>
       </div>
       <div style="background:#F8FAFC;padding:16px 32px;text-align:center;font-size:11px;color:#94A3B8;">
-        &copy; {$year} House of Grace CCR. All rights reserved.
+        &copy; {$year} Adom Fie CCR Community. All rights reserved.
       </div>
     </div>
     HTML;
@@ -527,14 +527,14 @@ function sendWelcomeMessage(array $member): bool
         $emailSent = sendEmail(
             $member['email'],
             $member['name'],
-            'Welcome to House of Grace CCR Family!',
+            'Welcome to Adom Fie CCR Community Family!',
             $html
         );
     }
 
     $smsSent = false;
     if (!empty($member['phone'])) {
-        $smsMsg = "Welcome to House of Grace CCR, {$member['name']}! We're glad to have you in our family. Your Member ID is {$member['code']}. God bless you.";
+        $smsMsg = "Welcome to Adom Fie CCR Community, {$member['name']}! We're glad to have you in our family. Your Member ID is {$member['code']}. God bless you.";
         $smsSent = sendSMS($member['phone'], $smsMsg);
     }
 
@@ -610,7 +610,7 @@ function broadcastEvent(array $event): void
     <div style="font-family:'DM Sans',Arial,sans-serif;max-width:540px;margin:0 auto;border:1px solid #EDE8DF;border-radius:12px;overflow:hidden;">
       <div style="background:#2E2D7B;padding:32px;text-align:center;">
         <h1 style="color:#ffffff;font-size:22px;margin:0;">New Event Scheduled</h1>
-        <p style="color:#B0A090;font-size:13px;margin:4px 0 0;">House of Grace CCR</p>
+        <p style="color:#B0A090;font-size:13px;margin:4px 0 0;">Adom Fie CCR Community</p>
       </div>
       <div style="padding:32px;">
         <h2 style="color:#1E1B4B;font-size:18px;margin-top:0;">{$title}</h2>
@@ -630,7 +630,7 @@ function broadcastEvent(array $event): void
             sendEmail($m['email'], $name, "New Event: $title", $htmlBase);
         }
         if (!empty($m['phone'])) {
-            $sms = "New Event: {$title}\nDate: {$date}\nTime: {$time}\nVenue: {$venue}\n- House of Grace CCR";
+            $sms = "New Event: {$title}\nDate: {$date}\nTime: {$time}\nVenue: {$venue}\n- Adom Fie CCR Community";
             sendSMS($m['phone'], $sms);
         }
     }
@@ -652,7 +652,7 @@ function broadcastAnnouncement(array $ann): void
     <div style="font-family:'DM Sans',Arial,sans-serif;max-width:540px;margin:0 auto;border:1px solid #EDE8DF;border-radius:12px;overflow:hidden;">
       <div style="background:#2E2D7B;padding:32px;text-align:center;">
         <h1 style="color:#ffffff;font-size:22px;margin:0;">New Announcement</h1>
-        <p style="color:#B0A090;font-size:13px;margin:4px 0 0;">House of Grace CCR</p>
+        <p style="color:#B0A090;font-size:13px;margin:4px 0 0;">Adom Fie CCR Community</p>
       </div>
       <div style="padding:32px;">
         <h2 style="color:#1E1B4B;font-size:18px;margin-top:0;">{$title}</h2>
@@ -667,7 +667,7 @@ function broadcastAnnouncement(array $ann): void
             sendEmail($m['email'], $name, "Announcement: $title", $htmlBase);
         }
         if (!empty($m['phone'])) {
-            $sms = "Announcement: {$title}\n{$desc}\n- House of Grace CCR";
+            $sms = "Announcement: {$title}\n{$desc}\n- Adom Fie CCR Community";
             sendSMS($m['phone'], $sms);
         }
     }
@@ -696,7 +696,7 @@ function broadcastMinistryMessage(int $ministryId, string $subject, string $mess
     <div style="font-family:'DM Sans',Arial,sans-serif;max-width:540px;margin:0 auto;border:1px solid #EDE8DF;border-radius:12px;overflow:hidden;">
       <div style="background:#2E2D7B;padding:32px;text-align:center;">
         <h1 style="color:#ffffff;font-size:22px;margin:0;">{$ministryName} Message</h1>
-        <p style="color:#B0A090;font-size:13px;margin:4px 0 0;">House of Grace CCR</p>
+        <p style="color:#B0A090;font-size:13px;margin:4px 0 0;">Adom Fie CCR Community</p>
       </div>
       <div style="padding:32px;">
         <p style="color:#475569;font-size:15px;line-height:1.6;">{$message}</p>
@@ -748,3 +748,54 @@ function renderToastAlerts(?string $successMsg, ?string $errorMsg): void
         echo "<script>document.addEventListener('DOMContentLoaded', function() { if(typeof showToast === 'function') showToast('{$msg}', 'error'); });</script>";
     }
 }
+
+function broadcastFamilyMessage(int $familyId, string $subject, string $message, string $channel = 'both'): array
+{
+    set_time_limit(0);
+    $db = getDB();
+    
+    // Fetch family name
+    $mNameStmt = $db->prepare("SELECT name FROM families WHERE id = ?");
+    $mNameStmt->execute([$familyId]);
+    $familyName = $mNameStmt->fetchColumn() ?: 'Family';
+
+    $stmt = $db->prepare("SELECT m.first_name, m.last_name, m.email, m.phone FROM members m JOIN member_families mm ON m.id = mm.member_id WHERE mm.family_id = ? AND m.status = 'Active'");
+    $stmt->execute([$familyId]);
+    $members = $stmt->fetchAll();
+
+    $sent = $failed = 0;
+    
+    $htmlContent = <<<HTML
+    <div style="font-family:'DM Sans',Arial,sans-serif;max-width:540px;margin:0 auto;border:1px solid #EDE8DF;border-radius:12px;overflow:hidden;">
+      <div style="background:#2E2D7B;padding:32px;text-align:center;">
+        <h1 style="color:#ffffff;font-size:22px;margin:0;">{$familyName} Message</h1>
+        <p style="color:#B0A090;font-size:13px;margin:4px 0 0;">Adom Fie CCR Community</p>
+      </div>
+      <div style="padding:32px;">
+        <p style="color:#475569;font-size:15px;line-height:1.6;">{$message}</p>
+        <p style="margin-top:28px;font-size:14px;color:#94A3B8;">
+          Blessings, <br>
+          <strong>{$familyName} Team</strong>
+        </p>
+      </div>
+    </div>
+    HTML;
+
+    foreach ($members as $m) {
+        $name = $m['first_name'] . ' ' . $m['last_name'];
+        $ok = false;
+
+        if (($channel === 'email' || $channel === 'both') && !empty($m['email'])) {
+            if (sendEmail($m['email'], $name, $subject ?: "{$familyName} Notification", $htmlContent)) $ok = true;
+        }
+
+        if (($channel === 'sms' || $channel === 'both') && !empty($m['phone'])) {
+            if (sendSMS($m['phone'], $message)) $ok = true;
+        }
+
+        $ok ? $sent++ : $failed++;
+    }
+
+    return ['sent' => $sent, 'failed' => $failed, 'family' => $familyName];
+}
+
