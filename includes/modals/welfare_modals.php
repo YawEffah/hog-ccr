@@ -394,7 +394,7 @@
             <select class="form-control" name="expense_account" required>
               <option value="">Select Category...</option>
               <?php
-                $expenses = $db->query("SELECT code, name FROM welfare_accounts WHERE type = 'Expense' ORDER BY code")->fetchAll();
+                $expenses = $db->query("SELECT code, name FROM finance_accounts WHERE type = 'Expense' ORDER BY code")->fetchAll();
                 foreach($expenses as $exp):
               ?>
               <option value="<?= $exp['code'] ?>"><?= htmlspecialchars($exp['name']) ?></option>
@@ -405,7 +405,7 @@
             <label class="form-label">Paid From (Asset)</label>
             <select class="form-control" name="asset_account" required>
               <?php
-                $assets = $db->query("SELECT code, name FROM welfare_accounts WHERE type = 'Asset' AND name LIKE 'Cash%' ORDER BY code")->fetchAll();
+                $assets = $db->query("SELECT code, name FROM finance_accounts WHERE type = 'Asset' AND name LIKE 'Cash%' ORDER BY code")->fetchAll();
                 foreach($assets as $ast):
               ?>
               <option value="<?= $ast['code'] ?>"><?= htmlspecialchars($ast['name']) ?></option>

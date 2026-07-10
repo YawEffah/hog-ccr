@@ -270,15 +270,16 @@ CREATE TABLE IF NOT EXISTS welfare_contributions (
 -- ─────────────────────────────────────────────
 -- 13. WELFARE LEDGER
 -- ─────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS welfare_accounts (
+CREATE TABLE IF NOT EXISTS finance_accounts (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   code VARCHAR(20) NOT NULL UNIQUE,
   name VARCHAR(150) NOT NULL,
   type ENUM('Asset', 'Liability', 'Equity', 'Revenue', 'Expense') NOT NULL,
+  fund ENUM('General', 'Welfare') DEFAULT 'General',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
-CREATE TABLE IF NOT EXISTS welfare_ledger (
+CREATE TABLE IF NOT EXISTS finance_ledger (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   transaction_date DATE NOT NULL,
   account_id INT UNSIGNED NOT NULL,
@@ -288,7 +289,7 @@ CREATE TABLE IF NOT EXISTS welfare_ledger (
   reference_no VARCHAR(100),
   created_by INT UNSIGNED NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_wl_account FOREIGN KEY (account_id) REFERENCES welfare_accounts(id) ON DELETE CASCADE,
+  CONSTRAINT fk_wl_account FOREIGN KEY (account_id) REFERENCES finance_accounts(id) ON DELETE CASCADE,
   CONSTRAINT fk_wl_admin FOREIGN KEY (created_by) REFERENCES admins(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 

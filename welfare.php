@@ -162,8 +162,8 @@ if ($isAllMonths) {
         "SELECT e.*, c.name as category_name, c.code as category_code, a.name as asset_name, a.code as asset_code, 
                 m.first_name, m.last_name, m.member_code
          FROM welfare_expenses e
-         JOIN welfare_accounts c ON e.category_id = c.id
-         JOIN welfare_accounts a ON e.asset_account_id = a.id
+         JOIN finance_accounts c ON e.category_id = c.id
+         JOIN finance_accounts a ON e.asset_account_id = a.id
          LEFT JOIN members m ON e.recipient_member_id = m.id
          WHERE DATE_FORMAT(e.expense_date, '%Y') = ?
          ORDER BY e.expense_date DESC, e.created_at DESC"
@@ -174,8 +174,8 @@ if ($isAllMonths) {
         "SELECT e.*, c.name as category_name, c.code as category_code, a.name as asset_name, a.code as asset_code, 
                 m.first_name, m.last_name, m.member_code
          FROM welfare_expenses e
-         JOIN welfare_accounts c ON e.category_id = c.id
-         JOIN welfare_accounts a ON e.asset_account_id = a.id
+         JOIN finance_accounts c ON e.category_id = c.id
+         JOIN finance_accounts a ON e.asset_account_id = a.id
          LEFT JOIN members m ON e.recipient_member_id = m.id
          WHERE DATE_FORMAT(e.expense_date, '%Y-%m') = ?
          ORDER BY e.expense_date DESC, e.created_at DESC"
