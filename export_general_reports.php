@@ -1,6 +1,7 @@
 <?php
 /**
- * Welfare Financial Reports - Excel Exporter
+ * General Church Fund Financial Reports - Excel Exporter
+ * Filtered to fund = 'General' accounts only
  */
 require_once 'includes/auth.php';
 requireAuth();
@@ -31,7 +32,7 @@ $periodEndDate = $isAllMonths
     ? "31st December, $currentYear" 
     : date('jS F, Y', strtotime(date('Y-m-t', strtotime(str_replace('-all','-01',$filterMonth) . '-01'))));
 
-// Calculate Ledger Balances — Welfare Fund only
+// Calculate Ledger Balances — General Fund only
 $accountsStmt = $db->prepare("
     SELECT a.code, a.name, a.type, 
     SUM(CASE WHEN l.transaction_date <= LAST_DAY(STR_TO_DATE(CONCAT(?, '-01'), '%Y-%m-%d')) THEN l.debit ELSE 0 END) as total_debit,
@@ -40,7 +41,7 @@ $accountsStmt = $db->prepare("
     SUM(CASE WHEN YEAR(l.transaction_date) = ? AND l.transaction_date <= LAST_DAY(STR_TO_DATE(CONCAT(?, '-01'), '%Y-%m-%d')) THEN l.credit ELSE 0 END) as ytd_credit
     FROM finance_accounts a
     LEFT JOIN finance_ledger l ON a.id = l.account_id
-    WHERE a.fund = 'Welfare'
+    WHERE a.fund = 'General'
     GROUP BY a.id
 ");
 $accountsStmt->execute([$finFilterMonth, $finFilterMonth, $currentYear, $finFilterMonth, $currentYear, $finFilterMonth]);
@@ -85,7 +86,7 @@ $openStmt = $db->prepare("
     JOIN finance_ledger l ON a.id = l.account_id 
     WHERE l.transaction_date <= ? 
       AND a.type IN ('Asset')
-      AND a.fund = 'Welfare'
+      AND a.fund = 'General'
     GROUP BY a.code
 ");
 $openStmt->execute([$prevYearEnd]);
@@ -114,14 +115,14 @@ $accumFund = $balances['3000']['balance'] ?? 0;
 
 // Set Excel Headers
 header("Content-Type: application/vnd.ms-excel; charset=utf-8");
-header("Content-Disposition: attachment; filename=Welfare_{$reportType}_" . date('Ymd') . ".xls");
+header("Content-Disposition: attachment; filename=General_Fund_{$reportType}_" . date('Ymd') . ".xls");
 header("Pragma: no-cache");
 header("Expires: 0");
 
 echo "<table border='1'>";
 
 if ($reportType === 'performance') {
-    echo "<tr><th colspan='3'>ADOM FIE CCR COMMUNITY — WELFARE FUND</th></tr>";
+    echo "<tr><th colspan='3'>ADOM FIE CCR COMMUNITY — GENERAL CHURCH FUND</th></tr>";
     echo "<tr><th colspan='3'>Statement of Financial Performance (Income & Expenditure) For the period ended {$periodEndDate}</th></tr>";
     echo "<tr><th>Income</th><th>Ghc</th><th>Ghc</th></tr>";
     echo "<tr><td>Subscription for {$currentYear}</td><td></td><td>{$subIncome}</td></tr>";
@@ -136,7 +137,7 @@ if ($reportType === 'performance') {
     echo "<tr><td><b>Surplus</b></td><td></td><td><b>{$surplus}</b></td></tr>";
 
 } elseif ($reportType === 'cashflow') {
-    echo "<tr><th colspan='3'>Adom Fie CCR Community — Welfare Fund</th></tr>";
+    echo "<tr><th colspan='3'>Adom Fie CCR Community — General Church Fund</th></tr>";
     echo "<tr><th colspan='3'>Statement of Cash Flows For the period ended {$periodEndDate}</th></tr>";
     echo "<tr><td><b>Operating Activities</b></td><td></td><td><b>Ghc</b></td></tr>";
     echo "<tr><td>Cash received from Members</td><td></td><td>{$cashReceived}</td></tr>";
@@ -157,7 +158,7 @@ if ($reportType === 'performance') {
     echo "<tr><td><b>Cash at Bank (Closing)</b></td><td></td><td><b>{$closeBank}</b></td></tr>";
 
 } elseif ($reportType === 'position') {
-    echo "<tr><th colspan='3'>Adom Fie CCR Community — Welfare Fund</th></tr>";
+    echo "<tr><th colspan='3'>Adom Fie CCR Community — General Church Fund</th></tr>";
     echo "<tr><th colspan='3'>Statement of Financial Position As At {$periodEndDate}</th></tr>";
     echo "<tr><td><b>Assets</b></td><td><b>Ghc</b></td><td><b>Ghc</b></td></tr>";
     echo "<tr><td><b>Current Assets</b></td><td></td><td></td></tr>";
@@ -183,7 +184,7 @@ if ($reportType === 'performance') {
     echo "<tr><td><b>Total Net Assets</b></td><td></td><td><b>" . ($accumFund + $surplus) . "</b></td></tr>";
 
 } elseif ($reportType === 'trialbalance') {
-    echo "<tr><th rowspan='2'>Particulars</th><th colspan='2'>CCR COMMUNITY — WELFARE FUND</th></tr>";
+    echo "<tr><th rowspan='2'>Particulars</th><th colspan='2'>GENERAL CHURCH FUND</th></tr>";
     echo "<tr><th colspan='2'>As At {$periodEndDate}</th></tr>";
     echo "<tr><th></th><th>Debit</th><th>Credit</th></tr>";
     echo "<tr><td><b>Capital Account</b></td><td></td><td><b>{$accumFund}</b></td></tr>";

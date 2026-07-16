@@ -128,7 +128,7 @@ unset($at);
 
 
 // ==========================================
-// 2. FINANCIAL ANALYTICS
+// 2. GENERAL CHURCH FUND ANALYTICS
 // ==========================================
 $annual_finance = [];
 $ytd_total_val = 0;
@@ -138,19 +138,15 @@ for ($m = 1; $m <= 12; $m++) {
   $mDate = date("Y-$m-01");
   $mName = date('M', strtotime($mDate));
 
-  $stmt = $db->prepare("SELECT SUM(amount) FROM finance_transactions WHERE MONTH(transaction_date) = ? AND YEAR(transaction_date) = ?");
+  $stmt = $db->prepare("SELECT SUM(amount) FROM finance_transactions WHERE MONTH(transaction_date) = ? AND YEAR(transaction_date) = ? AND type != 'Welfare'");
   $stmt->execute([$m, $currentYear]);
   $amt = (float) $stmt->fetchColumn();
-
-  $wStmt = $db->prepare("SELECT SUM(amount) FROM welfare_contributions WHERE MONTH(payment_date) = ? AND YEAR(payment_date) = ?");
-  $wStmt->execute([$m, $currentYear]);
-  $amt += (float) $wStmt->fetchColumn();
 
   $targetStmt = $db->prepare("SELECT target_amount FROM finance_targets WHERE target_month = ?");
   $targetStmt->execute([date('Y-m-01', strtotime($mDate))]);
   $target = (float) $targetStmt->fetchColumn() ?: 10000;
 
-  $percent = round(($amt / $target) * 100);
+  $percent = $target > 0 ? round(($amt / $target) * 100) : 0;
   $annual_finance[] = [
     'month' => $mName,
     'amount' => number_format($amt, 0),
@@ -162,14 +158,10 @@ for ($m = 1; $m <= 12; $m++) {
 }
 $ytd_total = number_format($ytd_total_val);
 
-// Revenue Breakdown
-$rbStmt = $db->query("SELECT type, SUM(amount) as total FROM finance_transactions WHERE YEAR(transaction_date) = $currentYear GROUP BY type");
+// Revenue Breakdown (General Fund only — exclude Welfare type)
+$rbStmt = $db->query("SELECT type, SUM(amount) as total FROM finance_transactions WHERE YEAR(transaction_date) = $currentYear AND type != 'Welfare' GROUP BY type");
 $revenue_breakdown = $rbStmt->fetchAll(PDO::FETCH_KEY_PAIR);
-$welfare_total = (float) $db->query("SELECT SUM(amount) FROM welfare_contributions WHERE YEAR(payment_date) = $currentYear")->fetchColumn();
-if ($welfare_total > 0) {
-  $revenue_breakdown['Welfare'] = $welfare_total;
-}
-$revColors = ['Tithe' => 'var(--gold)', 'Offering' => 'var(--deep)', 'Donation' => '#2E7D57', 'Pledge' => '#7C3AED', 'Welfare' => 'var(--deep3)'];
+$revColors = ['Tithe' => 'var(--gold)', 'Offering' => 'var(--deep)', 'Donation' => '#2E7D57', 'Pledge' => '#7C3AED', 'Project Contribution' => '#0EA5E9'];
 
 
 // ==========================================
@@ -201,7 +193,7 @@ $sysStats = [
 ];
 
 // ==========================================
-// 4. WELFARE ACCOUNTING
+// 4. GENERAL CHURCH FUND ACCOUNTING
 // ==========================================
 $accountsStmt = $db->prepare("
     SELECT a.code, a.name, a.type, 
@@ -211,6 +203,7 @@ $accountsStmt = $db->prepare("
     SUM(CASE WHEN YEAR(l.transaction_date) = ? AND l.transaction_date <= LAST_DAY(STR_TO_DATE(CONCAT(?, '-01'), '%Y-%m-%d')) THEN l.credit ELSE 0 END) as ytd_credit
     FROM finance_accounts a
     LEFT JOIN finance_ledger l ON a.id = l.account_id
+    WHERE a.fund = 'General'
     GROUP BY a.id
 ");
 $accountsStmt->execute([$finFilterMonth, $finFilterMonth, $currentYear, $finFilterMonth, $currentYear, $finFilterMonth]);
@@ -257,6 +250,7 @@ $openStmt = $db->prepare("
     JOIN finance_ledger l ON a.id = l.account_id 
     WHERE l.transaction_date <= ? 
       AND a.type IN ('Asset')
+      AND a.fund = 'General'
     GROUP BY a.code
 ");
 $openStmt->execute([$prevYearEnd]);
@@ -332,6 +326,36 @@ $wOpenStmt = $db->prepare("
 $wOpenStmt->execute([$prevYearEnd]);
 $wOpenBals = $wOpenStmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
+// Compute Welfare-specific financial variables from $wBalances
+$wSubIncome   = $wBalances['4000']['balance'] ?? 0;
+$wOthIncome   = $wBalances['4100']['balance'] ?? 0;
+$wTotalIncome = $wSubIncome + $wOthIncome;
+
+$wBenExpense   = $wBalances['5000']['balance'] ?? 0;
+$wMomoExpense  = $wBalances['5100']['balance'] ?? 0;
+$wTotalExpense = $wBenExpense + $wMomoExpense;
+$wSurplus      = $wTotalIncome - $wTotalExpense;
+
+$wOpenAR = $wOpenBals['1100'] ?? 0;
+$wCloseAR = $wBalances['1100']['balance'] ?? 0;
+$wCashReceived = $wSubIncome - ($wCloseAR - $wOpenAR);
+$wCashPaid = $wTotalExpense;
+$wNetOperating = $wCashReceived - $wCashPaid;
+
+$wInvesting = $wOthIncome;
+$wFinancing = 0;
+$wNetIncrease = $wNetOperating + $wInvesting + $wFinancing;
+$wOpenBank = ($wOpenBals['1000'] ?? 0) + ($wOpenBals['1010'] ?? 0);
+$wCloseBank = $wOpenBank + $wNetIncrease;
+
+$wCashAtBank = $wBalances['1000']['balance'] ?? 0;
+$wCashOnHand = $wBalances['1010']['balance'] ?? 0;
+$wAcctRec    = $wBalances['1100']['balance'] ?? 0;
+$wCurrAssets = $wCashAtBank + $wCashOnHand + $wAcctRec;
+
+$wAcctPay    = $wBalances['2000']['balance'] ?? 0;
+$wNetAssets   = $wCurrAssets - $wAcctPay;
+$wAccumFund  = $wBalances['3000']['balance'] ?? 0;
 
 // Enrolled vs Total Active Members
 $totalActiveMembers = (int)$db->query("SELECT COUNT(*) FROM members WHERE status = 'Active'")->fetchColumn();
@@ -340,7 +364,6 @@ $enrolledWelfare = (int)$db->query("SELECT COUNT(*) FROM welfare_members wm JOIN
 // Expected vs Collected
 $expectedWelfare = (float)$db->query("SELECT SUM(wm.monthly_amount) FROM welfare_members wm JOIN members m ON wm.member_id = m.id WHERE m.status = 'Active'")->fetchColumn();
 if ($isAllMonths) {
-    // If all months, expected is 12x the monthly amount
     $expectedWelfare *= 12;
 }
 $collectedWelfare = (float)$db->query("SELECT SUM(amount) FROM welfare_contributions WHERE $payDateCond")->fetchColumn();
@@ -359,10 +382,10 @@ $famStmt = $db->query("
 ");
 $familyPerformance = $famStmt->fetchAll(PDO::FETCH_ASSOC);
 $famColors = [
-    'Prudence' => '#10B981', // Green
-    'Temperance' => '#3B82F6', // Blue
-    'Fortitude' => '#EF4444', // Red
-    'Justice' => '#F59E0B' // Yellow
+    'Prudence' => '#10B981',
+    'Temperance' => '#3B82F6',
+    'Fortitude' => '#EF4444',
+    'Justice' => '#F59E0B'
 ];
 
 // Arrears Snapshot
@@ -378,6 +401,83 @@ $upToDateCount = (int)$db->query("
 $arrearsCount = max(0, $enrolledWelfare - $upToDateCount);
 $upToDatePercent = $enrolledWelfare > 0 ? round(($upToDateCount / $enrolledWelfare) * 100) : 0;
 $arrearsPercent = $enrolledWelfare > 0 ? round(($arrearsCount / $enrolledWelfare) * 100) : 0;
+
+// Welfare Monthly Collection Trend (last 6 months)
+$welfare_trend = [];
+$max_welf = 0;
+$trendBaseMonth = $isAllMonths ? $currentYear . '-12' : $filterMonth;
+for ($i = 5; $i >= 0; $i--) {
+  $mDate = date('Y-m-01', strtotime("$trendBaseMonth-01 -$i months"));
+  $trendMonth = date('Y-m', strtotime($mDate));
+  $wTrendStmt = $db->prepare("SELECT SUM(amount) FROM welfare_contributions WHERE DATE_FORMAT(payment_date, '%Y-%m') = ?");
+  $wTrendStmt->execute([$trendMonth]);
+  $trendAmt = (float) $wTrendStmt->fetchColumn();
+  $max_welf = max($max_welf, $trendAmt);
+  $welfare_trend[] = [
+    'month' => date('M', strtotime($mDate)),
+    'amount' => $trendAmt
+  ];
+}
+$max_welf = max($max_welf, 1);
+foreach ($welfare_trend as &$wt) {
+  $wt['bar_h'] = max(5, round(($wt['amount'] / $max_welf) * 100));
+}
+unset($wt);
+
+// Welfare Payment Method Breakdown
+$wMethodStmt = $db->query("
+    SELECT payment_method, SUM(amount) as total 
+    FROM welfare_contributions 
+    WHERE $payDateCond
+    GROUP BY payment_method
+");
+$welfare_method_breakdown = $wMethodStmt->fetchAll(PDO::FETCH_KEY_PAIR);
+$wMethodColors = [
+    'Cash' => '#10B981',
+    'MoMo' => '#F59E0B',
+    'Bank Transfer' => '#3B82F6',
+    'Cheque' => '#8B5CF6'
+];
+
+// Welfare Annual YTD Progress
+$welfare_annual = [];
+$welfare_ytd_val = 0;
+$monthlyExpectedWelfare = (float)$db->query("SELECT SUM(wm.monthly_amount) FROM welfare_members wm JOIN members m ON wm.member_id = m.id WHERE m.status = 'Active'")->fetchColumn();
+for ($m = 1; $m <= 12; $m++) {
+  if ($m > date('n') && $currentYear == date('Y'))
+    break;
+  $mDate = date("$currentYear-$m-01");
+  $mName = date('M', strtotime($mDate));
+
+  $wAnnStmt = $db->prepare("SELECT SUM(amount) FROM welfare_contributions WHERE MONTH(payment_date) = ? AND YEAR(payment_date) = ?");
+  $wAnnStmt->execute([$m, $currentYear]);
+  $wAnnAmt = (float) $wAnnStmt->fetchColumn();
+
+  $wAnnTarget = $monthlyExpectedWelfare ?: 1;
+  $wAnnPercent = $wAnnTarget > 0 ? round(($wAnnAmt / $wAnnTarget) * 100) : 0;
+  $welfare_annual[] = [
+    'month' => $mName,
+    'amount' => number_format($wAnnAmt, 0),
+    'target_percent' => $wAnnPercent,
+    'bar_width_percent' => min(100, $wAnnPercent),
+    'is_success' => $wAnnAmt >= $wAnnTarget
+  ];
+  $welfare_ytd_val += $wAnnAmt;
+}
+$welfare_ytd_total = number_format($welfare_ytd_val);
+
+// Top 5 Contributors
+$topContribStmt = $db->query("
+    SELECT m.first_name, m.last_name, SUM(wc.amount) as total
+    FROM welfare_contributions wc
+    JOIN welfare_members wm ON wc.welfare_id = wm.id
+    JOIN members m ON wm.member_id = m.id
+    WHERE $wcPayDateCond
+    GROUP BY wm.id
+    ORDER BY total DESC
+    LIMIT 5
+");
+$topContributors = $topContribStmt->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
 <!DOCTYPE html>
@@ -697,10 +797,10 @@ $arrearsPercent = $enrolledWelfare > 0 ? round(($arrearsCount / $enrolledWelfare
         </div>
 
 
-        <!-- ACCORDION 2: FINANCIAL ANALYTICS -->
+        <!-- ACCORDION 2: GENERAL CHURCH FUND -->
         <div class="accordion-item" id="section-finance">
           <div class="accordion-header" onclick="toggleAccordion(this)">
-            <h2><i class="ph ph-wallet"></i> Financial Analytics</h2>
+            <h2><i class="ph ph-wallet"></i> General Church Fund</h2>
             <i class="ph ph-caret-down"></i>
           </div>
           <div class="accordion-body">
@@ -781,7 +881,7 @@ $arrearsPercent = $enrolledWelfare > 0 ? round(($arrearsCount / $enrolledWelfare
                 <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
                   <h3 style="margin:0;">Financial Performance</h3>
                   <div style="display:flex; gap:8px;">
-                    <a href="export_welfare.php?report=performance&month=<?= $filterMonth ?>"
+                    <a href="export_general_reports.php?report=performance&month=<?= $filterMonth ?>"
                       class="btn btn-outline btn-sm no-print"><i class="ph ph-file-xls"></i> Excel</a>
                     <button class="btn btn-outline btn-sm no-print" onclick="printReportCard('card-welfare-performance', 'Financial Performance Report')"><i class="ph ph-printer"></i> Print</button>
                   </div>
@@ -870,7 +970,7 @@ $arrearsPercent = $enrolledWelfare > 0 ? round(($arrearsCount / $enrolledWelfare
                 <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
                   <h3 style="margin:0;">Statement of Cash Flows</h3>
                   <div style="display:flex; gap:8px;">
-                    <a href="export_welfare.php?report=cashflow&month=<?= $filterMonth ?>"
+                    <a href="export_general_reports.php?report=cashflow&month=<?= $filterMonth ?>"
                       class="btn btn-outline btn-sm no-print"><i class="ph ph-file-xls"></i> Excel</a>
                     <button class="btn btn-outline btn-sm no-print" onclick="printReportCard('card-welfare-cashflow', 'Statement of Cash Flows')"><i class="ph ph-printer"></i> Print</button>
                   </div>
@@ -986,7 +1086,7 @@ $arrearsPercent = $enrolledWelfare > 0 ? round(($arrearsCount / $enrolledWelfare
                 <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
                   <h3 style="margin:0;">Financial Position</h3>
                   <div style="display:flex; gap:8px;">
-                    <a href="export_welfare.php?report=position&month=<?= $filterMonth ?>"
+                    <a href="export_general_reports.php?report=position&month=<?= $filterMonth ?>"
                       class="btn btn-outline btn-sm no-print"><i class="ph ph-file-xls"></i> Excel</a>
                     <button class="btn btn-outline btn-sm no-print" onclick="printReportCard('card-welfare-position', 'Statement of Financial Position')"><i class="ph ph-printer"></i> Print</button>
                   </div>
@@ -1132,7 +1232,7 @@ $arrearsPercent = $enrolledWelfare > 0 ? round(($arrearsCount / $enrolledWelfare
                 <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
                   <h3 style="margin:0;">Trial Balance</h3>
                   <div style="display:flex; gap:8px;">
-                    <a href="export_welfare.php?report=trialbalance&month=<?= $filterMonth ?>"
+                    <a href="export_general_reports.php?report=trialbalance&month=<?= $filterMonth ?>"
                       class="btn btn-outline btn-sm no-print"><i class="ph ph-file-xls"></i> Excel</a>
                     <button class="btn btn-outline btn-sm no-print" onclick="printReportCard('card-welfare-trialbalance', 'Trial Balance')"><i class="ph ph-printer"></i> Print</button>
                   </div>
@@ -1211,16 +1311,396 @@ $arrearsPercent = $enrolledWelfare > 0 ? round(($arrearsCount / $enrolledWelfare
           </div>
         </div>
 
-        <!-- ACCORDION 3: WELFARE OPERATIONS -->
+        <!-- ACCORDION 3: WELFARE FUND -->
         <div class="accordion-item" id="section-welfare">
           <div class="accordion-header" onclick="toggleAccordion(this)">
-            <h2><i class="ph ph-heartbeat"></i> Welfare Operations</h2>
+            <h2><i class="ph ph-heartbeat"></i> Welfare Fund</h2>
             <i class="ph ph-caret-down"></i>
           </div>
           <div class="accordion-body">
 
+            <!-- Section A: Welfare Financial Analytics -->
+            <div class="grid-2" style="gap:24px;">
+
+              <!-- 1. Welfare Annual Progress -->
+              <div class="card" style="margin:0;" id="card-welfare-annual">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <h3 style="margin:0;">Annual Welfare Progress</h3><span class="badge badge-green">YTD</span>
+                  </div>
+                  <button class="btn btn-outline btn-sm no-print" onclick="printReportCard('card-welfare-annual', 'Annual Welfare Progress')"><i class="ph ph-printer"></i> Print</button>
+                </div>
+                <div class="card-body">
+                  <div style="display:flex;flex-direction:column;gap:12px;">
+                    <?php foreach ($welfare_annual as $wi): ?>
+                      <div class="summary-row" style="<?= $wi === end($welfare_annual) ? 'border-bottom: none;' : '' ?>">
+                        <span style="font-size:13px;color:var(--mid); min-width:30px;"><?= $wi['month'] ?></span>
+                        <div style="display:flex;align-items:center;gap:12px;flex:1;margin-left:16px;">
+                          <div style="flex:1;height:8px;border-radius:10px;background:#EDE8DF;overflow:hidden;">
+                            <div
+                              style="height:100%;width:<?= $wi['bar_width_percent'] ?>%;background:var(--primary);border-radius:10px;">
+                            </div>
+                          </div>
+                          <span
+                            style="font-size:13px;font-weight:600;color:<?= $wi['is_success'] ? 'var(--success)' : 'var(--deep2)' ?>;min-width:80px;text-align:right;">GH₵<?= $wi['amount'] ?></span>
+                        </div>
+                      </div>
+                    <?php endforeach; ?>
+                  </div>
+                  <div
+                    style="margin-top:18px;padding-top:14px;border-top:1px solid #EDE8DF;display:flex;justify-content:space-between;">
+                    <span style="font-size:14px;font-weight:700;">YTD Total</span>
+                    <span style="font-size:16px;font-weight:700;color:var(--success);">GH₵ <?= $welfare_ytd_total ?></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2. Welfare Payment Method Breakdown -->
+              <div class="card" style="margin:0;" id="card-welfare-methods">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <h3 style="margin:0; margin-bottom:4px;">Payment Method Breakdown</h3>
+                    <div style="font-size:12px; color:var(--muted);"><?= $currentYear ?></div>
+                  </div>
+                  <button class="btn btn-outline btn-sm no-print" onclick="printReportCard('card-welfare-methods', 'Welfare Payment Method Breakdown')"><i class="ph ph-printer"></i> Print</button>
+                </div>
+                <div class="card-body">
+                  <div style="display:flex; flex-direction:column; gap:16px;">
+                    <?php
+                    $wMethodTotal = array_sum($welfare_method_breakdown);
+                    if ($wMethodTotal > 0):
+                      foreach ($welfare_method_breakdown as $method => $amt):
+                        $pct = round(($amt / $wMethodTotal) * 100);
+                        $col = $wMethodColors[$method] ?? 'var(--muted)';
+                        ?>
+                        <div>
+                          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+                            <span style="font-weight:500;"><span
+                                style="display:inline-block;width:8px;height:8px;border-radius:50%;background:<?= $col ?>;margin-right:6px;"></span><?= $method ?></span>
+                            <span style="font-weight:600; color:var(--deep2);">GH₵ <?= number_format($amt, 2) ?> <span
+                                style="color:var(--muted); font-weight:400; margin-left:6px;"><?= $pct ?>%</span></span>
+                          </div>
+                          <div style="height:6px;border-radius:10px;background:#EDE8DF;">
+                            <div style="height:100%;width:<?= $pct ?>%;background:<?= $col ?>;border-radius:10px;"></div>
+                          </div>
+                        </div>
+                      <?php endforeach; else: ?>
+                      <div style="text-align:center; padding:40px 0; color:var(--muted);">No welfare contributions recorded yet.</div>
+                    <?php endif; ?>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. Welfare Financial Performance -->
+              <div class="card" style="margin:0;" id="card-welfare-performance">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                  <h3 style="margin:0;">Financial Performance</h3>
+                  <div style="display:flex; gap:8px;">
+                    <a href="export_welfare.php?report=performance&month=<?= $filterMonth ?>"
+                      class="btn btn-outline btn-sm no-print"><i class="ph ph-file-xls"></i> Excel</a>
+                    <button class="btn btn-outline btn-sm no-print" onclick="printReportCard('card-welfare-performance', 'Welfare Financial Performance')"><i class="ph ph-printer"></i> Print</button>
+                  </div>
+                </div>
+                <div class="card-body" style="overflow-x:auto;">
+                  <table class="report-table" style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                      <tr>
+                        <th style="border:1px solid #000; padding:6px; background:#f9f9f9; text-align:left; font-weight:bold;">Income</th>
+                        <th style="border:1px solid #000; padding:6px; background:#f9f9f9; text-align:right; font-weight:bold;">Ghc</th>
+                        <th style="border:1px solid #000; padding:6px; background:#f9f9f9; text-align:right; font-weight:bold;">Ghc</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px;">Welfare Subscriptions</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($wSubIncome, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px;">Other Income</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($wOthIncome, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Total Income</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format($wTotalIncome, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td colspan="3" style="border:1px solid #000; padding:6px; height:20px;"></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; text-decoration:underline;">Expenses</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px;">Benefits to Members</td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($wBenExpense, 2) ?></td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px;">Momo Charges</td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($wMomoExpense, 2) ?></td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px;">Total Expenses</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($wTotalExpense, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td colspan="3" style="border:1px solid #000; padding:6px; height:20px;"></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Surplus / (Deficit)</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; color:<?= $wSurplus >= 0 ? 'var(--success)' : '#F87171' ?>;"><?= number_format($wSurplus, 2) ?></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- 4. Welfare Cash Flows -->
+              <div class="card" style="margin:0;" id="card-welfare-cashflows">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                  <h3 style="margin:0;">Statement of Cash Flows</h3>
+                  <div style="display:flex; gap:8px;">
+                    <a href="export_welfare.php?report=cashflow&month=<?= $filterMonth ?>"
+                      class="btn btn-outline btn-sm no-print"><i class="ph ph-file-xls"></i> Excel</a>
+                    <button class="btn btn-outline btn-sm no-print" onclick="printReportCard('card-welfare-cashflows', 'Welfare Statement of Cash Flows')"><i class="ph ph-printer"></i> Print</button>
+                  </div>
+                </div>
+                <div class="card-body" style="overflow-x:auto;">
+                  <table class="report-table" style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <tbody>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; text-decoration:underline;">Operating Activities</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;">Ghc</td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px;">Cash received from Members</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($wCashReceived, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px;">Cash paid for Benefits</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($wCashPaid, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Net Cash from Operating Activities</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format($wNetOperating, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td colspan="3" style="border:1px solid #000; padding:6px; height:20px;"></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; text-decoration:underline;">Investing Activities</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px;">Bank Interest</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($wInvesting, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Net Cash from Investing Activities</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format($wInvesting, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td colspan="3" style="border:1px solid #000; padding:6px; height:20px;"></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px;">Net Increase / (Decrease) in Cash</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($wNetIncrease, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px;">Cash at Bank (Opening)</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($wOpenBank, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Cash at Bank (Closing)</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format($wCloseBank, 2) ?></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- 5. Welfare Financial Position -->
+              <div class="card" style="margin:0;" id="card-welfare-position">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                  <h3 style="margin:0;">Financial Position</h3>
+                  <div style="display:flex; gap:8px;">
+                    <a href="export_welfare.php?report=position&month=<?= $filterMonth ?>"
+                      class="btn btn-outline btn-sm no-print"><i class="ph ph-file-xls"></i> Excel</a>
+                    <button class="btn btn-outline btn-sm no-print" onclick="printReportCard('card-welfare-position', 'Welfare Financial Position')"><i class="ph ph-printer"></i> Print</button>
+                  </div>
+                </div>
+                <div class="card-body" style="overflow-x:auto;">
+                  <table class="report-table" style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <tbody>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Assets</td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;">Ghc</td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;">Ghc</td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; text-decoration:underline;">Current Assets</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px;">Cash at Bank</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($wCashAtBank, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px;">Cash on Hand</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($wCashOnHand, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px;">Accounts Receivable</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($wAcctRec, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format($wCurrAssets, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Total Assets</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format($wCurrAssets, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td colspan="3" style="border:1px solid #000; padding:6px; height:20px;"></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Liabilities</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px;">Accounts Payable</td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($wAcctPay, 2) ?></td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px;">Total Liabilities</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($wAcctPay, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td colspan="3" style="border:1px solid #000; padding:6px; height:20px;"></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Net Assets / Equity (Fund Balance)</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px;">Surplus</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($wSurplus, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px;">Accumulated Fund</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($wAccumFund, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Total Net Assets</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format($wAccumFund + $wSurplus, 2) ?></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- 6. Welfare Trial Balance -->
+              <div class="card" style="margin:0;" id="card-welfare-trialbalance">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                  <h3 style="margin:0;">Trial Balance</h3>
+                  <div style="display:flex; gap:8px;">
+                    <a href="export_welfare.php?report=trialbalance&month=<?= $filterMonth ?>"
+                      class="btn btn-outline btn-sm no-print"><i class="ph ph-file-xls"></i> Excel</a>
+                    <button class="btn btn-outline btn-sm no-print" onclick="printReportCard('card-welfare-trialbalance', 'Welfare Trial Balance')"><i class="ph ph-printer"></i> Print</button>
+                  </div>
+                </div>
+                <div class="card-body" style="overflow-x:auto;">
+                  <table class="report-table" style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                      <tr>
+                        <th style="border:1px solid #000; padding:6px; background:#f9f9f9; text-align:center; font-weight:bold;">Particulars</th>
+                        <th style="border:1px solid #000; padding:6px; background:#f9f9f9; text-align:center; font-weight:bold;">Debit</th>
+                        <th style="border:1px solid #000; padding:6px; background:#f9f9f9; text-align:center; font-weight:bold;">Credit</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Capital Account</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format($wAccumFund, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Current Assets</td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format($wCurrAssets, 2) ?></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format($wAcctPay, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Direct Income</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format($wSubIncome, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Direct Expenses</td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format($wBenExpense, 2) ?></td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Indirect Incomes</td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format($wOthIncome, 2) ?></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Indirect Expenses</td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format($wMomoExpense, 2) ?></td>
+                        <td style="border:1px solid #000; padding:6px;"></td>
+                      </tr>
+                      <tr>
+                        <td style="border:1px solid #000; padding:6px; font-weight:bold; text-align:center;">Grand Total</td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format($wCurrAssets + $wBenExpense + $wMomoExpense, 2) ?></td>
+                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format($wAccumFund + $wAcctPay + $wSubIncome + $wOthIncome, 2) ?></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Section B: Welfare Operations -->
+            <div style="margin-top:24px;">
+              <div style="font-size:14px; font-weight:700; color:var(--deep); margin-bottom:16px; padding-left:4px;">
+                <i class="ph ph-users-three" style="margin-right:6px;"></i> Welfare Operations
+              </div>
+            </div>
             <div class="grid-3" style="gap:24px;">
-              <!-- 1. Expected vs Collected -->
+
+              <!-- 7. Contributions Progress -->
               <div class="card" style="margin:0;" id="card-welfare-progress">
                 <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
                   <h3 style="margin:0;">Contributions Progress</h3>
@@ -1247,7 +1727,7 @@ $arrearsPercent = $enrolledWelfare > 0 ? round(($arrearsCount / $enrolledWelfare
                 </div>
               </div>
 
-              <!-- 2. Family Group Performance -->
+              <!-- 8. Family Group Performance -->
               <div class="card" style="margin:0;" id="card-welfare-families">
                 <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
                   <h3 style="margin:0;">Family Group Performance</h3>
@@ -1280,109 +1760,7 @@ $arrearsPercent = $enrolledWelfare > 0 ? round(($arrearsCount / $enrolledWelfare
                 </div>
               </div>
 
-                            <!-- 4. Welfare Financial Performance -->
-              <div class="card" style="margin:0;" id="card-welfare-performance">
-                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
-                  <h3 style="margin:0;">Welfare Financial Performance</h3>
-                  <button class="btn btn-outline btn-sm no-print" onclick="printReportCard('card-welfare-performance', 'Welfare Financial Performance')"><i class="ph ph-printer"></i> Print</button>
-                </div>
-                <div class="card-body" style="overflow-x:auto;">
-                  <table class="report-table" style="width:100%; border-collapse:collapse; font-size:13px;">
-                    <thead>
-                      <tr>
-                        <th style="border:1px solid #000; padding:6px; background:#f9f9f9; text-align:left; font-weight:bold;">Income</th>
-                        <th style="border:1px solid #000; padding:6px; background:#f9f9f9; text-align:right; font-weight:bold;">Ghc</th>
-                        <th style="border:1px solid #000; padding:6px; background:#f9f9f9; text-align:right; font-weight:bold;">Ghc</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td style="border:1px solid #000; padding:6px;">Welfare Subscriptions</td>
-                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($balances['4000']['balance'] ?? 0, 2) ?></td>
-                        <td style="border:1px solid #000; padding:6px;"></td>
-                      </tr>
-                      <tr>
-                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Total Income</td>
-                        <td style="border:1px solid #000; padding:6px;"></td>
-                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format($balances['4000']['balance'] ?? 0, 2) ?></td>
-                      </tr>
-                      <tr>
-                        <td style="border:1px solid #000; padding:6px; background:#f9f9f9; font-weight:bold;" colspan="3">Expenditure</td>
-                      </tr>
-                      <tr>
-                        <td style="border:1px solid #000; padding:6px;">Benefits to Members</td>
-                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($balances['5000']['balance'] ?? 0, 2) ?></td>
-                        <td style="border:1px solid #000; padding:6px;"></td>
-                      </tr>
-                      <tr>
-                        <td style="border:1px solid #000; padding:6px;">Momo Charges</td>
-                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($balances['5100']['balance'] ?? 0, 2) ?></td>
-                        <td style="border:1px solid #000; padding:6px;"></td>
-                      </tr>
-                      <tr>
-                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Total Expenditure</td>
-                        <td style="border:1px solid #000; padding:6px;"></td>
-                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format(($balances['5000']['balance'] ?? 0) + ($balances['5100']['balance'] ?? 0), 2) ?></td>
-                      </tr>
-                      <tr>
-                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Net Surplus / (Deficit)</td>
-                        <td style="border:1px solid #000; padding:6px;"></td>
-                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; color:<?= (($balances['4000']['balance'] ?? 0) - (($balances['5000']['balance'] ?? 0) + ($balances['5100']['balance'] ?? 0))) >= 0 ? 'var(--success)' : '#F87171' ?>;"><?= number_format(($balances['4000']['balance'] ?? 0) - (($balances['5000']['balance'] ?? 0) + ($balances['5100']['balance'] ?? 0)), 2) ?></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <!-- 5. Welfare Cash Flows -->
-              <div class="card" style="margin:0;" id="card-welfare-cashflows">
-                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
-                  <h3 style="margin:0;">Welfare Cash Flows</h3>
-                  <button class="btn btn-outline btn-sm no-print" onclick="printReportCard('card-welfare-cashflows', 'Welfare Statement of Cash Flows')"><i class="ph ph-printer"></i> Print</button>
-                </div>
-                <div class="card-body" style="overflow-x:auto;">
-                  <table class="report-table" style="width:100%; border-collapse:collapse; font-size:13px;">
-                    <tbody>
-                      <tr>
-                        <td style="border:1px solid #000; padding:6px; background:#f9f9f9; font-weight:bold;" colspan="3">Operating Activities</td>
-                      </tr>
-                      <tr>
-                        <td style="border:1px solid #000; padding:6px;">Cash Received from Members</td>
-                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($balances['4000']['balance'] ?? 0, 2) ?></td>
-                        <td style="border:1px solid #000; padding:6px;"></td>
-                      </tr>
-                      <tr>
-                        <td style="border:1px solid #000; padding:6px;">Cash Paid for Benefits & Charges</td>
-                        <td style="border:1px solid #000; padding:6px; text-align:right;">(<?= number_format(($balances['5000']['balance'] ?? 0) + ($balances['5100']['balance'] ?? 0), 2) ?>)</td>
-                        <td style="border:1px solid #000; padding:6px;"></td>
-                      </tr>
-                      <tr>
-                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Net Cash from Operating Activities</td>
-                        <td style="border:1px solid #000; padding:6px;"></td>
-                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format(($balances['4000']['balance'] ?? 0) - (($balances['5000']['balance'] ?? 0) + ($balances['5100']['balance'] ?? 0)), 2) ?></td>
-                      </tr>
-                      <tr>
-                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Net Increase in Welfare Cash</td>
-                        <td style="border:1px solid #000; padding:6px;"></td>
-                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format(($balances['4000']['balance'] ?? 0) - (($balances['5000']['balance'] ?? 0) + ($balances['5100']['balance'] ?? 0)), 2) ?></td>
-                      </tr>
-                      <tr>
-                        <td style="border:1px solid #000; padding:6px;">Welfare Cash at Bank at start of period</td>
-                        <td style="border:1px solid #000; padding:6px;"></td>
-                        <td style="border:1px solid #000; padding:6px; text-align:right;"><?= number_format($openBals['1001'] ?? 0, 2) ?></td>
-                      </tr>
-                      <tr>
-                        <td style="border:1px solid #000; padding:6px; font-weight:bold;">Welfare Cash at Bank at end of period</td>
-                        <td style="border:1px solid #000; padding:6px;"></td>
-                        <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;"><?= number_format(($openBals['1001'] ?? 0) + (($balances['4000']['balance'] ?? 0) - (($balances['5000']['balance'] ?? 0) + ($balances['5100']['balance'] ?? 0))), 2) ?></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-
-              <!-- 3. Arrears Snapshot -->
+              <!-- 9. Arrears Snapshot -->
               <div class="card" style="margin:0;" id="card-welfare-arrears">
                 <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
                   <h3 style="margin:0;">Arrears Snapshot</h3>
@@ -1390,7 +1768,6 @@ $arrearsPercent = $enrolledWelfare > 0 ? round(($arrearsCount / $enrolledWelfare
                 </div>
                 <div class="card-body">
                   <div style="display:flex;flex-direction:column;gap:15px;align-items:center;">
-                    
                     <div style="display:flex;justify-content:space-between;width:100%;padding:15px;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;">
                       <div>
                         <div style="font-size:12px;color:var(--muted);">Up to Date</div>
@@ -1401,7 +1778,6 @@ $arrearsPercent = $enrolledWelfare > 0 ? round(($arrearsCount / $enrolledWelfare
                         <div style="font-size:20px;font-weight:700;color:#F87171;"><?= $arrearsCount ?> <span style="font-size:12px;font-weight:normal;color:var(--muted);">(<?= $arrearsPercent ?>%)</span></div>
                       </div>
                     </div>
-
                     <div style="display:flex;justify-content:space-between;width:100%;padding:15px;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;">
                       <div>
                         <div style="font-size:12px;color:var(--muted);">Total Enrolled</div>
@@ -1412,10 +1788,67 @@ $arrearsPercent = $enrolledWelfare > 0 ? round(($arrearsCount / $enrolledWelfare
                         <div style="font-size:20px;font-weight:700;color:var(--deep);"><?= $totalActiveMembers ?></div>
                       </div>
                     </div>
-
                   </div>
                 </div>
               </div>
+
+              <!-- 10. Monthly Collection Trend -->
+              <div class="card" style="margin:0;" id="card-welfare-trend">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <h3 style="margin:0; margin-bottom:4px;">Monthly Collection Trend</h3>
+                    <div style="font-size:12px; color:var(--muted);">Last 6 months</div>
+                  </div>
+                  <button class="btn btn-outline btn-sm no-print" onclick="printReportCard('card-welfare-trend', 'Welfare Monthly Collection Trend')"><i class="ph ph-printer"></i> Print</button>
+                </div>
+                <div class="card-body">
+                  <div class="mini-bar-wrap" style="height:140px; gap:8px;">
+                    <?php foreach ($welfare_trend as $wt): ?>
+                      <div class="mini-bar-col" style="height:100%; justify-content:flex-end;">
+                        <div style="font-size:9px; color:var(--deep2); font-weight:600; margin-bottom:4px;">
+                          <?= $wt['amount'] > 0 ? 'GH₵' . number_format($wt['amount'], 0) : '' ?>
+                        </div>
+                        <div class="mini-bar" style="background:var(--primary); height:<?= $wt['bar_h'] ?>%; opacity:0.85;"></div>
+                        <div style="font-size:10px;color:var(--muted); margin-top:4px;"><?= $wt['month'] ?></div>
+                      </div>
+                    <?php endforeach; ?>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 11. Top Contributors -->
+              <div class="card" style="margin:0;" id="card-welfare-top">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                  <h3 style="margin:0;">Top Contributors</h3>
+                  <button class="btn btn-outline btn-sm no-print" onclick="printReportCard('card-welfare-top', 'Top Welfare Contributors')"><i class="ph ph-printer"></i> Print</button>
+                </div>
+                <div class="card-body">
+                  <?php if (!empty($topContributors)): ?>
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                      <?php foreach ($topContributors as $idx => $tc): 
+                        $rankColors = ['#F59E0B', '#94A3B8', '#CD7F32', 'var(--primary)', 'var(--primary)'];
+                      ?>
+                        <div style="display:flex; align-items:center; gap:12px; padding:8px 0; <?= $idx < count($topContributors) - 1 ? 'border-bottom:1px solid #F1F1F1;' : '' ?>">
+                          <div style="width:24px; height:24px; border-radius:50%; background:<?= $rankColors[$idx] ?? 'var(--primary)' ?>; color:white; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0;">
+                            <?= $idx + 1 ?>
+                          </div>
+                          <div style="flex:1; min-width:0;">
+                            <div style="font-size:13px; font-weight:500; color:var(--deep2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                              <?= htmlspecialchars($tc['first_name'] . ' ' . $tc['last_name']) ?>
+                            </div>
+                          </div>
+                          <div style="font-size:13px; font-weight:600; color:var(--success); white-space:nowrap;">
+                            GH₵ <?= number_format($tc['total'], 2) ?>
+                          </div>
+                        </div>
+                      <?php endforeach; ?>
+                    </div>
+                  <?php else: ?>
+                    <div style="text-align:center; padding:20px 0; color:var(--muted);">No contributions recorded yet.</div>
+                  <?php endif; ?>
+                </div>
+              </div>
+
             </div>
 
           </div>
