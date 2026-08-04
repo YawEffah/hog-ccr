@@ -389,14 +389,35 @@ $famColors = [
 ];
 
 // Arrears Snapshot
-$upToDateCount = (int)$db->query("
-    SELECT COUNT(DISTINCT wc.welfare_id) 
-    FROM welfare_contributions wc
-    JOIN welfare_members wm ON wc.welfare_id = wm.id
+$targetYear = $isAllMonths ? (int)date('Y') : (int)date('Y', strtotime($filterMonth . '-01'));
+$targetMonth = $isAllMonths ? (int)date('m') : (int)date('m', strtotime($filterMonth . '-01'));
+
+$arrearsStmt = $db->query("
+    SELECT wm.id, wm.monthly_amount, wm.enrol_date,
+           (SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id) as total_paid
+    FROM welfare_members wm
     JOIN members m ON wm.member_id = m.id
-    WHERE $wcPayDateCond
-    AND m.status = 'Active'
-")->fetchColumn();
+    WHERE m.status = 'Active'
+");
+$activeWelfareMembers = $arrearsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+$upToDateCount = 0;
+foreach($activeWelfareMembers as $wm) {
+    $monthlyAmount = (float)$wm['monthly_amount'];
+    $totalPaid = (float)$wm['total_paid'];
+    $enrolTime = strtotime($wm['enrol_date']);
+    $enrolYear = (int)date('Y', $enrolTime);
+    $enrolMonth = (int)date('m', $enrolTime);
+
+    $diffMonths = (($targetYear - $enrolYear) * 12) + ($targetMonth - $enrolMonth) + 1;
+    $expectedMonths = max(0, $diffMonths);
+    $expectedAmount = $expectedMonths * $monthlyAmount;
+    
+    $arrears = max(0.00, $expectedAmount - $totalPaid);
+    if ($arrears <= 0) {
+        $upToDateCount++;
+    }
+}
 
 $arrearsCount = max(0, $enrolledWelfare - $upToDateCount);
 $upToDatePercent = $enrolledWelfare > 0 ? round(($upToDateCount / $enrolledWelfare) * 100) : 0;

@@ -41,19 +41,43 @@ if ($isAllMonths) {
     $stmtCollected = $db->prepare("SELECT SUM(amount) FROM welfare_contributions WHERE DATE_FORMAT(payment_date, '%Y') = ?");
     $stmtCollected->execute([$filterYear]);
     $welfare_stats['collected_month'] = number_format((float)$stmtCollected->fetchColumn(), 2);
-
-    $stmtActive = $db->prepare("SELECT COUNT(DISTINCT welfare_id) FROM welfare_contributions WHERE DATE_FORMAT(payment_date, '%Y') = ?");
-    $stmtActive->execute([$filterYear]);
-    $welfare_stats['active_payers'] = (int)$stmtActive->fetchColumn();
 } else {
     $stmtCollected = $db->prepare("SELECT SUM(amount) FROM welfare_contributions WHERE DATE_FORMAT(payment_date, '%Y-%m') = ?");
     $stmtCollected->execute([$filterMonth]);
     $welfare_stats['collected_month'] = number_format((float)$stmtCollected->fetchColumn(), 2);
-
-    $stmtActive = $db->prepare("SELECT COUNT(DISTINCT welfare_id) FROM welfare_contributions WHERE DATE_FORMAT(payment_date, '%Y-%m') = ?");
-    $stmtActive->execute([$filterMonth]);
-    $welfare_stats['active_payers'] = (int)$stmtActive->fetchColumn();
 }
+
+// Calculate active payers using balance logic
+$targetYear = $isAllMonths ? (int)date('Y') : (int)date('Y', strtotime($filterMonth . '-01'));
+$targetMonth = $isAllMonths ? (int)date('m') : (int)date('m', strtotime($filterMonth . '-01'));
+
+$arrearsStmt = $db->query("
+    SELECT wm.id, wm.monthly_amount, wm.enrol_date,
+           (SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id) as total_paid
+    FROM welfare_members wm
+    JOIN members m ON wm.member_id = m.id
+    WHERE m.status = 'Active'
+");
+$activeWelfareMembers = $arrearsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+$upToDateCount = 0;
+foreach($activeWelfareMembers as $wm) {
+    $monthlyAmount = (float)$wm['monthly_amount'];
+    $totalPaid = (float)$wm['total_paid'];
+    $enrolTime = strtotime($wm['enrol_date']);
+    $enrolYear = (int)date('Y', $enrolTime);
+    $enrolMonth = (int)date('m', $enrolTime);
+
+    $diffMonths = (($targetYear - $enrolYear) * 12) + ($targetMonth - $enrolMonth) + 1;
+    $expectedMonths = max(0, $diffMonths);
+    $expectedAmount = $expectedMonths * $monthlyAmount;
+    
+    $arrears = max(0.00, $expectedAmount - $totalPaid);
+    if ($arrears <= 0) {
+        $upToDateCount++;
+    }
+}
+$welfare_stats['active_payers'] = $upToDateCount;
 
 $welfare_stats['pending'] = max(0, $welfare_stats['total_members'] - $welfare_stats['active_payers']);
 
@@ -62,30 +86,43 @@ if ($isAllMonths) {
     $membersStmt = $db->prepare(
         "SELECT wm.*, m.first_name, m.last_name, m.member_code, m.phone, m.email,
                 (SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id) as total_paid,
-                (SELECT payment_date FROM welfare_contributions WHERE welfare_id = wm.id ORDER BY payment_date DESC LIMIT 1) as last_payment_date,
-                (SELECT COUNT(*) FROM welfare_contributions WHERE welfare_id = wm.id AND DATE_FORMAT(payment_date, '%Y') = ?) as paid_in_filter_month
+                (SELECT payment_date FROM welfare_contributions WHERE welfare_id = wm.id ORDER BY payment_date DESC LIMIT 1) as last_payment_date
          FROM welfare_members wm
          JOIN members m ON wm.member_id = m.id
          ORDER BY m.last_name ASC"
     );
-    $membersStmt->execute([$filterYear]);
+    $membersStmt->execute();
 } else {
     $membersStmt = $db->prepare(
         "SELECT wm.*, m.first_name, m.last_name, m.member_code, m.phone, m.email,
                 (SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id) as total_paid,
-                (SELECT payment_date FROM welfare_contributions WHERE welfare_id = wm.id ORDER BY payment_date DESC LIMIT 1) as last_payment_date,
-                (SELECT COUNT(*) FROM welfare_contributions WHERE welfare_id = wm.id AND DATE_FORMAT(payment_date, '%Y-%m') = ?) as paid_in_filter_month
+                (SELECT payment_date FROM welfare_contributions WHERE welfare_id = wm.id ORDER BY payment_date DESC LIMIT 1) as last_payment_date
          FROM welfare_members wm
          JOIN members m ON wm.member_id = m.id
          ORDER BY m.last_name ASC"
     );
-    $membersStmt->execute([$filterMonth]);
+    $membersStmt->execute();
 }
 $rawWelfareMembers = $membersStmt->fetchAll();
 
 // Map for display
-$welfare_members = array_map(function($wm) use ($db) {
-    $status = ((int)$wm['paid_in_filter_month'] > 0) ? 'Up to date' : 'Arrears';
+$welfare_members = array_map(function($wm) use ($db, $isAllMonths, $filterYear, $filterMonth) {
+    $monthlyAmount = (float)$wm['monthly_amount'];
+    $totalPaid = (float)$wm['total_paid'];
+    $enrolTime = strtotime($wm['enrol_date']);
+    $enrolYear = (int)date('Y', $enrolTime);
+    $enrolMonth = (int)date('m', $enrolTime);
+
+    // Calculate diff months up to the filter month/year (or current if all)
+    $targetYear = $isAllMonths ? (int)date('Y') : (int)date('Y', strtotime($filterMonth . '-01'));
+    $targetMonth = $isAllMonths ? (int)date('m') : (int)date('m', strtotime($filterMonth . '-01'));
+
+    $diffMonths = (($targetYear - $enrolYear) * 12) + ($targetMonth - $enrolMonth) + 1;
+    $expectedMonths = max(0, $diffMonths);
+    $expectedAmount = $expectedMonths * $monthlyAmount;
+    
+    $arrears = max(0.00, $expectedAmount - $totalPaid);
+    $status = ($arrears <= 0) ? 'Up to date' : 'Arrears';
     
     // Fetch recent history
     $hStmt = $db->prepare("SELECT payment_date, amount, payment_method, reference_no, notif_sent FROM welfare_contributions WHERE welfare_id = ? ORDER BY payment_date DESC LIMIT 5");

@@ -60,14 +60,10 @@ if ($action === 'fetch_welfare_recipients') {
                  FROM welfare_members wm
                  JOIN members m ON wm.member_id = m.id
                  WHERE m.status = 'Active'
-                   AND wm.id NOT IN (
-                       SELECT DISTINCT welfare_id
-                       FROM welfare_contributions
-                       WHERE DATE_FORMAT(payment_date, '%Y-%m') = ?
-                   )
+                   AND (GREATEST(0, (YEAR(CURRENT_DATE) - YEAR(wm.enrol_date)) * 12 + MONTH(CURRENT_DATE) - MONTH(wm.enrol_date) + 1) * wm.monthly_amount) > COALESCE((SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id), 0)
                  ORDER BY m.last_name ASC"
             );
-            $stmt->execute([$currentMonth]);
+            $stmt->execute();
         } else {
             $stmt = $db->prepare(
                 "SELECT m.first_name, m.last_name, m.phone, m.email, wc.amount
@@ -263,14 +259,10 @@ if ($action === 'send_welfare_messages') {
                  FROM welfare_members wm
                  JOIN members m ON wm.member_id = m.id
                  WHERE m.status = 'Active'
-                   AND wm.id NOT IN (
-                       SELECT DISTINCT welfare_id
-                       FROM welfare_contributions
-                       WHERE DATE_FORMAT(payment_date, '%Y-%m') = ?
-                   )
+                   AND (GREATEST(0, (YEAR(CURRENT_DATE) - YEAR(wm.enrol_date)) * 12 + MONTH(CURRENT_DATE) - MONTH(wm.enrol_date) + 1) * wm.monthly_amount) > COALESCE((SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id), 0)
                  ORDER BY m.last_name ASC"
             );
-            $stmt->execute([$currentMonth]);
+            $stmt->execute();
         } else {
             $stmt = $db->prepare(
                 "SELECT m.first_name, m.last_name, m.phone, m.email, wc.amount

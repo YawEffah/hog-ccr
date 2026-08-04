@@ -22,14 +22,13 @@ $status = trim($_GET['status'] ?? 'All');
 $query = "
     SELECT wm.*, m.first_name, m.last_name, m.member_code, m.phone, m.email,
            (SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id) as total_paid,
-           (SELECT payment_date FROM welfare_contributions WHERE welfare_id = wm.id ORDER BY payment_date DESC LIMIT 1) as last_payment_date,
-           (SELECT COUNT(*) FROM welfare_contributions WHERE welfare_id = wm.id AND DATE_FORMAT(payment_date, '%Y-%m') = :month) as paid_in_filter_month
+           (SELECT payment_date FROM welfare_contributions WHERE welfare_id = wm.id ORDER BY payment_date DESC LIMIT 1) as last_payment_date
     FROM welfare_members wm
     JOIN members m ON wm.member_id = m.id
 ";
 
 $whereClauses = [];
-$bindParams = [':month' => $filterMonth];
+$bindParams = [];
 
 if ($search !== '') {
     $whereClauses[] = "(m.first_name LIKE :search OR m.last_name LIKE :search OR m.member_code LIKE :search OR m.phone LIKE :search)";
@@ -77,7 +76,21 @@ fputcsv($output, [
 
 // Write rows matching status criteria
 foreach ($rawMembers as $wm) {
-    $rowStatus = ((int)$wm['paid_in_filter_month'] > 0) ? 'Up to date' : 'Arrears';
+    $monthlyAmount = (float)$wm['monthly_amount'];
+    $totalPaid = (float)$wm['total_paid'];
+    $enrolTime = strtotime($wm['enrol_date']);
+    $enrolYear = (int)date('Y', $enrolTime);
+    $enrolMonth = (int)date('m', $enrolTime);
+
+    $targetYear = (int)date('Y', strtotime($filterMonth . '-01'));
+    $targetMonth = (int)date('m', strtotime($filterMonth . '-01'));
+
+    $diffMonths = (($targetYear - $enrolYear) * 12) + ($targetMonth - $enrolMonth) + 1;
+    $expectedMonths = max(0, $diffMonths);
+    $expectedAmount = $expectedMonths * $monthlyAmount;
+    
+    $arrears = max(0.00, $expectedAmount - $totalPaid);
+    $rowStatus = ($arrears <= 0) ? 'Up to date' : 'Arrears';
     
     // Status filter is evaluated in PHP to match client-side logic
     if ($status !== 'All' && $status !== '' && $rowStatus !== $status) {

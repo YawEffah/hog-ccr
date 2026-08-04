@@ -34,14 +34,12 @@ if ($filterMonth !== 'all' && !preg_match('/^(0[1-9]|1[0-2])$/', $filterMonth)) 
 $stmt = $db->prepare("
     SELECT wm.*, m.first_name, m.last_name, m.member_code, m.phone, m.email,
            (SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id) as total_paid,
-           (SELECT payment_date FROM welfare_contributions WHERE welfare_id = wm.id ORDER BY payment_date DESC LIMIT 1) as last_payment_date,
-           (SELECT COUNT(*) FROM welfare_contributions WHERE welfare_id = wm.id AND DATE_FORMAT(payment_date, '%Y-%m') = ?) as paid_in_current_month
+           (SELECT payment_date FROM welfare_contributions WHERE welfare_id = wm.id ORDER BY payment_date DESC LIMIT 1) as last_payment_date
     FROM welfare_members wm
     JOIN members m ON wm.member_id = m.id
     WHERE wm.id = ?
 ");
-$currentMonth = date('Y-m');
-$stmt->execute([$currentMonth, $welfare_id]);
+$stmt->execute([$welfare_id]);
 $member = $stmt->fetch();
 if (!$member) {
     header('Location: welfare.php');
@@ -68,7 +66,7 @@ $arrears = max(0.00, $expectedAmount - $totalPaid);
 $rawName  = $member['first_name'] . ' ' . $member['last_name'];
 $name     = htmlspecialchars($rawName);
 $initials = strtoupper(substr($member['first_name'], 0, 1) . substr($member['last_name'], 0, 1));
-$currentMonthStatus = ((int)$member['paid_in_current_month'] > 0) ? 'Up to date' : 'Arrears';
+$currentMonthStatus = ($arrears <= 0) ? 'Up to date' : 'Arrears';
 $statusBadge        = $currentMonthStatus === 'Up to date' ? 'badge-welfare' : 'badge-red';
 
 // ── Fetch filtered contributions ─────────────────────────────────────────────
@@ -105,17 +103,6 @@ $total_c = array_sum($methods);
 // ── 12-month compliance calendar for the selected year ───────────────────────
 $monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 $paidMonths = [];
-
-$cmStmt = $db->prepare("
-    SELECT MONTH(payment_date) as m, SUM(amount) as total
-    FROM welfare_contributions
-    WHERE welfare_id = ? AND YEAR(payment_date) = ?
-    GROUP BY MONTH(payment_date)
-");
-$cmStmt->execute([$welfare_id, $filterYear]);
-foreach ($cmStmt->fetchAll() as $row) {
-    $paidMonths[(int)$row['m']] = (float)$row['total'];
-}
 
 // Enrolment month — months before this are "N/A"
 $enrolYear  = (int)date('Y', strtotime($member['enrol_date']));
@@ -305,20 +292,30 @@ if ($filterMonth === 'all') {
 
               <!-- 12-month grid -->
               <div class="compliance-grid">
-                <?php for ($m = 1; $m <= 12; $m++):
+                <?php 
+                  for ($m = 1; $m <= 12; $m++):
+
                   $mm = str_pad($m, 2, '0', STR_PAD_LEFT);
                   $isBeforeEnrol = ($filterYear < $enrolYear) || ($filterYear === $enrolYear && $m < $enrolMonth);
+                  
+                  // Calculate expected amount up to this specific calendar month
+                  $gridDiffMonths = (($filterYear - $enrolYear) * 12) + ($m - $enrolMonth) + 1;
+                  $gridExpectedMonths = max(0, $gridDiffMonths);
+                  $gridExpectedAmount = $gridExpectedMonths * $monthlyAmount;
+                  
+                  // Are we fully covered up to this month?
+                  $isPaid = (!$isBeforeEnrol && $totalPaid >= $gridExpectedAmount);
+                  
                   $isFuture = ($filterYear === $thisYear && $m > (int)date('n')) || $filterYear > $thisYear;
-                  $paid = isset($paidMonths[$m]);
 
                   if ($isBeforeEnrol):
                     $cls = 'cal-na'; $title = 'Not enrolled yet'; $icon = '—';
+                  elseif ($isPaid):
+                    $cls = 'cal-paid'; $title = 'Covered'; $icon = '✓';
                   elseif ($isFuture):
                     $cls = 'cal-na'; $title = 'Not yet due'; $icon = '·';
-                  elseif ($paid):
-                    $cls = 'cal-paid'; $title = 'GH₵ ' . number_format($paidMonths[$m], 2); $icon = '✓';
                   else:
-                    $cls = 'cal-missed'; $title = 'Missed'; $icon = '✗';
+                    $cls = 'cal-missed'; $title = 'Arrears'; $icon = '✗';
                   endif;
 
                   $isActive = (!$isBeforeEnrol && !$isFuture && $filterMonth === $mm) ? ' cal-active' : '';
