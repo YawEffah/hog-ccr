@@ -10,6 +10,10 @@ require_once 'includes/helpers.php';
 $pageTitle  = 'Finance';
 $activePage = 'finance';
 
+if (!hasPermission('perm_manage_finance')) {
+    redirect('index.php');
+}
+
 // Flash messages
 $successMsg = flash('success');
 $errorMsg   = flash('error');
@@ -113,9 +117,12 @@ $rawTxns = $txnStmt->fetchAll();
 $typeBadges = [
     'Tithe'     => 'badge-yellow',
     'Offering'  => 'badge-green',
-    'Donation'  => 'badge-blue',
-    'Welfare'   => 'badge-purple',
-    'Pledge'    => 'badge-gray'
+    'Donation'  => 'badge-green',
+    'Pledge'    => 'badge-purple',
+    'Project Contribution' => 'badge-blue',
+    'Welfare'   => 'badge-red',
+    'Half Year Thanks Giving' => 'badge-yellow',
+    'End of Year Thanks Giving' => 'badge-purple'
 ];
 
 $transactions = array_map(function($t) use ($typeBadges) {
@@ -155,8 +162,10 @@ $breakdownColors = [
     'Tithe'    => 'var(--gold)',
     'Offering' => 'var(--deep)',
     'Donation' => '#2E7D57',
-    'Welfare'  => 'var(--deep3)',
-    'Pledge'   => '#7C3AED'
+    'Pledge'   => '#7C3AED',
+    'Project Contribution' => '#0EA5E9',
+    'Half Year Thanks Giving' => '#F59E0B',
+    'End of Year Thanks Giving' => '#9333EA'
 ];
 
 $income_breakdown = array_map(function($b) use ($totalIncome, $breakdownColors) {

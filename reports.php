@@ -161,7 +161,7 @@ $ytd_total = number_format($ytd_total_val);
 // Revenue Breakdown (General Fund only — exclude Welfare type)
 $rbStmt = $db->query("SELECT type, SUM(amount) as total FROM finance_transactions WHERE YEAR(transaction_date) = $currentYear AND type != 'Welfare' GROUP BY type");
 $revenue_breakdown = $rbStmt->fetchAll(PDO::FETCH_KEY_PAIR);
-$revColors = ['Tithe' => 'var(--gold)', 'Offering' => 'var(--deep)', 'Donation' => '#2E7D57', 'Pledge' => '#7C3AED', 'Project Contribution' => '#0EA5E9'];
+$revColors = ['Tithe' => 'var(--gold)', 'Offering' => 'var(--deep)', 'Donation' => '#2E7D57', 'Pledge' => '#7C3AED', 'Project Contribution' => '#0EA5E9', 'Half Year Thanks Giving' => '#F59E0B', 'End of Year Thanks Giving' => '#9333EA'];
 
 
 // ==========================================
@@ -674,6 +674,7 @@ $topContributors = $topContribStmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
 
         <!-- ACCORDION 1: GROWTH & PERFORMANCE -->
+        <?php if (hasPermission('perm_manage_members')): ?>
         <div class="accordion-item" id="section-growth">
           <div class="accordion-header" onclick="toggleAccordion(this)">
             <h2><i class="ph ph-trend-up"></i> Growth & Performance</h2>
@@ -795,9 +796,10 @@ $topContributors = $topContribStmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
           </div>
         </div>
-
+        <?php endif; ?>
 
         <!-- ACCORDION 2: GENERAL CHURCH FUND -->
+        <?php if (hasPermission('perm_manage_finance')): ?>
         <div class="accordion-item" id="section-finance">
           <div class="accordion-header" onclick="toggleAccordion(this)">
             <h2><i class="ph ph-wallet"></i> General Church Fund</h2>
@@ -1310,8 +1312,10 @@ $topContributors = $topContribStmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
           </div>
         </div>
+        <?php endif; ?>
 
-        <!-- ACCORDION 3: WELFARE FUND -->
+        <!-- ACCORDION 5: WELFARE FUND ACCOUNTING -->
+        <?php if (hasPermission('perm_manage_welfare')): ?>
         <div class="accordion-item" id="section-welfare">
           <div class="accordion-header" onclick="toggleAccordion(this)">
             <h2><i class="ph ph-heartbeat"></i> Welfare Fund</h2>
@@ -1853,8 +1857,10 @@ $topContributors = $topContribStmt->fetchAll(PDO::FETCH_ASSOC);
 
           </div>
         </div>
+        <?php endif; ?>
 
         <!-- ACCORDION 4: SYSTEMS & OPERATIONS -->
+        <?php if (hasPermission('perm_manage_users')): ?>
         <div class="accordion-item" id="section-systems">
           <div class="accordion-header" onclick="toggleAccordion(this)">
             <h2><i class="ph ph-hard-drives"></i> Systems & Operations</h2>
@@ -1922,6 +1928,16 @@ $topContributors = $topContribStmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
           </div>
         </div>
+        <?php endif; ?>
+
+        <!-- No Access State -->
+        <?php if (!hasPermission('perm_manage_members') && !hasPermission('perm_manage_finance') && !hasPermission('perm_manage_welfare') && !hasPermission('perm_manage_users')): ?>
+        <div style="text-align:center; padding: 40px; color: var(--muted);">
+          <i class="ph ph-lock-key" style="font-size: 48px; margin-bottom: 16px;"></i>
+          <h3>No Reports Available</h3>
+          <p>Your current role does not have permission to view any of the analytical reports.</p>
+        </div>
+        <?php endif; ?>
 
       </div>
     </div>

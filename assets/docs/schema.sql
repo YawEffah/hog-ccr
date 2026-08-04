@@ -208,7 +208,7 @@ CREATE TABLE IF NOT EXISTS attendance_records (
 CREATE TABLE IF NOT EXISTS finance_transactions (
   id               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   week_number      ENUM('Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5') DEFAULT 'Week 1',
-  type             ENUM('Tithe','Offering','Donation','Pledge','Project Contribution','Welfare') NOT NULL,
+  type             VARCHAR(100) NOT NULL,
   amount           DECIMAL(12,2) NOT NULL,
   payment_method   ENUM('Cash','MoMo','Bank Transfer','Cheque') DEFAULT 'Cash',
   reference_no     VARCHAR(100),

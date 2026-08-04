@@ -10,6 +10,10 @@ require_once 'includes/helpers.php';
 $pageTitle  = 'Ministries';
 $activePage = 'ministries';
 
+if (!hasPermission('perm_manage_members')) {
+    redirect('index.php');
+}
+
 $successMsg = flash('success');
 $errorMsg   = flash('error');
 

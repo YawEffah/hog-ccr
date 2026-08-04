@@ -11,7 +11,7 @@ $pageTitle  = 'User Management';
 $activePage = 'users';
 
 // Only administrators can access this page
-if (($currentUser['role'] ?? '') !== 'Administrator') {
+if (!hasPermission('perm_manage_users')) {
     redirect('index.php');
 }
 
@@ -24,12 +24,16 @@ if (!$successMsg && !$errorMsg) {
         'user_added'   => 'Administrative account created.',
         'user_updated' => 'Administrator profile updated.',
         'user_deleted' => 'Administrator account removed.',
+        'role_added'   => 'System role created successfully.',
+        'role_updated' => 'System role updated successfully.',
+        'role_deleted' => 'System role removed successfully.',
     ];
     $errorLabels = [
         'missing_fields' => 'Please fill in all required fields.',
         'db_error'       => 'A database error occurred.',
-        'duplicate_entry'=> 'Username or email already exists.',
+        'duplicate_entry'=> 'Username, email, or role name already exists.',
         'invalid_action' => 'You cannot perform this action.',
+        'role_in_use'    => 'Cannot delete role because it is currently assigned to one or more users.',
     ];
     $successMsg = $successLabels[$_GET['success'] ?? ''] ?? '';
     $errorMsg   = $errorLabels[$_GET['error']   ?? ''] ?? '';
@@ -41,7 +45,9 @@ $db = getDB();
 $stmt = $db->query("SELECT id, name, username, email, phone, role, initials, created_at FROM admins ORDER BY name ASC");
 $users = $stmt->fetchAll();
 
-?>
+// Fetch all roles
+$rolesStmt = $db->query("SELECT * FROM system_roles ORDER BY id ASC");
+$roles = $rolesStmt->fetchAll();?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -126,6 +132,64 @@ $users = $stmt->fetchAll();
             </table>
           </div>
         </div>
+
+        <div class="card" style="margin-top: 24px;">
+          <div class="card-header" style="padding: 20px; border-bottom: 1px solid #EDE8DF; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <h3 style="margin:0; font-family:'Cormorant Garamond', serif; font-size:22px;">System Roles</h3>
+              <p style="font-size:12px; color:var(--muted); margin-top:4px;">Manage custom roles and configure access permissions.</p>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="openModal('addRoleModal')">+ Add New Role</button>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Role Name</th>
+                  <th>Manage Users</th>
+                  <th>Manage Finance</th>
+                  <th>Manage Welfare</th>
+                  <th>Manage Members</th>
+                  <th>Manage Events</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($roles as $r): ?>
+                <tr>
+                  <td><span style="font-weight:600; color:var(--deep2);"><?= htmlspecialchars($r['name']) ?></span></td>
+                  <td>
+                    <?php if ($r['perm_manage_users']): ?><span class="badge badge-green"><i class="ph ph-check"></i> Yes</span><?php else: ?><span class="badge badge-gray"><i class="ph ph-x"></i> No</span><?php endif; ?>
+                  </td>
+                  <td>
+                    <?php if ($r['perm_manage_finance']): ?><span class="badge badge-green"><i class="ph ph-check"></i> Yes</span><?php else: ?><span class="badge badge-gray"><i class="ph ph-x"></i> No</span><?php endif; ?>
+                  </td>
+                  <td>
+                    <?php if ($r['perm_manage_welfare']): ?><span class="badge badge-green"><i class="ph ph-check"></i> Yes</span><?php else: ?><span class="badge badge-gray"><i class="ph ph-x"></i> No</span><?php endif; ?>
+                  </td>
+                  <td>
+                    <?php if ($r['perm_manage_members']): ?><span class="badge badge-green"><i class="ph ph-check"></i> Yes</span><?php else: ?><span class="badge badge-gray"><i class="ph ph-x"></i> No</span><?php endif; ?>
+                  </td>
+                  <td>
+                    <?php if ($r['perm_manage_events']): ?><span class="badge badge-green"><i class="ph ph-check"></i> Yes</span><?php else: ?><span class="badge badge-gray"><i class="ph ph-x"></i> No</span><?php endif; ?>
+                  </td>
+                  <td style="text-align:right;">
+                    <div style="display:flex; justify-content:flex-end; gap:6px;">
+                      <button class="btn btn-outline btn-sm" onclick='editRole(<?= json_encode($r) ?>)' title="Edit Role">
+                        <i class="ph ph-pencil-simple"></i>
+                      </button>
+                      <button class="btn btn-danger-soft btn-sm" 
+                        onclick="confirmDeleteRole(<?= $r['id'] ?>, '<?= htmlspecialchars(addslashes($r['name'])) ?>')" title="Delete Role">
+                        <i class="ph ph-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </main>
@@ -136,6 +200,12 @@ $users = $stmt->fetchAll();
     <?= csrfField() ?>
     <input type="hidden" name="action" value="delete_user">
     <input type="hidden" name="user_id" id="deleteUserId">
+  </form>
+
+  <form method="POST" action="handlers/user_handler.php" id="deleteRoleForm" style="display:none;">
+    <?= csrfField() ?>
+    <input type="hidden" name="action" value="delete_role">
+    <input type="hidden" name="role_id" id="deleteRoleId">
   </form>
 
   <script src="assets/js/main.js"></script>
@@ -160,6 +230,31 @@ $users = $stmt->fetchAll();
         function() {
           document.getElementById('deleteUserId').value = id;
           document.getElementById('deleteUserForm').submit();
+        },
+        'danger'
+      );
+    }
+
+    function editRole(r) {
+      document.getElementById('edit_roleId').value = r.id;
+      document.getElementById('edit_role_name').value = r.name;
+      document.getElementById('edit_perm_manage_users').checked = r.perm_manage_users == 1;
+      document.getElementById('edit_perm_manage_finance').checked = r.perm_manage_finance == 1;
+      document.getElementById('edit_perm_manage_welfare').checked = r.perm_manage_welfare == 1;
+      document.getElementById('edit_perm_manage_members').checked = r.perm_manage_members == 1;
+      document.getElementById('edit_perm_manage_events').checked = r.perm_manage_events == 1;
+      
+      openModal('editRoleModal');
+    }
+
+    function confirmDeleteRole(id, name) {
+      showConfirmModal(
+        'Delete Role',
+        'Are you sure you want to delete the role "' + name + '"? Users assigned to this role may lose access.',
+        'Delete Role',
+        function() {
+          document.getElementById('deleteRoleId').value = id;
+          document.getElementById('deleteRoleForm').submit();
         },
         'danger'
       );

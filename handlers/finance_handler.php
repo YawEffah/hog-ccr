@@ -18,6 +18,7 @@ $redirect = '../finance.php';
 if ($action === 'add_transaction') {
     $weekNumber    = $_POST['week_number']           ?? 'Week 1';
     $type          = $_POST['transaction_type']      ?? '';
+
     $amount        = (float)($_POST['amount']        ?? 0);
     $method        = $_POST['payment_method']        ?? 'Cash';
     $reference     = trim($_POST['reference_no']     ?? '');
@@ -25,10 +26,9 @@ if ($action === 'add_transaction') {
     $date          = $_POST['date']                  ?? date('Y-m-d');
     $sendReceipt   = isset($_POST['generate_receipt']);
 
-    $allowedTypes  = ['Tithe','Offering','Donation','Pledge','Project Contribution','Welfare'];
     $allowedMethods = ['Cash','MoMo','Bank Transfer','Cheque'];
 
-    if ($amount <= 0 || !in_array($type, $allowedTypes, true) || !in_array($method, $allowedMethods, true)) {
+    if ($amount <= 0 || empty($type) || !in_array($method, $allowedMethods, true)) {
         redirect($redirect . '?error=invalid_data');
     }
 
@@ -55,7 +55,9 @@ if ($action === 'add_transaction') {
             'Donation' => '4400',
             'Pledge' => '4500',
             'Project Contribution' => '4600',
-            'Welfare' => '4000'
+            'Welfare' => '4000',
+            'Half Year Thanks Giving' => '4300',
+            'End of Year Thanks Giving' => '4300'
         ];
         $revenueCode = $typeToAccMap[$type] ?? '4300';
         $revenueId = $db->query("SELECT id FROM finance_accounts WHERE code = '$revenueCode'")->fetchColumn();
@@ -86,7 +88,7 @@ if ($action === 'add_transaction') {
             ];
             
             // Get admins
-            $adminsStmt = $db->query("SELECT name, email, phone FROM admins WHERE role IN ('Administrator', 'Finance Secretary')");
+            $adminsStmt = $db->query("SELECT name, email, phone FROM admins WHERE role IN (SELECT name FROM system_roles WHERE perm_manage_finance = 1)");
             $admins = $adminsStmt->fetchAll();
             $anySent = false;
             foreach ($admins as $admin) {
@@ -205,7 +207,7 @@ if ($action === 'resend_receipt') {
         ];
 
         // Send receipt email / SMS to admins
-        $adminsStmt = $db->query("SELECT name, email, phone FROM admins WHERE role IN ('Administrator', 'Finance Secretary')");
+        $adminsStmt = $db->query("SELECT name, email, phone FROM admins WHERE role IN (SELECT name FROM system_roles WHERE perm_manage_finance = 1)");
         $admins = $adminsStmt->fetchAll();
         $anySent = false;
         foreach ($admins as $admin) {

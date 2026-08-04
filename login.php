@@ -32,6 +32,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Regenerate session ID to prevent fixation
         session_regenerate_id(true);
 
+        $roleStmt = $db->prepare("SELECT * FROM system_roles WHERE name = ? LIMIT 1");
+        $roleStmt->execute([$admin['role']]);
+        $roleData = $roleStmt->fetch(PDO::FETCH_ASSOC);
+        
+        $permissions = [];
+        if ($roleData) {
+            $permissions = [
+                'perm_manage_users' => (bool)$roleData['perm_manage_users'],
+                'perm_manage_finance' => (bool)$roleData['perm_manage_finance'],
+                'perm_manage_welfare' => (bool)$roleData['perm_manage_welfare'],
+                'perm_manage_members' => (bool)$roleData['perm_manage_members'],
+                'perm_manage_events'  => (bool)$roleData['perm_manage_events']
+            ];
+        }
+
         $_SESSION['user_id'] = $admin['id'];
         $_SESSION['user_data'] = [
           'id' => $admin['id'],
@@ -39,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           'initials' => $admin['initials'],
           'role' => $admin['role'],
           'email' => $admin['email'],
+          'permissions' => $permissions
         ];
 
         header('Location: index.php');

@@ -614,7 +614,7 @@ $nonWelfareMembers = $db->query(
                       <td style="font-size:13px;"><?= htmlspecialchars($e['description']) ?></td>
                       <td class="no-print">
                         <div style="display:flex;gap:6px;">
-                          <?php if (in_array($_SESSION['user_data']['role'], ['Administrator', 'Finance Secretary'])): ?>
+                          <?php if (hasPermission('perm_manage_welfare')): ?>
                           <button class="btn btn-outline btn-sm" onclick='openEditExpenseModal(<?= htmlspecialchars(json_encode($e), ENT_QUOTES, "UTF-8") ?>)' title="Edit Expense">
                             <i class="ph ph-pencil"></i>
                           </button>

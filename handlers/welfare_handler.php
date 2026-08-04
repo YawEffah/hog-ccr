@@ -473,7 +473,7 @@ if ($action === 'record_welfare_expense') {
 // ── EDIT WELFARE EXPENSE ────────────────────────────────────────────────────────
 if ($action === 'edit_welfare_expense') {
     // Role Check
-    if (!in_array($_SESSION['user_data']['role'], ['Administrator', 'Finance Secretary'])) {
+    if (!hasPermission('perm_manage_welfare')) {
         redirect($redirect . '?error=unauthorized');
     }
 
@@ -532,7 +532,7 @@ if ($action === 'edit_welfare_expense') {
 // ── DELETE WELFARE EXPENSE ──────────────────────────────────────────────────────
 if ($action === 'delete_welfare_expense') {
     // Role Check
-    if (!in_array($_SESSION['user_data']['role'], ['Administrator', 'Finance Secretary'])) {
+    if (!hasPermission('perm_manage_welfare')) {
         redirect($redirect . '?error=unauthorized');
     }
 

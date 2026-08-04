@@ -10,6 +10,10 @@ require_once 'includes/helpers.php';
 $pageTitle  = 'Families';
 $activePage = 'families';
 
+if (!hasPermission('perm_manage_members')) {
+    redirect('index.php');
+}
+
 $successMsg = flash('success');
 $errorMsg   = flash('error');
 

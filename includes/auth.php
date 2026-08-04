@@ -61,3 +61,15 @@ function destroySession(): void
 if (isAuthenticated()) {
     $currentUser = $_SESSION['user_data'];
 }
+
+/**
+ * Check if the currently logged-in user has a specific permission.
+ */
+function hasPermission(string $perm): bool
+{
+    global $currentUser;
+    if (!$currentUser || empty($currentUser['permissions'])) {
+        return false;
+    }
+    return !empty($currentUser['permissions'][$perm]);
+}

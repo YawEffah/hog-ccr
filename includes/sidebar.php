@@ -29,7 +29,9 @@ $currentUser = $currentUser ?? [
       Dashboard
     </a>
 
+    <?php if (hasPermission('perm_manage_members') || hasPermission('perm_manage_welfare')): ?>
     <div class="nav-section-label">Congregation</div>
+    <?php if (hasPermission('perm_manage_members')): ?>
     <a href="members.php" class="nav-item <?= $activePage === 'members' ? 'active' : '' ?>">
       <i class="ph ph-users"></i>
       Members
@@ -42,31 +44,41 @@ $currentUser = $currentUser ?? [
       <i class="ph ph-users-three"></i>
       Families
     </a>
+    <?php endif; ?>
+    <?php if (hasPermission('perm_manage_welfare')): ?>
     <a href="welfare.php" class="nav-item <?= $activePage === 'welfare' ? 'active' : '' ?>">
       <i class="ph ph-hand-heart"></i>
       Welfare
     </a>
+    <?php endif; ?>
+    <?php endif; ?>
 
 
     <div class="nav-section-label">Administration</div>
+    <?php if (hasPermission('perm_manage_finance')): ?>
     <a href="finance.php" class="nav-item <?= $activePage === 'finance' ? 'active' : '' ?>">
       <i class="ph ph-wallet"></i>
       Finance
     </a>
+    <?php endif; ?>
+    <?php if (hasPermission('perm_manage_events')): ?>
     <a href="events.php" class="nav-item <?= $activePage === 'events' ? 'active' : '' ?>">
       <i class="ph ph-calendar"></i>
       Events
     </a>
+    <?php endif; ?>
     <a href="reports.php" class="nav-item <?= $activePage === 'reports' ? 'active' : '' ?>">
       <i class="ph ph-chart-bar"></i>
       Reports
     </a>
 
     <div class="nav-section-label">System</div>
+    <?php if (hasPermission('perm_manage_users')): ?>
     <a href="users.php" class="nav-item <?= $activePage === 'users' ? 'active' : '' ?>">
       <i class="ph ph-shield-check"></i>
       User Management
     </a>
+    <?php endif; ?>
     <a href="logout.php" class="nav-item">
       <i class="ph ph-sign-out"></i>
       Logout

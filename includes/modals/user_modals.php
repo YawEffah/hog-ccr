@@ -28,10 +28,9 @@
           <div class="form-group">
             <label class="form-label">Role</label>
             <select class="form-control" name="role" required>
-              <option value="Secretary">Secretary</option>
-              <option value="Finance Secretary">Finance Secretary</option>
-              <option value="Administrator">Administrator</option>
-              <option value="Head Pastor">Head Pastor</option>
+              <?php foreach ($roles as $r): ?>
+                <option value="<?= htmlspecialchars($r['name']) ?>"><?= htmlspecialchars($r['name']) ?></option>
+              <?php endforeach; ?>
             </select>
           </div>
         </div>
@@ -92,10 +91,9 @@
           <div class="form-group">
             <label class="form-label">Role</label>
             <select class="form-control" name="role" id="edit_role" required>
-              <option value="Secretary">Secretary</option>
-              <option value="Finance Secretary">Finance Secretary</option>
-              <option value="Administrator">Administrator</option>
-              <option value="Head Pastor">Head Pastor</option>
+              <?php foreach ($roles as $r): ?>
+                <option value="<?= htmlspecialchars($r['name']) ?>"><?= htmlspecialchars($r['name']) ?></option>
+              <?php endforeach; ?>
             </select>
           </div>
         </div>
@@ -118,6 +116,95 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" onclick="closeModal('editUserModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Role Modal -->
+<div class="modal-overlay" id="addRoleModal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <h3>Add New Role</h3>
+      <button class="close-btn" onclick="closeModal('addRoleModal')"><i class="ph ph-x"></i></button>
+    </div>
+    <form action="handlers/user_handler.php" method="POST">
+      <?= csrfField() ?>
+      <input type="hidden" name="action" value="add_role">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Role Name</label>
+          <input class="form-control" name="name" placeholder="e.g. Media Manager" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" style="margin-bottom: 12px; display: block;">Permissions</label>
+          
+          <label class="checkbox-wrap" style="margin-bottom: 8px; display: flex;">
+            <input type="checkbox" name="perm_manage_users" value="1"> Manage Users & Roles
+          </label>
+          <label class="checkbox-wrap" style="margin-bottom: 8px; display: flex;">
+            <input type="checkbox" name="perm_manage_finance" value="1"> Manage Finance
+          </label>
+          <label class="checkbox-wrap" style="margin-bottom: 8px; display: flex;">
+            <input type="checkbox" name="perm_manage_welfare" value="1"> Manage Welfare
+          </label>
+          <label class="checkbox-wrap" style="margin-bottom: 8px; display: flex;">
+            <input type="checkbox" name="perm_manage_members" value="1"> Manage Members & Ministries
+          </label>
+          <label class="checkbox-wrap" style="margin-bottom: 8px; display: flex;">
+            <input type="checkbox" name="perm_manage_events" value="1"> Manage Events
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('addRoleModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Role</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Role Modal -->
+<div class="modal-overlay" id="editRoleModal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <h3>Edit Role</h3>
+      <button class="close-btn" onclick="closeModal('editRoleModal')"><i class="ph ph-x"></i></button>
+    </div>
+    <form action="handlers/user_handler.php" method="POST">
+      <?= csrfField() ?>
+      <input type="hidden" name="action" value="edit_role">
+      <input type="hidden" name="role_id" id="edit_roleId">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Role Name</label>
+          <input class="form-control" name="name" id="edit_role_name" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" style="margin-bottom: 12px; display: block;">Permissions</label>
+          
+          <label class="checkbox-wrap" style="margin-bottom: 8px; display: flex;">
+            <input type="checkbox" name="perm_manage_users" id="edit_perm_manage_users" value="1"> Manage Users & Roles
+          </label>
+          <label class="checkbox-wrap" style="margin-bottom: 8px; display: flex;">
+            <input type="checkbox" name="perm_manage_finance" id="edit_perm_manage_finance" value="1"> Manage Finance
+          </label>
+          <label class="checkbox-wrap" style="margin-bottom: 8px; display: flex;">
+            <input type="checkbox" name="perm_manage_welfare" id="edit_perm_manage_welfare" value="1"> Manage Welfare
+          </label>
+          <label class="checkbox-wrap" style="margin-bottom: 8px; display: flex;">
+            <input type="checkbox" name="perm_manage_members" id="edit_perm_manage_members" value="1"> Manage Members & Ministries
+          </label>
+          <label class="checkbox-wrap" style="margin-bottom: 8px; display: flex;">
+            <input type="checkbox" name="perm_manage_events" id="edit_perm_manage_events" value="1"> Manage Events
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('editRoleModal')">Cancel</button>
         <button type="submit" class="btn btn-primary">Save Changes</button>
       </div>
     </form>

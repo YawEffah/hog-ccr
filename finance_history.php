@@ -89,10 +89,12 @@ $rawTxns = $stmt->fetchAll();
 $typeBadges = [
     'Tithe'     => 'badge-yellow',
     'Offering'  => 'badge-green',
-    'Donation'  => 'badge-blue',
-    'Welfare'   => 'badge-purple',
-    'Pledge'    => 'badge-gray',
-    'Project Contribution' => 'badge-blue'
+    'Donation'  => 'badge-green',
+    'Pledge'    => 'badge-purple',
+    'Project Contribution' => 'badge-blue',
+    'Welfare'   => 'badge-red',
+    'Half Year Thanks Giving' => 'badge-yellow',
+    'End of Year Thanks Giving' => 'badge-purple'
 ];
 
 $transactions = array_map(function($t) use ($typeBadges) {
@@ -188,11 +190,20 @@ $transactions = array_map(function($t) use ($typeBadges) {
                 <label class="form-label">Transaction Type</label>
                 <select name="type" class="form-control">
                   <option value="">All Types</option>
-                  <option value="Tithe" <?= $type === 'Tithe' ? 'selected' : '' ?>>Tithe</option>
-                  <option value="Offering" <?= $type === 'Offering' ? 'selected' : '' ?>>Offering</option>
-                  <option value="Donation" <?= $type === 'Donation' ? 'selected' : '' ?>>Donation</option>
-                  <option value="Pledge" <?= $type === 'Pledge' ? 'selected' : '' ?>>Pledge</option>
-                  <option value="Project Contribution" <?= $type === 'Project Contribution' ? 'selected' : '' ?>>Project Contribution</option>
+                  <?php
+                    if (isset($db)) {
+                        $typeStmt = $db->query("SELECT DISTINCT type FROM finance_transactions WHERE type IS NOT NULL AND type != ''");
+                        $dbTypes = $typeStmt->fetchAll(PDO::FETCH_COLUMN);
+                    } else {
+                        $dbTypes = [];
+                    }
+                    $defaultTypes = ['Tithe', 'Offering', 'Donation', 'Pledge', 'Project Contribution', 'Welfare', 'Half Year Thanks Giving', 'End of Year Thanks Giving'];
+                    $allTypes = array_unique(array_merge($defaultTypes, $dbTypes));
+                    foreach($allTypes as $t) {
+                        $selected = ($type === $t) ? 'selected' : '';
+                        echo '<option value="' . htmlspecialchars($t) . '" ' . $selected . '>' . htmlspecialchars($t) . '</option>';
+                    }
+                  ?>
                 </select>
               </div>
 
