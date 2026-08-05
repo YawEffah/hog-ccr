@@ -10,7 +10,7 @@ require_once '../includes/helpers.php';
 
 // Only administrators can perform these actions
 if (!hasPermission('perm_manage_users')) {
-    redirect('../index.php');
+    redirect('../dashboard.php');
 }
 
 verifyCsrf();

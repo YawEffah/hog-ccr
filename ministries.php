@@ -11,7 +11,7 @@ $pageTitle  = 'Ministries';
 $activePage = 'ministries';
 
 if (!hasPermission('perm_manage_members')) {
-    redirect('index.php');
+    redirect('dashboard.php');
 }
 
 $successMsg = flash('success');

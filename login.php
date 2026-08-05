@@ -9,7 +9,7 @@ require_once 'includes/db.php';
 
 // If already logged in, redirect to dashboard
 if (isAuthenticated()) {
-  header('Location: index.php');
+  header('Location: dashboard.php');
   exit();
 }
 
@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           'permissions' => $permissions
         ];
 
-        header('Location: index.php');
+        header('Location: dashboard.php');
         exit();
       } else {
         $error = 'Invalid username or password. Please try again.';

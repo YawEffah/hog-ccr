@@ -12,7 +12,7 @@ $activePage = 'users';
 
 // Only administrators can access this page
 if (!hasPermission('perm_manage_users')) {
-    redirect('index.php');
+    redirect('dashboard.php');
 }
 
 $successMsg = flash('success');

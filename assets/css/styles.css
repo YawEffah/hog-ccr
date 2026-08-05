@@ -1058,14 +1058,21 @@ select.form-control {
 
 /* Notification Styles */
 .notif-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 10px;
   background: #EF4444;
+  color: white;
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 2px;
+  right: 2px;
   border: 2px solid white;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  padding: 0 4px;
 }
 
 .topbar-actions {

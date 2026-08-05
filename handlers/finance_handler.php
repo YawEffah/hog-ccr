@@ -135,6 +135,18 @@ if ($action === 'set_target') {
         $stmt->execute([$monthDate, $targetAmount, $notes ?: null, $_SESSION['user_id']]);
 
         logActivity('Set finance target for ' . date('F Y', strtotime($monthDate)) . ' to ' . formatGhc($targetAmount), 'finance');
+        
+        // Trigger notification
+        notifyRoles(
+            ['Administrator', 'Finance Secretary', 'Head Pastor'],
+            'finance_target',
+            'Monthly Target Updated',
+            "Target for " . date('F Y', strtotime($monthDate)) . " has been set to " . formatGhc($targetAmount) . ".",
+            'finance.php',
+            'ph ph-target',
+            '#3B82F6'
+        );
+
         redirect($redirect . '?success=target_set');
 
     } catch (PDOException $e) {

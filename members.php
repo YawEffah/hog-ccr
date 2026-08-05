@@ -11,7 +11,7 @@ $pageTitle  = 'Members';
 $activePage = 'members';
 
 if (!hasPermission('perm_manage_members')) {
-    redirect('index.php');
+    redirect('dashboard.php');
 }
 
 // Flash messages

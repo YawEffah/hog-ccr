@@ -11,7 +11,7 @@ $pageTitle  = 'Finance';
 $activePage = 'finance';
 
 if (!hasPermission('perm_manage_finance')) {
-    redirect('index.php');
+    redirect('dashboard.php');
 }
 
 // Flash messages

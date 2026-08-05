@@ -320,3 +320,20 @@ CREATE TABLE IF NOT EXISTS message_queue (
   created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
+
+-- ─────────────────────────────────────────────
+-- 16. NOTIFICATIONS
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS notifications (
+  id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  admin_id     INT UNSIGNED  NOT NULL,
+  type         VARCHAR(50)   NOT NULL,
+  title        VARCHAR(200)  NOT NULL,
+  message      TEXT          NOT NULL,
+  link         VARCHAR(255)  NULL,
+  icon         VARCHAR(50)   NULL,
+  color        VARCHAR(50)   NULL,
+  is_read      TINYINT(1)    DEFAULT 0,
+  created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_notif_admin FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
+) ENGINE=InnoDB;

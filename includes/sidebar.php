@@ -24,7 +24,7 @@ $currentUser = $currentUser ?? [
 
   <nav style="flex:1; overflow-y:auto; padding: 8px 0;">
     <div class="nav-section-label">Overview</div>
-    <a href="index.php" class="nav-item <?= $activePage === 'dashboard' ? 'active' : '' ?>">
+    <a href="dashboard.php" class="nav-item <?= $activePage === 'dashboard' ? 'active' : '' ?>">
       <i class="ph ph-house"></i>
       Dashboard
     </a>

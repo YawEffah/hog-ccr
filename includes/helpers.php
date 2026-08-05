@@ -799,3 +799,114 @@ function broadcastFamilyMessage(int $familyId, string $subject, string $message,
     return ['sent' => $sent, 'failed' => $failed, 'family' => $familyName];
 }
 
+// ==========================================
+// NOTIFICATIONS
+// ==========================================
+
+/**
+ * Create a notification for a specific admin.
+ */
+function createNotification($adminId, $type, $title, $message, $link = null, $icon = null, $color = null) {
+    $db = getDB();
+    try {
+        $stmt = $db->prepare("
+            INSERT INTO notifications (admin_id, type, title, message, link, icon, color)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([$adminId, $type, $title, $message, $link, $icon, $color]);
+        return true;
+    } catch (PDOException $e) {
+        error_log("Failed to create notification: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Send a notification to all admins with specific roles.
+ */
+function notifyRoles(array $roles, $type, $title, $message, $link = null, $icon = null, $color = null) {
+    $db = getDB();
+    if (empty($roles)) return false;
+    
+    try {
+        $placeholders = implode(',', array_fill(0, count($roles), '?'));
+        $stmt = $db->prepare("SELECT id FROM admins WHERE role IN ($placeholders)");
+        $stmt->execute($roles);
+        $admins = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        $success = true;
+        foreach ($admins as $adminId) {
+            if (!createNotification($adminId, $type, $title, $message, $link, $icon, $color)) {
+                $success = false;
+            }
+        }
+        return $success;
+    } catch (PDOException $e) {
+        error_log("Failed to notify roles: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Get unread notifications for a specific admin.
+ */
+function getUnreadNotifications($adminId, $limit = 10) {
+    $db = getDB();
+    try {
+        $stmt = $db->prepare("
+            SELECT * FROM notifications 
+            WHERE admin_id = ? AND is_read = 0 
+            ORDER BY created_at DESC 
+            LIMIT ?
+        ");
+        $stmt->bindValue(1, $adminId, PDO::PARAM_INT);
+        $stmt->bindValue(2, (int)$limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Failed to get notifications: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Get unread notifications count for a specific admin.
+ */
+function getUnreadNotificationsCount($adminId) {
+    $db = getDB();
+    try {
+        $stmt = $db->prepare("SELECT COUNT(*) FROM notifications WHERE admin_id = ? AND is_read = 0");
+        $stmt->execute([$adminId]);
+        return (int)$stmt->fetchColumn();
+    } catch (PDOException $e) {
+        return 0;
+    }
+}
+
+/**
+ * Mark a specific notification as read.
+ */
+function markNotificationAsRead($adminId, $notificationId) {
+    $db = getDB();
+    try {
+        $stmt = $db->prepare("UPDATE notifications SET is_read = 1 WHERE admin_id = ? AND id = ?");
+        return $stmt->execute([$adminId, $notificationId]);
+    } catch (PDOException $e) {
+        error_log("Failed to mark notification as read: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Mark all notifications as read for an admin.
+ */
+function markAllNotificationsAsRead($adminId) {
+    $db = getDB();
+    try {
+        $stmt = $db->prepare("UPDATE notifications SET is_read = 1 WHERE admin_id = ? AND is_read = 0");
+        return $stmt->execute([$adminId]);
+    } catch (PDOException $e) {
+        error_log("Failed to mark all notifications as read: " . $e->getMessage());
+        return false;
+    }
+}

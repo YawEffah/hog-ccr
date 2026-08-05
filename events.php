@@ -11,7 +11,7 @@ $pageTitle  = 'Events';
 $activePage = 'events';
 
 if (!hasPermission('perm_manage_events')) {
-    redirect('index.php');
+    redirect('dashboard.php');
 }
 
 // Flash messages (from redirect pattern)

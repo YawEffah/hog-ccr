@@ -237,3 +237,83 @@ function showToast(message, type = 'success', duration = 5000) {
         setTimeout(() => toast.remove(), 400); // wait for hide animation
     }, duration);
 }
+
+// ==========================================
+// NOTIFICATIONS API & POLLING
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const notifDot = document.querySelector('.notif-dot');
+    const markAllBtn = document.getElementById('markAllReadBtn');
+    
+    // Polling function
+    function fetchNotifications() {
+        fetch('ajax/notifications_api.php?action=fetch')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Update dot if there are unread notifications
+                    if (data.count > 0) {
+                        if (notifDot) {
+                            notifDot.style.display = 'block';
+                            notifDot.textContent = data.count > 9 ? '9+' : data.count;
+                        }
+                    } else {
+                        if (notifDot) notifDot.style.display = 'none';
+                    }
+                }
+            })
+            .catch(err => console.error('Error fetching notifications:', err));
+    }
+
+    // Poll every 30 seconds
+    setInterval(fetchNotifications, 30000);
+    
+    // Initial fetch
+    fetchNotifications();
+
+    // Mark single notification as read
+    document.body.addEventListener('click', (e) => {
+        const notifItem = e.target.closest('.notif-item');
+        if (notifItem && notifItem.classList.contains('unread')) {
+            const notifId = notifItem.dataset.id;
+            if (notifId) {
+                const formData = new FormData();
+                formData.append('action', 'mark_read');
+                formData.append('id', notifId);
+                
+                fetch('ajax/notifications_api.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        notifItem.classList.remove('unread');
+                        fetchNotifications(); // Refresh count
+                    }
+                });
+            }
+        }
+    });
+
+    // Mark all as read
+    if (markAllBtn) {
+        markAllBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('action', 'mark_all_read');
+            
+            fetch('ajax/notifications_api.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    document.querySelectorAll('.notif-item.unread').forEach(item => item.classList.remove('unread'));
+                    if (notifDot) notifDot.style.display = 'none';
+                }
+            });
+        });
+    }
+});
