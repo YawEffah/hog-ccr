@@ -501,11 +501,13 @@ try {
                 </div>
                 <div class="cta-col">
                     <span>Information</span>
-                    <strong onclick="document.getElementById('service-times').scrollIntoView();" style="cursor:pointer;">Service Times <i class="ph ph-caret-down"></i></strong>
+                    <strong onclick="document.getElementById('service-times').scrollIntoView();"
+                        style="cursor:pointer;">Service Times <i class="ph ph-caret-down"></i></strong>
                 </div>
                 <div class="cta-col">
                     <span>Connect</span>
-                    <strong onclick="document.getElementById('contact').scrollIntoView();" style="cursor:pointer;">Contact Us <i class="ph ph-caret-down"></i></strong>
+                    <strong onclick="document.getElementById('contact').scrollIntoView();"
+                        style="cursor:pointer;">Contact Us <i class="ph ph-caret-down"></i></strong>
                 </div>
                 <button class="cta-btn" onclick="document.getElementById('what-we-do').scrollIntoView();">
                     <i class="ph-bold ph-magnifying-glass"></i> Explore
@@ -548,23 +550,95 @@ try {
             <?php endif; ?>
         </div>
 
+        <h2 class="section-title mt-80" id="teams">Our Teams</h2>
+        <div class="ministry-grid">
+            <div class="ministry-card">
+                <div class="m-icon"><i class="ph-bold ph-heart"></i></div>
+                <h4>Marriage and Family Life Team</h4>
+                <p>Supporting and strengthening marriages and family life within the community.</p>
+                <span class="arrow-link">
+                    <i class="ph-bold ph-arrow-up-right"></i>
+                </span>
+            </div>
+            <div class="ministry-card">
+                <div class="m-icon"><i class="ph-bold ph-globe"></i></div>
+                <h4>Outreach and Evangelization Team</h4>
+                <p>Spreading the Word and reaching out to our community.</p>
+                <span class="arrow-link">
+                    <i class="ph-bold ph-arrow-up-right"></i>
+                </span>
+            </div>
+            <div class="ministry-card">
+                <div class="m-icon"><i class="ph-bold ph-handshake"></i></div>
+                <h4>Welcoming and Hospitality Team</h4>
+                <p>Ensuring every visitor and member feels at home in God's presence.</p>
+                <span class="arrow-link">
+                    <i class="ph-bold ph-arrow-up-right"></i>
+                </span>
+            </div>
+        </div>
+
+        <h2 class="section-title mt-80" id="committees">Standing Committees</h2>
+        <div class="ministry-grid">
+            <div class="ministry-card">
+                <div class="m-icon"><i class="ph-bold ph-fork-knife"></i></div>
+                <h4>Food Committee</h4>
+                <p>Managing culinary needs and refreshments for community events.</p>
+                <span class="arrow-link">
+                    <i class="ph-bold ph-arrow-up-right"></i>
+                </span>
+            </div>
+            <div class="ministry-card">
+                <div class="m-icon"><i class="ph-bold ph-kanban"></i></div>
+                <h4>Projects Committee</h4>
+                <p>Overseeing and executing special projects and developments.</p>
+                <span class="arrow-link">
+                    <i class="ph-bold ph-arrow-up-right"></i>
+                </span>
+            </div>
+            <div class="ministry-card">
+                <div class="m-icon"><i class="ph-bold ph-hand-heart"></i></div>
+                <h4>Welfare Committee</h4>
+                <p>Providing care and support for the well-being of all members.</p>
+                <span class="arrow-link">
+                    <i class="ph-bold ph-arrow-up-right"></i>
+                </span>
+            </div>
+            <div class="ministry-card">
+                <div class="m-icon"><i class="ph-bold ph-sparkle"></i></div>
+                <h4>Decorations and Beautification Committee</h4>
+                <p>Enhancing our environment for a more welcoming worship experience.</p>
+                <span class="arrow-link">
+                    <i class="ph-bold ph-arrow-up-right"></i>
+                </span>
+            </div>
+            <div class="ministry-card">
+                <div class="m-icon"><i class="ph-bold ph-book-open"></i></div>
+                <h4>Liturgical Committee</h4>
+                <p>Organizing and preparing liturgical activities and spiritual events.</p>
+                <span class="arrow-link">
+                    <i class="ph-bold ph-arrow-up-right"></i>
+                </span>
+            </div>
+        </div>
+
         <h2 class="section-title mt-80" id="service-times">Service Times</h2>
         <div class="stats-grid" style="margin-top: 0;">
             <div class="stat-card stat-light" style="align-items: center; text-align: center;">
                 <h3 style="font-size: 28px; margin-bottom: 12px; color: var(--gold);">Sunday Service</h3>
-                <p style="font-size: 16px; color: var(--black); font-weight: 500; margin-bottom: 4px;">9:00 AM - 11:30 AM</p>
+                <p style="font-size: 16px; color: var(--black); font-weight: 500; margin-bottom: 4px;">8:30 AM</p>
                 <p>Main Sanctuary</p>
             </div>
-            <div class="stat-card stat-dark" style="align-items: center; text-align: center; flex-direction: column; justify-content: center; gap: 0;">
-                <h3 style="font-size: 28px; margin-bottom: 12px; font-weight: 600;">Wednesday</h3>
-                <p style="font-size: 16px; font-weight: 500; margin-bottom: 4px; color: var(--white);">6:30 PM - 8:00 PM</p>
-                <p style="color: rgba(255,255,255,0.8);">Interactive Bible Study</p>
-                <div class="watermark" style="font-size: 80px; bottom: -10px;">Word</div>
+            <div class="stat-card stat-dark"
+                style="align-items: center; text-align: center; flex-direction: column; justify-content: center; gap: 0;">
+                <h3 style="font-size: 28px; margin-bottom: 12px; font-weight: 600;">Morning Mass</h3>
+                <p style="font-size: 16px; font-weight: 500; margin-bottom: 4px; color: var(--white);">Wednesday @ 6:00 AM
+                </p>
+                <div class="watermark" style="font-size: 80px; bottom: -10px;">Mass</div>
             </div>
             <div class="stat-card stat-light" style="align-items: center; text-align: center;">
-                <h3 style="font-size: 28px; margin-bottom: 12px; color: var(--gold);">Friday Prayer</h3>
-                <p style="font-size: 16px; color: var(--black); font-weight: 500; margin-bottom: 4px;">7:00 PM - 9:00 PM</p>
-                <p>Intercession</p>
+                <h3 style="font-size: 28px; margin-bottom: 12px; color: var(--gold);">Prayer Meetings</h3>
+                <p style="font-size: 16px; color: var(--black); font-weight: 500; margin-bottom: 4px;">7:00 PM</p>
             </div>
         </div>
 
@@ -578,7 +652,7 @@ try {
             <div class="contact-card">
                 <i class="ph-fill ph-envelope-simple contact-icon"></i>
                 <h4 style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">Email</h4>
-                <p style="color: var(--gray);">info@adomfieccr.org</p>
+                <p style="color: var(--gray);">info@adomfieccr.com</p>
             </div>
             <div class="contact-card">
                 <i class="ph-fill ph-map-pin contact-icon"></i>

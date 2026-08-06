@@ -151,7 +151,7 @@
             <input type="checkbox" name="perm_manage_welfare" value="1"> Manage Welfare
           </label>
           <label class="checkbox-wrap" style="margin-bottom: 8px; display: flex;">
-            <input type="checkbox" name="perm_manage_members" value="1"> Manage Members & Ministries
+            <input type="checkbox" name="perm_manage_members" value="1"> Manage Members
           </label>
           <label class="checkbox-wrap" style="margin-bottom: 8px; display: flex;">
             <input type="checkbox" name="perm_manage_events" value="1"> Manage Events
@@ -196,7 +196,7 @@
             <input type="checkbox" name="perm_manage_welfare" id="edit_perm_manage_welfare" value="1"> Manage Welfare
           </label>
           <label class="checkbox-wrap" style="margin-bottom: 8px; display: flex;">
-            <input type="checkbox" name="perm_manage_members" id="edit_perm_manage_members" value="1"> Manage Members & Ministries
+            <input type="checkbox" name="perm_manage_members" id="edit_perm_manage_members" value="1"> Manage Members
           </label>
           <label class="checkbox-wrap" style="margin-bottom: 8px; display: flex;">
             <input type="checkbox" name="perm_manage_events" id="edit_perm_manage_events" value="1"> Manage Events
