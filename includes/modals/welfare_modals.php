@@ -29,10 +29,18 @@
         </div>
 
         <div class="grid-2" style="gap:16px;">
-          <div class="form-group" style="grid-column: span 2;">
+          <div class="form-group">
             <label class="form-label">Monthly Contribution (GH₵)</label>
             <input type="number" step="0.01" class="form-control" name="monthly_amount" placeholder="e.g. 20.00"
               required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Enrollment Date</label>
+            <input type="date" class="form-control" name="enrol_date" value="<?= date('Y-m-d') ?>" required
+              max="<?= date('Y-m-d') ?>">
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">
+              Actual date joined welfare.
+            </div>
           </div>
         </div>
         <div class="form-group">

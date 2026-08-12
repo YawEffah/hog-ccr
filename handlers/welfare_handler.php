@@ -90,6 +90,10 @@ if ($action === 'fetch_welfare_recipients') {
 if ($action === 'enrol_welfare') {
     $memberId      = (int)($_POST['member_id']      ?? 0);
     $enrolDate     = $_POST['enrol_date']           ?? date('Y-m-d');
+    // Prevent future enrollment dates
+    if ($enrolDate > date('Y-m-d')) {
+        $enrolDate = date('Y-m-d');
+    }
     $monthlyAmount = (float)($_POST['monthly_amount'] ?? 0);
     $notes         = trim($_POST['notes']           ?? '');
 

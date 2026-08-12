@@ -40,7 +40,7 @@
                   } else {
                       $dbTypes = [];
                   }
-                  $defaultTypes = ['Tithe', 'Offering', 'Donation', 'Pledge', 'Project Contribution', 'Welfare', 'Half Year Thanks Giving', 'End of Year Thanks Giving'];
+                  $defaultTypes = ['Tithe', 'Offering', 'Donation', 'Pledge', 'Project Contribution', 'Half Year Thanks Giving', 'End of Year Thanks Giving'];
                   $allTypes = array_unique(array_merge($defaultTypes, $dbTypes));
                   foreach($allTypes as $t) {
                       echo '<div class="custom-select-option" onclick="selectTxnType(\'' . htmlspecialchars(addslashes($t)) . '\')">' . htmlspecialchars($t) . '</div>';
@@ -124,6 +124,154 @@
     </form>
   </div>
 </div>
+
+<?php
+// Fetch accounts for expenses
+$expenseTypes = ['Utilities', 'Transportation', 'Stationery', 'Honorarium', 'Maintenance', 'Miscellaneous'];
+$assetAccounts = [];
+if (isset($db)) {
+    $assetAccounts = $db->query("SELECT id, name FROM finance_accounts WHERE type = 'Asset' AND fund = 'General' ORDER BY name")->fetchAll();
+}
+?>
+
+<!-- Record Finance Expense Modal -->
+<div class="modal-overlay" id="recordFinanceExpenseModal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <h3>Record Expense</h3>
+      <button class="close-btn" onclick="closeModal('recordFinanceExpenseModal')"><i class="ph ph-x"></i></button>
+    </div>
+    <form action="handlers/finance_handler.php" method="POST">
+      <?= csrfField() ?>
+      <input type="hidden" name="action" value="record_finance_expense">
+      <input type="hidden" name="return_to" id="recordExpReturnTo" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
+      <div class="modal-body">
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Expense Type</label>
+            <select class="form-control" name="type" required>
+              <option value="">-- Select Type --</option>
+              <?php foreach($expenseTypes as $type): ?>
+                <option value="<?= htmlspecialchars($type) ?>"><?= htmlspecialchars($type) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Paid From (Asset)</label>
+            <select class="form-control" name="asset_account_id" required>
+              <option value="">-- Select Asset --</option>
+              <?php foreach($assetAccounts as $ast): ?>
+                <option value="<?= $ast['id'] ?>"><?= htmlspecialchars($ast['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+        </div>
+        
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Amount (GH₵)</label>
+            <input type="number" step="0.01" class="form-control" name="amount" placeholder="0.00" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control" name="expense_date" value="<?= date('Y-m-d') ?>" required max="<?= date('Y-m-d') ?>">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Description / Reason</label>
+          <input type="text" class="form-control" name="description" placeholder="e.g. Bought fuel for generator" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Notes (Optional)</label>
+          <textarea class="form-control" name="notes" rows="2" placeholder="Additional details..." style="resize:none;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('recordFinanceExpenseModal')">Cancel</button>
+        <button type="submit" class="btn btn-danger">Save Expense</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Finance Expense Modal -->
+<div class="modal-overlay" id="editFinanceExpenseModal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <h3>Edit Expense</h3>
+      <button class="close-btn" onclick="closeModal('editFinanceExpenseModal')"><i class="ph ph-x"></i></button>
+    </div>
+    <form action="handlers/finance_handler.php" method="POST">
+      <?= csrfField() ?>
+      <input type="hidden" name="action" value="edit_finance_expense">
+      <input type="hidden" name="expense_id" id="editExpId">
+      <input type="hidden" name="return_to" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
+      <div class="modal-body">
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Expense Type</label>
+            <select class="form-control" name="type" id="editExpType" required>
+              <option value="">-- Select Type --</option>
+              <?php foreach($expenseTypes as $type): ?>
+                <option value="<?= htmlspecialchars($type) ?>"><?= htmlspecialchars($type) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Paid From (Asset)</label>
+            <select class="form-control" name="asset_account_id" id="editExpAssetId" required>
+              <option value="">-- Select Asset --</option>
+              <?php foreach($assetAccounts as $ast): ?>
+                <option value="<?= $ast['id'] ?>"><?= htmlspecialchars($ast['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+        </div>
+        
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Amount (GH₵)</label>
+            <input type="number" step="0.01" class="form-control" name="amount" id="editExpAmount" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control" name="expense_date" id="editExpDate" required max="<?= date('Y-m-d') ?>">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Description / Reason</label>
+          <input type="text" class="form-control" name="description" id="editExpDescription" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Notes (Optional)</label>
+          <textarea class="form-control" name="notes" id="editExpNotes" rows="2" style="resize:none;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('editFinanceExpenseModal')">Cancel</button>
+        <button type="submit" class="btn btn-danger">Update Expense</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openEditFinanceExpenseModal(exp) {
+    document.getElementById('editExpId').value = exp.id;
+    document.getElementById('editExpType').value = exp.type;
+    document.getElementById('editExpAssetId').value = exp.asset_account_id;
+    document.getElementById('editExpAmount').value = exp.amount;
+    document.getElementById('editExpDate').value = exp.expense_date;
+    document.getElementById('editExpDescription').value = exp.description;
+    document.getElementById('editExpNotes').value = exp.notes || '';
+    
+    openModal('editFinanceExpenseModal');
+}
+</script>
 
 <script>
   document.getElementById('paymentMethodSelect')?.addEventListener('change', function () {

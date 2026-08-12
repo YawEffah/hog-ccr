@@ -301,6 +301,7 @@ $finance_summary = [
             <span class="notif-dot"></span>
           </button>
           <?php include 'includes/notifications.php'; ?>
+          <a href="profile.php" class="topbar-avatar" title="<?= htmlspecialchars($currentUser['name']) ?>"><?= htmlspecialchars($currentUser['initials']) ?></a>
         </div>
       </div>
       <div class="content">

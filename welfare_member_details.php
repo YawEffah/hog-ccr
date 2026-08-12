@@ -283,7 +283,7 @@ if ($filterMonth === 'all') {
                   <input type="hidden" name="id" value="<?= $welfare_id ?>">
                   <input type="hidden" name="month" value="<?= htmlspecialchars($filterMonth) ?>">
                   <select name="year" class="form-control" style="width:90px;padding:5px 10px;font-size:12px;" onchange="this.form.submit()">
-                    <?php for ($y = $thisYear; $y >= max($enrolYear, $thisYear - 5); $y--): ?>
+                    <?php for ($y = $thisYear; $y >= 2021; $y--): ?>
                       <option value="<?= $y ?>" <?= $filterYear === $y ? 'selected' : '' ?>><?= $y ?></option>
                     <?php endfor; ?>
                   </select>
@@ -387,7 +387,7 @@ if ($filterMonth === 'all') {
             <form method="GET" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
               <input type="hidden" name="id" value="<?= $welfare_id ?>">
               <select name="year" class="form-control" style="width:90px;padding:8px 12px;font-size:13px;">
-                <?php for ($y = $thisYear; $y >= max($enrolYear, $thisYear - 5); $y--): ?>
+                <?php for ($y = $thisYear; $y >= 2021; $y--): ?>
                   <option value="<?= $y ?>" <?= $filterYear === $y ? 'selected' : '' ?>><?= $y ?></option>
                 <?php endfor; ?>
               </select>

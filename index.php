@@ -13,470 +13,29 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Adom Fie CCR — A vibrant community dedicated to spiritual growth, fellowship, and serving others in love. House of Grace, Ghana.">
     <title>Welcome to Adom Fie CCR | House of Grace</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
-    <style>
-        :root {
-            --bg: #F5F7F8;
-            --white: #FFFFFF;
-            --black: #111111;
-            --gold: #1E40AF;
-            --gold-light: #6D28D9;
-            --gold-pale: #EEF2FF;
-            --gray-light: #E9ECEF;
-            --gray: #6C757D;
-            --radius-lg: 32px;
-            --radius-md: 24px;
-            --radius-sm: 12px;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: var(--bg);
-            color: var(--black);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        /* Container */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: var(--white);
-            border-radius: var(--radius-lg);
-            padding: 20px 40px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-        }
-
-        /* Navbar */
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0 30px;
-        }
-
-        .brand {
-            font-size: 24px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: var(--black);
-            text-decoration: none;
-        }
-
-        .brand img {
-            width: 32px;
-            height: 32px;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 32px;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: var(--gray);
-            font-weight: 500;
-            font-size: 15px;
-            transition: color 0.2s;
-            position: relative;
-        }
-
-        .nav-links a:hover,
-        .nav-links a.active {
-            color: var(--gold);
-        }
-
-        .nav-links a.active::after {
-            content: '';
-            position: absolute;
-            bottom: -6px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 12px;
-            height: 2px;
-            background: var(--gold);
-            border-radius: 2px;
-        }
-
-        .nav-actions {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--gold), var(--gold-light));
-            color: var(--white);
-            text-decoration: none;
-            padding: 12px 24px;
-            border-radius: 100px;
-            font-weight: 500;
-            font-size: 15px;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
-        }
-
-        /* Hero Area */
-        .hero {
-            position: relative;
-            background: linear-gradient(to right, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1)), url('assets/images/back.jpg') center/cover;
-            height: 500px;
-            border-radius: var(--radius-lg);
-            padding: 60px;
-            color: var(--white);
-            margin-bottom: 24px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .hero h1 {
-            font-size: 48px;
-            font-weight: 600;
-            max-width: 500px;
-            line-height: 1.2;
-            margin-bottom: 16px;
-        }
-
-        .hero p {
-            font-size: 18px;
-            max-width: 400px;
-            color: rgba(255, 255, 255, 0.9);
-            line-height: 1.5;
-        }
-
-        /* Floating CTA Box */
-        .floating-cta {
-            position: absolute;
-            bottom: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--white);
-            border-radius: var(--radius-md);
-            padding: 24px;
-            display: flex;
-            align-items: center;
-            gap: 40px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-            width: 90%;
-            max-width: 800px;
-            color: var(--black);
-        }
-
-        .cta-col {
-            flex: 1;
-        }
-
-        .cta-col span {
-            display: block;
-            font-size: 13px;
-            color: var(--gray);
-            font-weight: 500;
-            margin-bottom: 4px;
-        }
-
-        .cta-col strong {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            color: var(--gold);
-        }
-
-        .cta-btn {
-            background: linear-gradient(135deg, var(--gold), var(--gold-light));
-            color: var(--white);
-            border: none;
-            padding: 16px 32px;
-            border-radius: var(--radius-sm);
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .cta-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
-        }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1.2fr;
-            gap: 24px;
-            margin-top: 60px;
-            margin-bottom: 80px;
-        }
-
-        .stat-card {
-            border-radius: var(--radius-md);
-            padding: 32px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            min-height: 180px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-light {
-            background: var(--bg);
-        }
-
-        .stat-light h3 {
-            font-size: 36px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--gold);
-        }
-
-        .stat-light p {
-            color: var(--gray);
-            font-size: 15px;
-        }
-
-        .stat-image {
-            background: linear-gradient(rgba(30, 64, 175, 0.4), rgba(109, 40, 217, 0.4)), url('assets/images/back.jpg') center/cover;
-            color: var(--white);
-        }
-
-        .stat-image h3 {
-            font-size: 32px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .stat-image p {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 15px;
-        }
-
-        .stat-dark {
-            background: linear-gradient(135deg, var(--gold), var(--gold-light));
-            color: var(--white);
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .stat-dark h3 {
-            font-size: 48px;
-            font-weight: 500;
-        }
-
-        .stat-dark p {
-            font-size: 16px;
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .watermark {
-            position: absolute;
-            right: 0;
-            bottom: -20px;
-            font-size: 120px;
-            font-weight: 700;
-            color: rgba(255, 255, 255, 0.1);
-            line-height: 1;
-            pointer-events: none;
-        }
-
-        /* What We Do */
-        .section-title {
-            text-align: center;
-            font-size: 32px;
-            font-weight: 600;
-            margin-bottom: 40px;
-            color: var(--black);
-        }
-
-        .ministry-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 24px;
-        }
-
-        .ministry-card {
-            background: var(--bg);
-            border-radius: var(--radius-md);
-            padding: 32px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            position: relative;
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 1px solid transparent;
-        }
-
-        .ministry-card:hover {
-            transform: translateY(-4px);
-            background: var(--white);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-            border-color: var(--gray-light);
-        }
-
-        .m-icon {
-            font-size: 32px;
-            background: var(--white);
-            color: var(--gold);
-            width: 64px;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: var(--radius-sm);
-            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.1);
-        }
-
-        .ministry-card h4 {
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        .ministry-card p {
-            color: var(--gray);
-            font-size: 15px;
-            line-height: 1.5;
-        }
-
-        .arrow-link {
-            position: absolute;
-            top: 24px;
-            right: 24px;
-            width: 40px;
-            height: 40px;
-            background: var(--white);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--black);
-            text-decoration: none;
-            transition: background 0.2s, color 0.2s, transform 0.2s;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .ministry-card:hover .arrow-link {
-            background: var(--gold);
-            color: var(--white);
-            transform: scale(1.05);
-        }
-
-        /* Service Times & Contact */
-        .mt-80 {
-            margin-top: 80px;
-        }
-
-        .contact-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 24px;
-        }
-
-        .contact-card {
-            background: var(--white);
-            padding: 32px;
-            border-radius: var(--radius-md);
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .contact-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-        }
-
-        .contact-icon {
-            font-size: 40px;
-            color: var(--gold);
-            margin-bottom: 16px;
-        }
-
-        /* Footer */
-        footer {
-            margin-top: 80px;
-            padding-top: 40px;
-            border-top: 1px solid var(--gray-light);
-            display: flex;
-            justify-content: space-between;
-            color: var(--gray);
-            font-size: 14px;
-        }
-
-        @media (max-width: 900px) {
-            .hero {
-                padding: 40px;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .floating-cta {
-                flex-direction: column;
-                gap: 20px;
-                position: relative;
-                bottom: 0;
-                transform: none;
-                left: 0;
-                width: 100%;
-                margin-top: -30px;
-            }
-
-            .cta-col {
-                width: 100%;
-            }
-
-            .cta-btn {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .nav-links {
-                display: none;
-            }
-        }
-    </style>
+    <!-- Landing Stylesheet -->
+    <link rel="stylesheet" href="assets/css/landing.css">
 </head>
 
 <body>
 
     <div class="container">
+
+        <!-- ── Navigation ─────────────────────────────────────────── -->
         <nav>
             <a href="#" class="brand">
-                <img src="assets/images/logo.png" alt="Logo">
+                <img src="assets/images/logo.png" alt="Adom Fie CCR Logo">
                 Adom Fie
             </a>
             <div class="nav-links">
@@ -490,31 +49,44 @@ try {
             </div>
         </nav>
 
+        <!-- ── Hero ───────────────────────────────────────────────── -->
         <div class="hero">
-            <h1>Discover Your Spiritual Home Today</h1>
+
+            <div class="hero-badge">
+                <span class="badge-dot"></span>
+                Serving our community
+            </div>
+
+            <h1>Discover Your <em>Spiritual Home</em> Today</h1>
             <p>A vibrant community dedicated to spiritual growth, fellowship, and serving others in love.</p>
 
+            <!-- Floating Quick-Action Bar -->
             <div class="floating-cta">
                 <div class="cta-col">
                     <span>Action</span>
-                    <strong>Join a Ministry <i class="ph ph-caret-down"></i></strong>
+                    <strong onclick="document.getElementById('what-we-do').scrollIntoView({behavior:'smooth'});">
+                        Join a Ministry <i class="ph ph-caret-right"></i>
+                    </strong>
                 </div>
                 <div class="cta-col">
                     <span>Information</span>
-                    <strong onclick="document.getElementById('service-times').scrollIntoView();"
-                        style="cursor:pointer;">Service Times <i class="ph ph-caret-down"></i></strong>
+                    <strong onclick="document.getElementById('service-times').scrollIntoView({behavior:'smooth'});">
+                        Service Times <i class="ph ph-caret-right"></i>
+                    </strong>
                 </div>
                 <div class="cta-col">
                     <span>Connect</span>
-                    <strong onclick="document.getElementById('contact').scrollIntoView();"
-                        style="cursor:pointer;">Contact Us <i class="ph ph-caret-down"></i></strong>
+                    <strong onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'});">
+                        Contact Us <i class="ph ph-caret-right"></i>
+                    </strong>
                 </div>
-                <button class="cta-btn" onclick="document.getElementById('what-we-do').scrollIntoView();">
-                    <i class="ph-bold ph-magnifying-glass"></i> Explore
+                <button class="cta-btn" onclick="document.getElementById('what-we-do').scrollIntoView({behavior:'smooth'});">
+                    <i class="ph-bold ph-compass"></i> Explore
                 </button>
             </div>
         </div>
 
+        <!-- ── Stats Strip ─────────────────────────────────────────── -->
         <div class="stats-grid">
             <div class="stat-card stat-light">
                 <h3>10+</h3>
@@ -531,142 +103,204 @@ try {
             </div>
         </div>
 
-        <h2 class="section-title" id="what-we-do">What we do</h2>
+        <!-- ── What We Do — Ministries ────────────────────────────── -->
+        <section class="section-gap" id="what-we-do">
+            <div class="section-header">
+                <span class="section-eyebrow">What We Do</span>
+                <h2 class="section-title">Our Ministries</h2>
+                <p class="section-subtitle">Join one of our active ministries and find your place in our growing community of faith.</p>
+            </div>
 
-        <div class="ministry-grid">
-            <?php if (!empty($ministries)): ?>
-                <?php foreach ($ministries as $min): ?>
-                    <div class="ministry-card">
-                        <div class="m-icon"><?= htmlspecialchars($min['icon']) ?></div>
-                        <h4><?= htmlspecialchars($min['name']) ?></h4>
-                        <p><?= htmlspecialchars($min['description'] ?? 'Join our active group.') ?></p>
-                        <span class="arrow-link">
-                            <i class="ph-bold ph-arrow-up-right"></i>
-                        </span>
+            <div class="ministry-grid">
+                <?php if (!empty($ministries)): ?>
+                    <?php foreach ($ministries as $min): ?>
+                        <div class="ministry-card">
+                            <div class="m-icon"><?= htmlspecialchars($min['icon']) ?></div>
+                            <h4><?= htmlspecialchars($min['name']) ?></h4>
+                            <p><?= htmlspecialchars($min['description'] ?? 'Join our active group.') ?></p>
+                            <span class="arrow-link">
+                                <i class="ph-bold ph-arrow-up-right"></i>
+                            </span>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p style="text-align: center; color: var(--gray); grid-column: 1 / -1; padding: 40px 0;">No ministries found.</p>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <!-- ── Our Teams ───────────────────────────────────────────── -->
+        <section class="section-gap" id="teams">
+            <div class="section-header">
+                <span class="section-eyebrow">Community</span>
+                <h2 class="section-title">Our Teams</h2>
+                <p class="section-subtitle">Dedicated groups working together to strengthen and serve our community.</p>
+            </div>
+
+            <div class="ministry-grid">
+                <div class="ministry-card">
+                    <div class="m-icon"><i class="ph-bold ph-heart"></i></div>
+                    <h4>Marriage and Family Life Team</h4>
+                    <p>Supporting and strengthening marriages and family life within the community.</p>
+                    <span class="arrow-link"><i class="ph-bold ph-arrow-up-right"></i></span>
+                </div>
+                <div class="ministry-card">
+                    <div class="m-icon"><i class="ph-bold ph-globe"></i></div>
+                    <h4>Outreach and Evangelization Team</h4>
+                    <p>Spreading the Word and reaching out to our community with love and purpose.</p>
+                    <span class="arrow-link"><i class="ph-bold ph-arrow-up-right"></i></span>
+                </div>
+                <div class="ministry-card">
+                    <div class="m-icon"><i class="ph-bold ph-handshake"></i></div>
+                    <h4>Welcoming and Hospitality Team</h4>
+                    <p>Ensuring every visitor and member feels at home in God's presence.</p>
+                    <span class="arrow-link"><i class="ph-bold ph-arrow-up-right"></i></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Standing Committees ────────────────────────────────── -->
+        <section class="section-gap" id="committees">
+            <div class="section-header">
+                <span class="section-eyebrow">Organisation</span>
+                <h2 class="section-title">Standing Committees</h2>
+                <p class="section-subtitle">Committees that keep our community running smoothly and beautifully.</p>
+            </div>
+
+            <div class="ministry-grid">
+                <div class="ministry-card">
+                    <div class="m-icon"><i class="ph-bold ph-fork-knife"></i></div>
+                    <h4>Food Committee</h4>
+                    <p>Managing culinary needs and refreshments for community events.</p>
+                    <span class="arrow-link"><i class="ph-bold ph-arrow-up-right"></i></span>
+                </div>
+                <div class="ministry-card">
+                    <div class="m-icon"><i class="ph-bold ph-kanban"></i></div>
+                    <h4>Projects Committee</h4>
+                    <p>Overseeing and executing special projects and developments.</p>
+                    <span class="arrow-link"><i class="ph-bold ph-arrow-up-right"></i></span>
+                </div>
+                <div class="ministry-card">
+                    <div class="m-icon"><i class="ph-bold ph-hand-heart"></i></div>
+                    <h4>Welfare Committee</h4>
+                    <p>Providing care and support for the well-being of all members.</p>
+                    <span class="arrow-link"><i class="ph-bold ph-arrow-up-right"></i></span>
+                </div>
+                <div class="ministry-card">
+                    <div class="m-icon"><i class="ph-bold ph-sparkle"></i></div>
+                    <h4>Decorations &amp; Beautification</h4>
+                    <p>Enhancing our environment for a more welcoming worship experience.</p>
+                    <span class="arrow-link"><i class="ph-bold ph-arrow-up-right"></i></span>
+                </div>
+                <div class="ministry-card">
+                    <div class="m-icon"><i class="ph-bold ph-book-open"></i></div>
+                    <h4>Liturgical Committee</h4>
+                    <p>Organising and preparing liturgical activities and spiritual events.</p>
+                    <span class="arrow-link"><i class="ph-bold ph-arrow-up-right"></i></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Service Times ──────────────────────────────────────── -->
+        <section class="section-gap" id="service-times">
+            <div class="section-header">
+                <span class="section-eyebrow">Join Us</span>
+                <h2 class="section-title">Service Times</h2>
+                <p class="section-subtitle">We'd love to see you. Come worship with us any day of the week.</p>
+            </div>
+
+            <div class="service-grid">
+                <div class="service-card service-light">
+                    <div class="service-icon">
+                        <i class="ph-bold ph-sun"></i>
                     </div>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <p style="text-align: center; color: var(--gray); grid-column: 1 / -1;">No ministries found.</p>
-            <?php endif; ?>
-        </div>
+                    <h3>Sunday Service</h3>
+                    <div class="service-time">8:30 AM</div>
+                    <div class="service-detail">Main Sanctuary &mdash; Every Sunday</div>
+                </div>
 
-        <h2 class="section-title mt-80" id="teams">Our Teams</h2>
-        <div class="ministry-grid">
-            <div class="ministry-card">
-                <div class="m-icon"><i class="ph-bold ph-heart"></i></div>
-                <h4>Marriage and Family Life Team</h4>
-                <p>Supporting and strengthening marriages and family life within the community.</p>
-                <span class="arrow-link">
-                    <i class="ph-bold ph-arrow-up-right"></i>
-                </span>
-            </div>
-            <div class="ministry-card">
-                <div class="m-icon"><i class="ph-bold ph-globe"></i></div>
-                <h4>Outreach and Evangelization Team</h4>
-                <p>Spreading the Word and reaching out to our community.</p>
-                <span class="arrow-link">
-                    <i class="ph-bold ph-arrow-up-right"></i>
-                </span>
-            </div>
-            <div class="ministry-card">
-                <div class="m-icon"><i class="ph-bold ph-handshake"></i></div>
-                <h4>Welcoming and Hospitality Team</h4>
-                <p>Ensuring every visitor and member feels at home in God's presence.</p>
-                <span class="arrow-link">
-                    <i class="ph-bold ph-arrow-up-right"></i>
-                </span>
-            </div>
-        </div>
+                <div class="service-card service-featured">
+                    <div class="service-icon">
+                        <i class="ph-bold ph-hands-praying"></i>
+                    </div>
+                    <h3>Morning Mass</h3>
+                    <div class="service-time">6:00 AM</div>
+                    <div class="service-detail">Wednesday &mdash; Main Sanctuary</div>
+                    <div class="service-watermark">Mass</div>
+                </div>
 
-        <h2 class="section-title mt-80" id="committees">Standing Committees</h2>
-        <div class="ministry-grid">
-            <div class="ministry-card">
-                <div class="m-icon"><i class="ph-bold ph-fork-knife"></i></div>
-                <h4>Food Committee</h4>
-                <p>Managing culinary needs and refreshments for community events.</p>
-                <span class="arrow-link">
-                    <i class="ph-bold ph-arrow-up-right"></i>
-                </span>
+                <div class="service-card service-light">
+                    <div class="service-icon">
+                        <i class="ph-bold ph-moon"></i>
+                    </div>
+                    <h3>Prayer Meetings</h3>
+                    <div class="service-time">7:00 PM</div>
+                    <div class="service-detail">Mid-week &mdash; All Welcome</div>
+                </div>
             </div>
-            <div class="ministry-card">
-                <div class="m-icon"><i class="ph-bold ph-kanban"></i></div>
-                <h4>Projects Committee</h4>
-                <p>Overseeing and executing special projects and developments.</p>
-                <span class="arrow-link">
-                    <i class="ph-bold ph-arrow-up-right"></i>
-                </span>
-            </div>
-            <div class="ministry-card">
-                <div class="m-icon"><i class="ph-bold ph-hand-heart"></i></div>
-                <h4>Welfare Committee</h4>
-                <p>Providing care and support for the well-being of all members.</p>
-                <span class="arrow-link">
-                    <i class="ph-bold ph-arrow-up-right"></i>
-                </span>
-            </div>
-            <div class="ministry-card">
-                <div class="m-icon"><i class="ph-bold ph-sparkle"></i></div>
-                <h4>Decorations and Beautification Committee</h4>
-                <p>Enhancing our environment for a more welcoming worship experience.</p>
-                <span class="arrow-link">
-                    <i class="ph-bold ph-arrow-up-right"></i>
-                </span>
-            </div>
-            <div class="ministry-card">
-                <div class="m-icon"><i class="ph-bold ph-book-open"></i></div>
-                <h4>Liturgical Committee</h4>
-                <p>Organizing and preparing liturgical activities and spiritual events.</p>
-                <span class="arrow-link">
-                    <i class="ph-bold ph-arrow-up-right"></i>
-                </span>
-            </div>
-        </div>
+        </section>
 
-        <h2 class="section-title mt-80" id="service-times">Service Times</h2>
-        <div class="stats-grid" style="margin-top: 0;">
-            <div class="stat-card stat-light" style="align-items: center; text-align: center;">
-                <h3 style="font-size: 28px; margin-bottom: 12px; color: var(--gold);">Sunday Service</h3>
-                <p style="font-size: 16px; color: var(--black); font-weight: 500; margin-bottom: 4px;">8:30 AM</p>
-                <p>Main Sanctuary</p>
+        <!-- ── Contact ────────────────────────────────────────────── -->
+        <section class="section-gap" id="contact">
+            <div class="section-header">
+                <span class="section-eyebrow">Get in Touch</span>
+                <h2 class="section-title">Contact Us</h2>
+                <p class="section-subtitle">We'd love to hear from you. Reach out any time and we'll get back to you.</p>
             </div>
-            <div class="stat-card stat-dark"
-                style="align-items: center; text-align: center; flex-direction: column; justify-content: center; gap: 0;">
-                <h3 style="font-size: 28px; margin-bottom: 12px; font-weight: 600;">Morning Mass</h3>
-                <p style="font-size: 16px; font-weight: 500; margin-bottom: 4px; color: var(--white);">Wednesday @ 6:00 AM
-                </p>
-                <div class="watermark" style="font-size: 80px; bottom: -10px;">Mass</div>
-            </div>
-            <div class="stat-card stat-light" style="align-items: center; text-align: center;">
-                <h3 style="font-size: 28px; margin-bottom: 12px; color: var(--gold);">Prayer Meetings</h3>
-                <p style="font-size: 16px; color: var(--black); font-weight: 500; margin-bottom: 4px;">7:00 PM</p>
-            </div>
-        </div>
 
-        <h2 class="section-title mt-80" id="contact">Contact Us</h2>
-        <div class="contact-grid">
-            <div class="contact-card">
-                <i class="ph-fill ph-phone-call contact-icon"></i>
-                <h4 style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">Phone</h4>
-                <p style="color: var(--gray);">+233 540 207 812</p>
+            <div class="contact-grid">
+                <div class="contact-card">
+                    <i class="ph-fill ph-phone-call contact-icon"></i>
+                    <h4>Phone</h4>
+                    <p>+233 540 207 812</p>
+                </div>
+                <div class="contact-card">
+                    <i class="ph-fill ph-envelope-simple contact-icon"></i>
+                    <h4>Email</h4>
+                    <p>info@adomfieccr.com</p>
+                </div>
+                <div class="contact-card">
+                    <i class="ph-fill ph-map-pin contact-icon"></i>
+                    <h4>Address</h4>
+                    <p>House of Grace, Ghana</p>
+                </div>
             </div>
-            <div class="contact-card">
-                <i class="ph-fill ph-envelope-simple contact-icon"></i>
-                <h4 style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">Email</h4>
-                <p style="color: var(--gray);">info@adomfieccr.com</p>
-            </div>
-            <div class="contact-card">
-                <i class="ph-fill ph-map-pin contact-icon"></i>
-                <h4 style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">Address</h4>
-                <p style="color: var(--gray);">House of Grace, Ghana</p>
-            </div>
-        </div>
+        </section>
 
-        <footer>
-            <div>&copy; <?= date('Y') ?> Adom Fie CCR Community. All rights reserved.</div>
-            <div>Built for the Community</div>
+        <!-- ── Footer ─────────────────────────────────────────────── -->
+        <footer class="site-footer">
+            <div class="footer-inner">
+                <div class="footer-brand">
+                    <img src="assets/images/logo.png" alt="Logo">
+                    Adom Fie CCR
+                </div>
+                <p class="footer-copy">&copy; <?= date('Y') ?> Adom Fie CCR Community. All rights reserved.</p>
+                <p class="footer-tagline">Built for the Community</p>
+            </div>
         </footer>
-    </div>
+
+    </div><!-- .container -->
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach((entry, i) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        obs.unobserve(entry.target);
+                    }
+                });
+            }, { root: null, rootMargin: '0px', threshold: 0.08 });
+
+            document.querySelectorAll(
+                '.stat-card, .ministry-card, .contact-card, .service-card, .section-header'
+            ).forEach((el, index) => {
+                el.classList.add('animate-on-scroll');
+                el.style.transitionDelay = `${(index % 5) * 0.08}s`;
+                observer.observe(el);
+            });
+        });
+    </script>
 
 </body>
-
 </html>

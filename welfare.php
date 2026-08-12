@@ -51,13 +51,17 @@ if ($isAllMonths) {
 $targetYear = $isAllMonths ? (int)date('Y') : (int)date('Y', strtotime($filterMonth . '-01'));
 $targetMonth = $isAllMonths ? (int)date('m') : (int)date('m', strtotime($filterMonth . '-01'));
 
-$arrearsStmt = $db->query("
+$targetDateSql = $isAllMonths ? "YEAR(payment_date) <= ?" : "payment_date <= LAST_DAY(?)";
+$targetDateParam = $isAllMonths ? $filterYear : $filterMonth . '-01';
+
+$arrearsStmt = $db->prepare("
     SELECT wm.id, wm.monthly_amount, wm.enrol_date,
-           (SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id) as total_paid
+           (SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id AND {$targetDateSql}) as total_paid
     FROM welfare_members wm
     JOIN members m ON wm.member_id = m.id
     WHERE m.status = 'Active'
 ");
+$arrearsStmt->execute([$targetDateParam]);
 $activeWelfareMembers = $arrearsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 $upToDateCount = 0;
@@ -85,23 +89,23 @@ $welfare_stats['pending'] = max(0, $welfare_stats['total_members'] - $welfare_st
 if ($isAllMonths) {
     $membersStmt = $db->prepare(
         "SELECT wm.*, m.first_name, m.last_name, m.member_code, m.phone, m.email,
-                (SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id) as total_paid,
-                (SELECT payment_date FROM welfare_contributions WHERE welfare_id = wm.id ORDER BY payment_date DESC LIMIT 1) as last_payment_date
+                (SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id AND {$targetDateSql}) as total_paid,
+                (SELECT payment_date FROM welfare_contributions WHERE welfare_id = wm.id AND {$targetDateSql} ORDER BY payment_date DESC LIMIT 1) as last_payment_date
          FROM welfare_members wm
          JOIN members m ON wm.member_id = m.id
          ORDER BY m.last_name ASC"
     );
-    $membersStmt->execute();
+    $membersStmt->execute([$targetDateParam, $targetDateParam]);
 } else {
     $membersStmt = $db->prepare(
         "SELECT wm.*, m.first_name, m.last_name, m.member_code, m.phone, m.email,
-                (SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id) as total_paid,
-                (SELECT payment_date FROM welfare_contributions WHERE welfare_id = wm.id ORDER BY payment_date DESC LIMIT 1) as last_payment_date
+                (SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id AND {$targetDateSql}) as total_paid,
+                (SELECT payment_date FROM welfare_contributions WHERE welfare_id = wm.id AND {$targetDateSql} ORDER BY payment_date DESC LIMIT 1) as last_payment_date
          FROM welfare_members wm
          JOIN members m ON wm.member_id = m.id
          ORDER BY m.last_name ASC"
     );
-    $membersStmt->execute();
+    $membersStmt->execute([$targetDateParam, $targetDateParam]);
 }
 $rawWelfareMembers = $membersStmt->fetchAll();
 
@@ -272,7 +276,7 @@ $nonWelfareMembers = $db->query(
               <?php endforeach; ?>
             </select>
             <select class="form-control" style="width:90px;padding:8px 12px;" id="welfareYearSelect" onchange="updateWelfareFilter()">
-              <?php for($y = $thisYear; $y >= $thisYear - 5; $y--): ?>
+              <?php for($y = $thisYear; $y >= 2021; $y--): ?>
                 <option value="<?= $y ?>" <?= (string)$currentY === (string)$y ? 'selected' : '' ?>><?= $y ?></option>
               <?php endfor; ?>
             </select>

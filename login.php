@@ -48,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $_SESSION['user_id'] = $admin['id'];
+        $_SESSION['last_activity'] = time();
         $_SESSION['user_data'] = [
           'id' => $admin['id'],
           'name' => $admin['name'],
@@ -388,6 +389,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h1>Welcome Back</h1>
         <p>Adom Fie CCR Community Mgmt. System</p>
       </div>
+
+      <?php if (isset($_GET['reason']) && $_GET['reason'] === 'idle'): ?>
+        <div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:13px;color:#92400E;">
+          <i class="ph ph-clock" style="font-size:18px;flex-shrink:0;"></i>
+          You were logged out due to inactivity.
+        </div>
+      <?php endif; ?>
 
       <?php if ($error): ?>
         <div class="error-msg">

@@ -38,6 +38,7 @@ $type      = trim($_GET['type'] ?? '');
 $method    = trim($_GET['method'] ?? '');
 $fromDate  = trim($_GET['from_date'] ?? '');
 $toDate    = trim($_GET['to_date'] ?? '');
+$filterYear = trim($_GET['year'] ?? '');
 
 if ($search) {
     // Search by week_number
@@ -66,6 +67,11 @@ if ($toDate) {
     $params[] = $toDate;
 }
 
+if ($filterYear) {
+    $whereClauses[] = "YEAR(t.transaction_date) = ?";
+    $params[] = $filterYear;
+}
+
 $whereSql = '';
 if (!empty($whereClauses)) {
     $whereSql = "WHERE " . implode(' AND ', $whereClauses);
@@ -92,7 +98,6 @@ $typeBadges = [
     'Donation'  => 'badge-green',
     'Pledge'    => 'badge-purple',
     'Project Contribution' => 'badge-blue',
-    'Welfare'   => 'badge-red',
     'Half Year Thanks Giving' => 'badge-yellow',
     'End of Year Thanks Giving' => 'badge-purple'
 ];
@@ -109,6 +114,42 @@ $transactions = array_map(function($t) use ($typeBadges) {
         'date'         => date('F j, Y', strtotime($t['transaction_date']))
     ];
 }, $rawTxns);
+
+// ── Query Expenses ───────────────────────────────────────────────────────────
+$expWhereClauses = [];
+$expParams = [];
+if ($search) {
+    $expWhereClauses[] = "(e.description LIKE ? OR e.reference_no LIKE ? OR e.notes LIKE ?)";
+    array_push($expParams, $searchWildcard, $searchWildcard, $searchWildcard);
+}
+if ($fromDate) {
+    $expWhereClauses[] = "e.expense_date >= ?";
+    $expParams[] = $fromDate;
+}
+if ($toDate) {
+    $expWhereClauses[] = "e.expense_date <= ?";
+    $expParams[] = $toDate;
+}
+if ($filterYear) {
+    $expWhereClauses[] = "YEAR(e.expense_date) = ?";
+    $expParams[] = $filterYear;
+}
+$expWhereSql = '';
+if (!empty($expWhereClauses)) {
+    $expWhereSql = "WHERE " . implode(' AND ', $expWhereClauses);
+}
+
+$expQuery = "
+    SELECT e.*, a.name as asset_name
+    FROM finance_expenses e
+    LEFT JOIN finance_accounts a ON e.asset_account_id = a.id
+    $expWhereSql
+    ORDER BY e.expense_date DESC, e.created_at DESC
+    LIMIT $limit
+";
+$expStmt = $db->prepare($expQuery);
+$expStmt->execute($expParams);
+$finance_expenses = $expStmt->fetchAll();
 
 ?>
 <!DOCTYPE html>
@@ -142,6 +183,7 @@ $transactions = array_map(function($t) use ($typeBadges) {
             if ($search) $filterItems[] = "Search Week: " . htmlspecialchars($search);
             if ($type) $filterItems[] = "Type: " . htmlspecialchars($type);
             if ($method) $filterItems[] = "Method: " . htmlspecialchars($method);
+            if ($filterYear) $filterItems[] = "Year: " . htmlspecialchars($filterYear);
             if ($fromDate) $filterItems[] = "From: " . htmlspecialchars($fromDate);
             if ($toDate) $filterItems[] = "To: " . htmlspecialchars($toDate);
             echo implode(' | ', $filterItems);
@@ -197,7 +239,7 @@ $transactions = array_map(function($t) use ($typeBadges) {
                     } else {
                         $dbTypes = [];
                     }
-                    $defaultTypes = ['Tithe', 'Offering', 'Donation', 'Pledge', 'Project Contribution', 'Welfare', 'Half Year Thanks Giving', 'End of Year Thanks Giving'];
+                    $defaultTypes = ['Tithe', 'Offering', 'Donation', 'Pledge', 'Project Contribution', 'Half Year Thanks Giving', 'End of Year Thanks Giving'];
                     $allTypes = array_unique(array_merge($defaultTypes, $dbTypes));
                     foreach($allTypes as $t) {
                         $selected = ($type === $t) ? 'selected' : '';
@@ -218,7 +260,19 @@ $transactions = array_map(function($t) use ($typeBadges) {
                 </select>
               </div>
 
-              <div class="form-group" style="margin-bottom:0;"></div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Year</label>
+                <select name="year" class="form-control">
+                  <option value="">All Years</option>
+                  <?php
+                    $thisYear = date('Y');
+                    for($y = $thisYear; $y >= $thisYear - 5; $y--) {
+                        $selected = ((string)$filterYear === (string)$y) ? 'selected' : '';
+                        echo '<option value="'.$y.'" '.$selected.'>'.$y.'</option>';
+                    }
+                  ?>
+                </select>
+              </div>
 
               <div class="form-group" style="margin-bottom:0;">
                 <label class="form-label">From Date</label>
@@ -245,77 +299,144 @@ $transactions = array_map(function($t) use ($typeBadges) {
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <h3 style="margin:0;">Transaction Ledger</h3>
-              <div style="font-size:13px; color:var(--muted); margin-top:4px;">
-                Showing <?= count($transactions) ?> result(s) <?= count($transactions) === $limit ? '(Limit reached)' : '' ?>
+        <div class="tabs no-print" id="financeTabs" style="margin-bottom:20px;background:white;border:1px solid #EDE8DF;border-radius:10px;padding:4px;display:inline-flex;">
+          <button class="tab active" id="tabIncomeBtn" onclick="switchFinanceTab('income')" style="padding:7px 20px;font-size:13px;">
+            <i class="ph ph-trend-up"></i> Income
+          </button>
+          <button class="tab" id="tabExpensesBtn" onclick="switchFinanceTab('expenses')" style="padding:7px 20px;font-size:13px;">
+            <i class="ph ph-trend-down"></i> Expenses
+          </button>
+        </div>
+
+        <!-- INCOME TAB -->
+        <div id="financeIncomeTab">
+          <div class="card">
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <h3 style="margin:0;">Transactions List</h3>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <a href="export_finance.php?search=<?= urlencode($search) ?>&type=<?= urlencode($type) ?>&method=<?= urlencode($method) ?>&from_date=<?= urlencode($fromDate) ?>&to_date=<?= urlencode($toDate) ?>" class="btn btn-outline btn-sm no-print">
+                  <i class="ph ph-download-simple"></i> Export CSV
+                </a>
+                <button onclick="window.print()" class="btn btn-outline btn-sm no-print">
+                  <i class="ph ph-printer"></i> Print
+                </button>
               </div>
             </div>
-            <div style="display:flex; gap:8px;">
-              <a href="export_finance.php?search=<?= urlencode($search) ?>&type=<?= urlencode($type) ?>&method=<?= urlencode($method) ?>&from_date=<?= urlencode($fromDate) ?>&to_date=<?= urlencode($toDate) ?>" class="btn btn-outline btn-sm no-print">
-                <i class="ph ph-download-simple"></i> Export CSV
-              </a>
-              <button onclick="window.print()" class="btn btn-outline btn-sm no-print">
-                <i class="ph ph-printer"></i> Print
-              </button>
-            </div>
-          </div>
-          <div class="table-responsive">
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Week</th>
-                  <th>Type</th>
-                  <th>Method & Ref</th>
-                  <th>Amount</th>
-                  <th class="no-print" style="text-align:right;">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php if (empty($transactions)): ?>
-                <tr>
-                  <td colspan="6" style="text-align:center; padding: 40px; color:var(--muted);">
-                    No transactions found matching your criteria.
-                  </td>
-                </tr>
-                <?php else: ?>
-                  <?php foreach ($transactions as $tx): ?>
+            <div class="table-responsive">
+              <table>
+                <thead>
                   <tr>
-                    <td>
-                      <div style="font-weight:500; color:var(--deep);"><?= $tx['date'] ?></div>
-                    </td>
-                    <td>
-                      <div style="font-weight:500;"><?= htmlspecialchars($tx['week']) ?></div>
-                    </td>
-                    <td>
-                      <span class="badge <?= $tx['type_badge'] ?>"><?= $tx['type'] ?></span>
-                    </td>
-                    <td>
-                      <div style="font-weight:500;"><?= htmlspecialchars($tx['method']) ?></div>
-                      <div style="font-size:12px; color:var(--muted);"><?= htmlspecialchars($tx['reference']) ?></div>
-                    </td>
-                    <td>
-                      <div style="font-weight:600;color:var(--success);">GH₵ <?= $tx['amount'] ?></div>
-                    </td>
-                    <td class="no-print" style="text-align:right;">
-                      <div style="display:flex; justify-content:flex-end; gap:4px;">
-                        <button class="btn btn-outline btn-sm" title="View Receipt" onclick='openReceiptModal(<?= json_encode($tx) ?>)'>
-                          <i class="ph ph-receipt"></i>
-                        </button>
-                        <button class="btn btn-danger-soft btn-sm" title="Delete"
-                          onclick="confirmDeleteTxn(<?= $tx['id'] ?>)">
-                          <i class="ph ph-trash"></i>
-                        </button>
-                      </div>
+                    <th>Date</th>
+                    <th>Week</th>
+                    <th>Type</th>
+                    <th>Method & Ref</th>
+                    <th>Amount</th>
+                    <th class="no-print" style="text-align:right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php if (empty($transactions)): ?>
+                  <tr>
+                    <td colspan="6" style="text-align:center; padding: 40px; color:var(--muted);">
+                      No transactions found matching your criteria.
                     </td>
                   </tr>
-                  <?php endforeach; ?>
-                <?php endif; ?>
-              </tbody>
-            </table>
+                  <?php else: ?>
+                    <?php foreach ($transactions as $tx): ?>
+                    <tr>
+                      <td>
+                        <div style="font-weight:500; color:var(--deep);"><?= $tx['date'] ?></div>
+                      </td>
+                      <td>
+                        <div style="font-weight:500;"><?= htmlspecialchars($tx['week']) ?></div>
+                      </td>
+                      <td>
+                        <span class="badge <?= $tx['type_badge'] ?>"><?= $tx['type'] ?></span>
+                      </td>
+                      <td>
+                        <div style="font-weight:500;"><?= htmlspecialchars($tx['method']) ?></div>
+                        <div style="font-size:12px; color:var(--muted);"><?= htmlspecialchars($tx['reference']) ?></div>
+                      </td>
+                      <td>
+                        <div style="font-weight:600;color:var(--success);">GH₵ <?= $tx['amount'] ?></div>
+                      </td>
+                      <td class="no-print" style="text-align:right;">
+                        <div style="display:flex; justify-content:flex-end; gap:4px;">
+                          <button class="btn btn-outline btn-sm" title="View Receipt" onclick='openReceiptModal(<?= json_encode($tx) ?>)'>
+                            <i class="ph ph-receipt"></i>
+                          </button>
+                          <button class="btn btn-danger-soft btn-sm" title="Delete"
+                            onclick="confirmDeleteTxn(<?= $tx['id'] ?>)">
+                            <i class="ph ph-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    <?php endforeach; ?>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXPENSES TAB -->
+        <div id="financeExpensesTab" style="display:none;">
+          <div class="card">
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <h3>Expenses List</h3>
+              </div>
+              <div class="no-print" style="display:flex; gap:8px;">
+                <a href="export_finance_expenses.php?search=<?= urlencode($search) ?>&from_date=<?= urlencode($fromDate) ?>&to_date=<?= urlencode($toDate) ?>" class="btn btn-outline btn-sm">
+                  <i class="ph ph-download-simple"></i> Export CSV
+                </a>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Paid From</th>
+                    <th>Description</th>
+                    <th>Reference</th>
+                    <th>Amount</th>
+                    <th class="no-print" style="text-align:right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php if (count($finance_expenses) > 0): ?>
+                    <?php foreach ($finance_expenses as $ex): ?>
+                    <tr>
+                      <td style="font-size:13px;"><?= date('M j, Y', strtotime($ex['expense_date'])) ?></td>
+                      <td style="font-weight:500;color:var(--deep2);"><?= htmlspecialchars($ex['type'] ?: 'Unknown') ?></td>
+                      <td style="font-size:13px;color:var(--muted);"><?= htmlspecialchars($ex['asset_name'] ?: 'Unknown') ?></td>
+                      <td style="font-size:13px;"><?= htmlspecialchars($ex['description']) ?></td>
+                      <td style="font-size:12px;color:var(--muted);"><?= htmlspecialchars($ex['reference_no']) ?></td>
+                      <td style="font-weight:600;color:var(--danger);">GH₵ <?= number_format($ex['amount'], 2) ?></td>
+                      <td class="no-print" style="text-align:right;">
+                        <div style="display:flex; gap:4px; justify-content:flex-end;">
+                          <button class="btn btn-outline btn-sm" title="Edit Expense" onclick='openEditFinanceExpenseModal(<?= json_encode($ex) ?>)'>
+                            <i class="ph ph-pencil-simple"></i>
+                          </button>
+                          <button class="btn btn-danger-soft btn-sm" title="Delete Expense"
+                            onclick="confirmDeleteExp(<?= $ex['id'] ?>)">
+                            <i class="ph ph-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    <?php endforeach; ?>
+                  <?php else: ?>
+                    <tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted);">No expenses found matching the criteria.</td></tr>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -324,16 +445,23 @@ $transactions = array_map(function($t) use ($typeBadges) {
 
   </main>
 
-  <?php include 'includes/modals/finance_modal.php'; ?>
   <?php include 'includes/modals/receipt_modal.php'; ?>
+  <?php include 'includes/modals/finance_modal.php'; ?>
 
   <!-- Hidden delete-transaction form -->
   <form method="POST" action="handlers/finance_handler.php" id="deleteTxnForm" style="display:none;">
     <?= csrfField() ?>
     <input type="hidden" name="action" value="delete_transaction">
     <input type="hidden" name="txn_id" id="deleteTxnId">
-    <!-- Include a return_to parameter so handler redirects back to history -->
-    <input type="hidden" name="return_to" value="../finance_history.php">
+    <input type="hidden" name="return_to" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
+  </form>
+
+  <!-- Hidden form to delete expense -->
+  <form method="POST" action="handlers/finance_handler.php" id="deleteExpForm" style="display:none;">
+    <?= csrfField() ?>
+    <input type="hidden" name="action" value="delete_finance_expense">
+    <input type="hidden" name="expense_id" id="deleteExpId">
+    <input type="hidden" name="return_to" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
   </form>
 
   <script src="assets/js/main.js"></script>
@@ -365,6 +493,34 @@ $transactions = array_map(function($t) use ($typeBadges) {
         },
         'danger'
       );
+    }
+
+    function confirmDeleteExp(id) {
+      showConfirmModal(
+        'Delete Expense',
+        'Are you sure you want to delete this expense? This will also remove the ledger entry.',
+        'Delete',
+        function() {
+          document.getElementById('deleteExpId').value = id;
+          document.getElementById('deleteExpForm').submit();
+        },
+        'danger'
+      );
+    }
+
+    function switchFinanceTab(tabId) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      
+      document.getElementById('financeIncomeTab').style.display = 'none';
+      document.getElementById('financeExpensesTab').style.display = 'none';
+      
+      if (tabId === 'income') {
+        document.getElementById('tabIncomeBtn').classList.add('active');
+        document.getElementById('financeIncomeTab').style.display = 'block';
+      } else if (tabId === 'expenses') {
+        document.getElementById('tabExpensesBtn').classList.add('active');
+        document.getElementById('financeExpensesTab').style.display = 'block';
+      }
     }
 
     function openReceiptModal(tx) {

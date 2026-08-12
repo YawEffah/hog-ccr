@@ -221,6 +221,24 @@ CREATE TABLE IF NOT EXISTS finance_transactions (
 ) ENGINE=InnoDB;
 
 -- ─────────────────────────────────────────────
+-- 9b. FINANCE EXPENSES
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS finance_expenses (
+  id                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  expense_date      DATE          NOT NULL,
+  amount            DECIMAL(12,2) NOT NULL,
+  type              VARCHAR(100)  NOT NULL,
+  asset_account_id  INT UNSIGNED  NOT NULL,   -- FK -> finance_accounts (Asset type)
+  description       VARCHAR(255)  NOT NULL,
+  reference_no      VARCHAR(50),
+  notes             TEXT,
+  recorded_by       INT UNSIGNED  NULL,
+  created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_fexp_asset    FOREIGN KEY (asset_account_id) REFERENCES finance_accounts(id),
+  CONSTRAINT fk_fexp_admin    FOREIGN KEY (recorded_by) REFERENCES admins(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ─────────────────────────────────────────────
 -- 10. FINANCE TARGETS
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS finance_targets (
