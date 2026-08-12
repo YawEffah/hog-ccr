@@ -10,6 +10,10 @@ require_once 'includes/helpers.php';
 $pageTitle  = 'Events';
 $activePage = 'events';
 
+if (!hasPermission('perm_manage_events')) {
+    redirect('dashboard.php');
+}
+
 // Flash messages (from redirect pattern)
 $successMsg = flash('success');
 $errorMsg   = flash('error');

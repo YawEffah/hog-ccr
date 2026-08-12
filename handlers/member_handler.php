@@ -120,6 +120,18 @@ if ($action === 'add_member') {
         }
 
         logActivity("Added member: {$firstName} {$lastName} ({$code})", 'members');
+
+        // Trigger notification
+        notifyRoles(
+            ['Administrator', 'Secretary'],
+            'member_added',
+            'New Member Registered',
+            "{$firstName} {$lastName} ({$code}) has been added to the database.",
+            'members.php',
+            'ph ph-user-plus',
+            '#10B981'
+        );
+
         redirect($redirect . '?success=member_added');
 
     } catch (PDOException $e) {

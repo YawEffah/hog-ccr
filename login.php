@@ -9,7 +9,7 @@ require_once 'includes/db.php';
 
 // If already logged in, redirect to dashboard
 if (isAuthenticated()) {
-  header('Location: index.php');
+  header('Location: dashboard.php');
   exit();
 }
 
@@ -32,16 +32,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Regenerate session ID to prevent fixation
         session_regenerate_id(true);
 
+        $roleStmt = $db->prepare("SELECT * FROM system_roles WHERE name = ? LIMIT 1");
+        $roleStmt->execute([$admin['role']]);
+        $roleData = $roleStmt->fetch(PDO::FETCH_ASSOC);
+        
+        $permissions = [];
+        if ($roleData) {
+            $permissions = [
+                'perm_manage_users' => (bool)$roleData['perm_manage_users'],
+                'perm_manage_finance' => (bool)$roleData['perm_manage_finance'],
+                'perm_manage_welfare' => (bool)$roleData['perm_manage_welfare'],
+                'perm_manage_members' => (bool)$roleData['perm_manage_members'],
+                'perm_manage_events'  => (bool)$roleData['perm_manage_events']
+            ];
+        }
+
         $_SESSION['user_id'] = $admin['id'];
+        $_SESSION['last_activity'] = time();
         $_SESSION['user_data'] = [
           'id' => $admin['id'],
           'name' => $admin['name'],
           'initials' => $admin['initials'],
           'role' => $admin['role'],
           'email' => $admin['email'],
+          'permissions' => $permissions
         ];
 
-        header('Location: index.php');
+        header('Location: dashboard.php');
         exit();
       } else {
         $error = 'Invalid username or password. Please try again.';
@@ -372,6 +389,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h1>Welcome Back</h1>
         <p>Adom Fie CCR Community Mgmt. System</p>
       </div>
+
+      <?php if (isset($_GET['reason']) && $_GET['reason'] === 'idle'): ?>
+        <div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:13px;color:#92400E;">
+          <i class="ph ph-clock" style="font-size:18px;flex-shrink:0;"></i>
+          You were logged out due to inactivity.
+        </div>
+      <?php endif; ?>
 
       <?php if ($error): ?>
         <div class="error-msg">

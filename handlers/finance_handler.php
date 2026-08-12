@@ -18,6 +18,7 @@ $redirect = '../finance.php';
 if ($action === 'add_transaction') {
     $weekNumber    = $_POST['week_number']           ?? 'Week 1';
     $type          = $_POST['transaction_type']      ?? '';
+
     $amount        = (float)($_POST['amount']        ?? 0);
     $method        = $_POST['payment_method']        ?? 'Cash';
     $reference     = trim($_POST['reference_no']     ?? '');
@@ -25,10 +26,9 @@ if ($action === 'add_transaction') {
     $date          = $_POST['date']                  ?? date('Y-m-d');
     $sendReceipt   = isset($_POST['generate_receipt']);
 
-    $allowedTypes  = ['Tithe','Offering','Donation','Pledge','Project Contribution','Welfare'];
     $allowedMethods = ['Cash','MoMo','Bank Transfer','Cheque'];
 
-    if ($amount <= 0 || !in_array($type, $allowedTypes, true) || !in_array($method, $allowedMethods, true)) {
+    if ($amount <= 0 || empty($type) || !in_array($method, $allowedMethods, true)) {
         redirect($redirect . '?error=invalid_data');
     }
 
@@ -55,7 +55,8 @@ if ($action === 'add_transaction') {
             'Donation' => '4400',
             'Pledge' => '4500',
             'Project Contribution' => '4600',
-            'Welfare' => '4000'
+            'Half Year Thanks Giving' => '4300',
+            'End of Year Thanks Giving' => '4300'
         ];
         $revenueCode = $typeToAccMap[$type] ?? '4300';
         $revenueId = $db->query("SELECT id FROM finance_accounts WHERE code = '$revenueCode'")->fetchColumn();
@@ -86,7 +87,7 @@ if ($action === 'add_transaction') {
             ];
             
             // Get admins
-            $adminsStmt = $db->query("SELECT name, email, phone FROM admins WHERE role IN ('Administrator', 'Finance Secretary')");
+            $adminsStmt = $db->query("SELECT name, email, phone FROM admins WHERE role IN (SELECT name FROM system_roles WHERE perm_manage_finance = 1)");
             $admins = $adminsStmt->fetchAll();
             $anySent = false;
             foreach ($admins as $admin) {
@@ -133,6 +134,18 @@ if ($action === 'set_target') {
         $stmt->execute([$monthDate, $targetAmount, $notes ?: null, $_SESSION['user_id']]);
 
         logActivity('Set finance target for ' . date('F Y', strtotime($monthDate)) . ' to ' . formatGhc($targetAmount), 'finance');
+        
+        // Trigger notification
+        notifyRoles(
+            ['Administrator', 'Finance Secretary', 'Head Pastor'],
+            'finance_target',
+            'Monthly Target Updated',
+            "Target for " . date('F Y', strtotime($monthDate)) . " has been set to " . formatGhc($targetAmount) . ".",
+            'finance.php',
+            'ph ph-target',
+            '#3B82F6'
+        );
+
         redirect($redirect . '?success=target_set');
 
     } catch (PDOException $e) {
@@ -205,7 +218,7 @@ if ($action === 'resend_receipt') {
         ];
 
         // Send receipt email / SMS to admins
-        $adminsStmt = $db->query("SELECT name, email, phone FROM admins WHERE role IN ('Administrator', 'Finance Secretary')");
+        $adminsStmt = $db->query("SELECT name, email, phone FROM admins WHERE role IN (SELECT name FROM system_roles WHERE perm_manage_finance = 1)");
         $admins = $adminsStmt->fetchAll();
         $anySent = false;
         foreach ($admins as $admin) {
@@ -227,6 +240,149 @@ if ($action === 'resend_receipt') {
     } catch (PDOException $e) {
         error_log('resend_receipt error: ' . $e->getMessage());
         redirect($returnTo . '&error=db_error');
+    }
+}
+
+// ── RECORD FINANCE EXPENSE ───────────────────────────────────────────────────
+if ($action === 'record_finance_expense') {
+    $date         = $_POST['expense_date'] ?? date('Y-m-d');
+    $amount       = (float)($_POST['amount'] ?? 0);
+    $type         = trim($_POST['type'] ?? '');
+    $assetId      = (int)($_POST['asset_account_id'] ?? 0);
+    $description  = trim($_POST['description'] ?? '');
+    $notes        = trim($_POST['notes'] ?? '');
+    $returnTo     = $_POST['return_to'] ?? $redirect;
+
+    if ($amount <= 0 || !$type || !$assetId || !$description) {
+        redirect($returnTo . '?error=invalid_data');
+    }
+
+    try {
+        // Look up category_id based on the type name
+        $catStmt = $db->prepare("SELECT id FROM finance_accounts WHERE name = ? AND type = 'Expense' AND fund = 'General'");
+        $catStmt->execute([$type]);
+        $categoryId = (int)$catStmt->fetchColumn();
+
+        if (!$categoryId) {
+            redirect($returnTo . '?error=invalid_data');
+        }
+
+        $stmt = $db->prepare(
+            "INSERT INTO finance_expenses
+             (expense_date, amount, type, asset_account_id, description, notes, recorded_by)
+             VALUES (?, ?, ?, ?, ?, ?, ?)"
+        );
+        $stmt->execute([
+            $date, $amount, $type, $assetId, $description,
+            $notes ?: null, $_SESSION['user_id']
+        ]);
+        
+        $expId = (int)$db->lastInsertId();
+        $refNo = "FEXP-$expId";
+        
+        $db->prepare("UPDATE finance_expenses SET reference_no = ? WHERE id = ?")
+           ->execute([$refNo, $expId]);
+
+        // Double entry ledger
+        $ledgerDesc = "Finance Expense: $description" . ($notes ? " - $notes" : "");
+        
+        // Debit Expense
+        $db->prepare("INSERT INTO finance_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
+           ->execute([$date, $categoryId, $ledgerDesc, $amount, 0, $refNo, $_SESSION['user_id']]);
+           
+        // Credit Asset
+        $db->prepare("INSERT INTO finance_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
+           ->execute([$date, $assetId, $ledgerDesc, 0, $amount, $refNo, $_SESSION['user_id']]);
+
+        logActivity("Recorded finance expense of " . formatGhc($amount) . " for $description", 'finance');
+        redirect($returnTo . '?success=expense_recorded');
+
+    } catch (PDOException $e) {
+        error_log('record_finance_expense error: ' . $e->getMessage());
+        redirect($returnTo . '?error=db_error');
+    }
+}
+
+// ── EDIT FINANCE EXPENSE ─────────────────────────────────────────────────────
+if ($action === 'edit_finance_expense') {
+    if (!hasPermission('perm_manage_finance')) redirect($redirect);
+
+    $id           = (int)($_POST['expense_id'] ?? 0);
+    $date         = $_POST['expense_date'] ?? date('Y-m-d');
+    $amount       = (float)($_POST['amount'] ?? 0);
+    $type         = trim($_POST['type'] ?? '');
+    $assetId      = (int)($_POST['asset_account_id'] ?? 0);
+    $description  = trim($_POST['description'] ?? '');
+    $notes        = trim($_POST['notes'] ?? '');
+    $returnTo     = $_POST['return_to'] ?? $redirect;
+
+    if ($id <= 0 || $amount <= 0 || !$type || !$assetId || !$description) {
+        redirect($returnTo . '?error=invalid_data');
+    }
+
+    try {
+        // Look up category_id based on the type name
+        $catStmt = $db->prepare("SELECT id FROM finance_accounts WHERE name = ? AND type = 'Expense' AND fund = 'General'");
+        $catStmt->execute([$type]);
+        $categoryId = (int)$catStmt->fetchColumn();
+
+        if (!$categoryId) {
+            redirect($returnTo . '?error=invalid_data');
+        }
+
+        $stmt = $db->prepare(
+            "UPDATE finance_expenses
+             SET expense_date = ?, amount = ?, type = ?, asset_account_id = ?, description = ?, notes = ?
+             WHERE id = ?"
+        );
+        $stmt->execute([
+            $date, $amount, $type, $assetId, $description,
+            $notes ?: null, $id
+        ]);
+        
+        $refNo = "FEXP-$id";
+
+        // Re-do ledger entries
+        $db->prepare("DELETE FROM finance_ledger WHERE reference_no = ?")->execute([$refNo]);
+
+        $ledgerDesc = "Finance Expense: $description" . ($notes ? " - $notes" : "");
+        
+        // Debit Expense
+        $db->prepare("INSERT INTO finance_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
+           ->execute([$date, $categoryId, $ledgerDesc, $amount, 0, $refNo, $_SESSION['user_id']]);
+           
+        // Credit Asset
+        $db->prepare("INSERT INTO finance_ledger (transaction_date, account_id, description, debit, credit, reference_no, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)")
+           ->execute([$date, $assetId, $ledgerDesc, 0, $amount, $refNo, $_SESSION['user_id']]);
+
+        logActivity("Updated finance expense #$id", 'finance');
+        redirect($returnTo . '?success=expense_updated');
+
+    } catch (PDOException $e) {
+        error_log('edit_finance_expense error: ' . $e->getMessage());
+        redirect($returnTo . '?error=db_error');
+    }
+}
+
+// ── DELETE FINANCE EXPENSE ───────────────────────────────────────────────────
+if ($action === 'delete_finance_expense') {
+    if (!hasPermission('perm_manage_finance')) redirect($redirect);
+    
+    $id = (int)($_POST['expense_id'] ?? 0);
+    $returnTo = $_POST['return_to'] ?? $redirect;
+
+    if (!$id) redirect($returnTo . '?error=invalid_data');
+
+    try {
+        $db->prepare("DELETE FROM finance_expenses WHERE id = ?")->execute([$id]);
+        $db->prepare("DELETE FROM finance_ledger WHERE reference_no = ?")->execute(["FEXP-$id"]);
+
+        logActivity("Deleted finance expense #$id", 'finance');
+        redirect($returnTo . '?success=expense_deleted');
+
+    } catch (PDOException $e) {
+        error_log('delete_finance_expense error: ' . $e->getMessage());
+        redirect($returnTo . '?error=db_error');
     }
 }
 

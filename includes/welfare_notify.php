@@ -14,14 +14,12 @@ function calculateWelfareMemberStats(PDO $db, int $welfareId): array
 {
     // Fetch member enrollment and contribution data
     $stmt = $db->prepare("
-        SELECT wm.enrol_date, wm.monthly_amount,
-               COALESCE((SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id), 0) as total_paid,
-               COALESCE((SELECT COUNT(*) FROM welfare_contributions WHERE welfare_id = wm.id AND DATE_FORMAT(payment_date, '%Y-%m') = ?), 0) as paid_current_month
+        SELECT wm.*, 
+               (SELECT SUM(amount) FROM welfare_contributions WHERE welfare_id = wm.id) as total_paid
         FROM welfare_members wm
         WHERE wm.id = ?
     ");
-    $currentMonthStr = date('Y-m');
-    $stmt->execute([$currentMonthStr, $welfareId]);
+    $stmt->execute([$welfareId]);
     $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$data) {
@@ -47,7 +45,7 @@ function calculateWelfareMemberStats(PDO $db, int $welfareId): array
     $expectedAmount = $expectedMonths * $monthlyAmount;
     
     $arrears = max(0.00, $expectedAmount - $totalPaid);
-    $status  = ($data['paid_current_month'] > 0) ? 'Up to date' : 'Arrears';
+    $status  = ($arrears <= 0) ? 'Up to date' : 'Arrears';
 
     return [
         'total_paid' => $totalPaid,

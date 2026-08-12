@@ -20,58 +20,75 @@ $currentUser = $currentUser ?? [
       <h1>Adom Fie CCR</h1>
       <p>Community</p>
     </span>
+    <!-- Shown when expanded -->
+    <button class="sidebar-collapse-btn no-print" onclick="toggleSidebarCollapse()" title="Collapse sidebar">
+      <i class="ph ph-sidebar-simple" id="sidebarCollapseIcon"></i>
+    </button>
   </div>
 
   <nav style="flex:1; overflow-y:auto; padding: 8px 0;">
     <div class="nav-section-label">Overview</div>
-    <a href="index.php" class="nav-item <?= $activePage === 'dashboard' ? 'active' : '' ?>">
+    <a href="dashboard.php" class="nav-item <?= $activePage === 'dashboard' ? 'active' : '' ?>" data-tooltip="Dashboard">
       <i class="ph ph-house"></i>
-      Dashboard
+      <span class="nav-item-text">Dashboard</span>
     </a>
 
+    <?php if (hasPermission('perm_manage_members') || hasPermission('perm_manage_welfare')): ?>
     <div class="nav-section-label">Congregation</div>
-    <a href="members.php" class="nav-item <?= $activePage === 'members' ? 'active' : '' ?>">
+    <?php if (hasPermission('perm_manage_members')): ?>
+    <a href="members.php" class="nav-item <?= $activePage === 'members' ? 'active' : '' ?>" data-tooltip="Members">
       <i class="ph ph-users"></i>
-      Members
+      <span class="nav-item-text">Members</span>
     </a>
-    <a href="ministries.php" class="nav-item <?= $activePage === 'ministries' ? 'active' : '' ?>">
+    <a href="ministries.php" class="nav-item <?= $activePage === 'ministries' ? 'active' : '' ?>" data-tooltip="Ministries">
       <i class="ph ph-heart"></i>
-      Ministries
+      <span class="nav-item-text">Ministries</span>
     </a>
-    <a href="families.php" class="nav-item <?= $activePage === 'families' ? 'active' : '' ?>">
+    <a href="families.php" class="nav-item <?= $activePage === 'families' ? 'active' : '' ?>" data-tooltip="Families">
       <i class="ph ph-users-three"></i>
-      Families
+      <span class="nav-item-text">Families</span>
     </a>
-    <a href="welfare.php" class="nav-item <?= $activePage === 'welfare' ? 'active' : '' ?>">
+    <?php endif; ?>
+    <?php if (hasPermission('perm_manage_welfare')): ?>
+    <a href="welfare.php" class="nav-item <?= $activePage === 'welfare' ? 'active' : '' ?>" data-tooltip="Welfare">
       <i class="ph ph-hand-heart"></i>
-      Welfare
+      <span class="nav-item-text">Welfare</span>
     </a>
+    <?php endif; ?>
+    <?php endif; ?>
 
 
     <div class="nav-section-label">Administration</div>
-    <a href="finance.php" class="nav-item <?= $activePage === 'finance' ? 'active' : '' ?>">
+    <?php if (hasPermission('perm_manage_finance')): ?>
+    <a href="finance.php" class="nav-item <?= $activePage === 'finance' ? 'active' : '' ?>" data-tooltip="Finance">
       <i class="ph ph-wallet"></i>
-      Finance
+      <span class="nav-item-text">Finance</span>
     </a>
-    <a href="events.php" class="nav-item <?= $activePage === 'events' ? 'active' : '' ?>">
+    <?php endif; ?>
+    <?php if (hasPermission('perm_manage_events')): ?>
+    <a href="events.php" class="nav-item <?= $activePage === 'events' ? 'active' : '' ?>" data-tooltip="Events">
       <i class="ph ph-calendar"></i>
-      Events
+      <span class="nav-item-text">Events</span>
     </a>
-    <a href="reports.php" class="nav-item <?= $activePage === 'reports' ? 'active' : '' ?>">
+    <?php endif; ?>
+    <a href="reports.php" class="nav-item <?= $activePage === 'reports' ? 'active' : '' ?>" data-tooltip="Reports">
       <i class="ph ph-chart-bar"></i>
-      Reports
+      <span class="nav-item-text">Reports</span>
     </a>
 
     <div class="nav-section-label">System</div>
-    <a href="users.php" class="nav-item <?= $activePage === 'users' ? 'active' : '' ?>">
+    <?php if (hasPermission('perm_manage_users')): ?>
+    <a href="users.php" class="nav-item <?= $activePage === 'users' ? 'active' : '' ?>" data-tooltip="User Management">
       <i class="ph ph-shield-check"></i>
-      User Management
+      <span class="nav-item-text">User Management</span>
     </a>
-    <a href="logout.php" class="nav-item">
+    <?php endif; ?>
+    <a href="logout.php" class="nav-item" data-tooltip="Logout">
       <i class="ph ph-sign-out"></i>
-      Logout
+      <span class="nav-item-text">Logout</span>
     </a>
   </nav>
+
 
   <div class="sidebar-footer">
     <div class="user-chip">
@@ -92,4 +109,30 @@ $currentUser = $currentUser ?? [
   </div>
 </aside>
 
+<div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<script>
+  // Sidebar collapse (desktop only) with localStorage persistence
+  (function () {
+    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.addEventListener('DOMContentLoaded', function () {
+        var sidebar = document.getElementById('sidebar');
+        var main    = document.getElementById('main');
+        if (sidebar) sidebar.classList.add('collapsed');
+        if (main)    main.classList.add('sidebar-collapsed');
+      });
+    }
+  })();
+
+  function toggleSidebarCollapse() {
+    var sidebar = document.getElementById('sidebar');
+    var main    = document.getElementById('main');
+    if (!sidebar) return;
+    var isCollapsed = sidebar.classList.toggle('collapsed');
+    if (main) main.classList.toggle('sidebar-collapsed', isCollapsed);
+    localStorage.setItem('sidebarCollapsed', isCollapsed);
+  }
+</script>
+
 <?php require_once __DIR__ . '/modals/confirm_modal.php'; ?>
+<?php require_once __DIR__ . '/modals/idle_timeout_modal.php'; ?>

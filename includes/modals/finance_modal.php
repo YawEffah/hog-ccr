@@ -20,15 +20,34 @@
               <option value="Week 5">Week 5</option>
             </select>
           </div>
-          <div class="form-group">
+          <div class="form-group" style="position: relative;">
             <label class="form-label">Transaction Type</label>
-            <select class="form-control" name="transaction_type" required>
-              <option>Tithe</option>
-              <option>Offering</option>
-              <option>Donation</option>
-              <option>Pledge</option>
-              <option>Project Contribution</option>
-            </select>
+            <input type="hidden" name="transaction_type" id="transactionTypeSelect" required>
+            <div class="custom-select-trigger" onclick="toggleTxnDropdown()" id="txnSelectTrigger">
+              <span id="txnSelectedText" style="color:var(--muted)">Select or add new...</span>
+              <i class="ph ph-caret-down"></i>
+            </div>
+            <div class="custom-select-dropdown" id="txnSelectDropdown" style="display:none;">
+              <div class="custom-select-search">
+                <input type="text" id="txnSearchInput" placeholder="Type new & press Enter..." onkeydown="handleTxnInput(event)" autocomplete="off">
+                <button type="button" class="btn btn-sm btn-primary" onclick="addNewTxnType()" style="padding: 4px 8px; font-size:12px; height:auto; min-height:0;"><i class="ph ph-plus"></i></button>
+              </div>
+              <div class="custom-select-options" id="txnSelectOptions">
+                <?php
+                  if (isset($db)) {
+                      $typeStmt = $db->query("SELECT DISTINCT type FROM finance_transactions WHERE type IS NOT NULL AND type != ''");
+                      $dbTypes = $typeStmt->fetchAll(PDO::FETCH_COLUMN);
+                  } else {
+                      $dbTypes = [];
+                  }
+                  $defaultTypes = ['Tithe', 'Offering', 'Donation', 'Pledge', 'Project Contribution', 'Half Year Thanks Giving', 'End of Year Thanks Giving'];
+                  $allTypes = array_unique(array_merge($defaultTypes, $dbTypes));
+                  foreach($allTypes as $t) {
+                      echo '<div class="custom-select-option" onclick="selectTxnType(\'' . htmlspecialchars(addslashes($t)) . '\')">' . htmlspecialchars($t) . '</div>';
+                  }
+                ?>
+              </div>
+            </div>
           </div>
         </div>
         <div class="grid-2" style="gap:16px;">
@@ -106,6 +125,154 @@
   </div>
 </div>
 
+<?php
+// Fetch accounts for expenses
+$expenseTypes = ['Utilities', 'Transportation', 'Stationery', 'Honorarium', 'Maintenance', 'Miscellaneous'];
+$assetAccounts = [];
+if (isset($db)) {
+    $assetAccounts = $db->query("SELECT id, name FROM finance_accounts WHERE type = 'Asset' AND fund = 'General' ORDER BY name")->fetchAll();
+}
+?>
+
+<!-- Record Finance Expense Modal -->
+<div class="modal-overlay" id="recordFinanceExpenseModal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <h3>Record Expense</h3>
+      <button class="close-btn" onclick="closeModal('recordFinanceExpenseModal')"><i class="ph ph-x"></i></button>
+    </div>
+    <form action="handlers/finance_handler.php" method="POST">
+      <?= csrfField() ?>
+      <input type="hidden" name="action" value="record_finance_expense">
+      <input type="hidden" name="return_to" id="recordExpReturnTo" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
+      <div class="modal-body">
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Expense Type</label>
+            <select class="form-control" name="type" required>
+              <option value="">-- Select Type --</option>
+              <?php foreach($expenseTypes as $type): ?>
+                <option value="<?= htmlspecialchars($type) ?>"><?= htmlspecialchars($type) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Paid From (Asset)</label>
+            <select class="form-control" name="asset_account_id" required>
+              <option value="">-- Select Asset --</option>
+              <?php foreach($assetAccounts as $ast): ?>
+                <option value="<?= $ast['id'] ?>"><?= htmlspecialchars($ast['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+        </div>
+        
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Amount (GH₵)</label>
+            <input type="number" step="0.01" class="form-control" name="amount" placeholder="0.00" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control" name="expense_date" value="<?= date('Y-m-d') ?>" required max="<?= date('Y-m-d') ?>">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Description / Reason</label>
+          <input type="text" class="form-control" name="description" placeholder="e.g. Bought fuel for generator" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Notes (Optional)</label>
+          <textarea class="form-control" name="notes" rows="2" placeholder="Additional details..." style="resize:none;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('recordFinanceExpenseModal')">Cancel</button>
+        <button type="submit" class="btn btn-danger">Save Expense</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Finance Expense Modal -->
+<div class="modal-overlay" id="editFinanceExpenseModal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <h3>Edit Expense</h3>
+      <button class="close-btn" onclick="closeModal('editFinanceExpenseModal')"><i class="ph ph-x"></i></button>
+    </div>
+    <form action="handlers/finance_handler.php" method="POST">
+      <?= csrfField() ?>
+      <input type="hidden" name="action" value="edit_finance_expense">
+      <input type="hidden" name="expense_id" id="editExpId">
+      <input type="hidden" name="return_to" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
+      <div class="modal-body">
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Expense Type</label>
+            <select class="form-control" name="type" id="editExpType" required>
+              <option value="">-- Select Type --</option>
+              <?php foreach($expenseTypes as $type): ?>
+                <option value="<?= htmlspecialchars($type) ?>"><?= htmlspecialchars($type) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Paid From (Asset)</label>
+            <select class="form-control" name="asset_account_id" id="editExpAssetId" required>
+              <option value="">-- Select Asset --</option>
+              <?php foreach($assetAccounts as $ast): ?>
+                <option value="<?= $ast['id'] ?>"><?= htmlspecialchars($ast['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+        </div>
+        
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Amount (GH₵)</label>
+            <input type="number" step="0.01" class="form-control" name="amount" id="editExpAmount" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control" name="expense_date" id="editExpDate" required max="<?= date('Y-m-d') ?>">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Description / Reason</label>
+          <input type="text" class="form-control" name="description" id="editExpDescription" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Notes (Optional)</label>
+          <textarea class="form-control" name="notes" id="editExpNotes" rows="2" style="resize:none;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('editFinanceExpenseModal')">Cancel</button>
+        <button type="submit" class="btn btn-danger">Update Expense</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openEditFinanceExpenseModal(exp) {
+    document.getElementById('editExpId').value = exp.id;
+    document.getElementById('editExpType').value = exp.type;
+    document.getElementById('editExpAssetId').value = exp.asset_account_id;
+    document.getElementById('editExpAmount').value = exp.amount;
+    document.getElementById('editExpDate').value = exp.expense_date;
+    document.getElementById('editExpDescription').value = exp.description;
+    document.getElementById('editExpNotes').value = exp.notes || '';
+    
+    openModal('editFinanceExpenseModal');
+}
+</script>
+
 <script>
   document.getElementById('paymentMethodSelect')?.addEventListener('change', function () {
     const label = document.getElementById('refLabel');
@@ -121,4 +288,100 @@
       label.textContent = 'Reference / Trans ID';
     }
   });
+
+  function toggleTxnDropdown() {
+    const dropdown = document.getElementById('txnSelectDropdown');
+    dropdown.style.display = dropdown.style.display === 'none' ? 'flex' : 'none';
+    if(dropdown.style.display === 'flex') {
+        document.getElementById('txnSearchInput').focus();
+    }
+  }
+
+  function selectTxnType(value) {
+    document.getElementById('transactionTypeSelect').value = value;
+    document.getElementById('txnSelectedText').textContent = value;
+    document.getElementById('txnSelectedText').style.color = '#1E293B';
+    document.getElementById('txnSelectDropdown').style.display = 'none';
+    document.getElementById('txnSearchInput').value = '';
+  }
+
+  function addNewTxnType() {
+    const input = document.getElementById('txnSearchInput');
+    const val = input.value.trim();
+    if(val) {
+        selectTxnType(val);
+    }
+  }
+
+  function handleTxnInput(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        addNewTxnType();
+    }
+  }
+
+  document.addEventListener('click', function(e) {
+    const trigger = document.getElementById('txnSelectTrigger');
+    const dropdown = document.getElementById('txnSelectDropdown');
+    if (trigger && dropdown && !trigger.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = 'none';
+    }
+  });
 </script>
+<style>
+  .custom-select-trigger {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    color: #1E293B;
+  }
+  .custom-select-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    z-index: 100;
+    flex-direction: column;
+    max-height: 250px;
+    overflow: hidden;
+  }
+  .custom-select-search {
+    padding: 8px;
+    border-bottom: 1px solid #E2E8F0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .custom-select-search input {
+    border: 1px solid #E2E8F0;
+    border-radius: 4px;
+    padding: 6px 10px;
+    outline: none;
+    width: 100%;
+    font-size: 13px;
+  }
+  .custom-select-options {
+    overflow-y: auto;
+    max-height: 200px;
+  }
+  .custom-select-option {
+    padding: 10px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    color: #334155;
+    transition: background 0.2s;
+  }
+  .custom-select-option:hover {
+    background: #F1F5F9;
+  }
+</style>

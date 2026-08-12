@@ -10,10 +10,35 @@ require_once 'includes/helpers.php';
 $pageTitle  = 'Ministries';
 $activePage = 'ministries';
 
+if (!hasPermission('perm_manage_members')) {
+    redirect('dashboard.php');
+}
+
 $successMsg = flash('success');
 $errorMsg   = flash('error');
 
 $db = getDB();
+
+// ── Global Finance Dashboard Stats ───────────────────────────────────────────
+$monthStart = date('Y-m-01');
+
+// 1. Monthly Revenue (Finance Summary)
+$stmtRev = $db->prepare("SELECT SUM(amount) FROM finance_transactions WHERE transaction_date >= ?");
+$stmtRev->execute([$monthStart]);
+$globalMonthFinance = (float)$stmtRev->fetchColumn();
+
+// Add new welfare contributions to this month's revenue
+$wMonthStmt = $db->prepare("SELECT SUM(amount) FROM welfare_contributions WHERE payment_date >= ?");
+$wMonthStmt->execute([$monthStart]);
+$globalMonthFinance += (float)$wMonthStmt->fetchColumn();
+
+// 2. Monthly Tithe
+$titheStmt = $db->prepare("SELECT SUM(amount) FROM finance_transactions WHERE type='Tithe' AND transaction_date >= ?");
+$titheStmt->execute([$monthStart]);
+$globalMonthlyTithe = (float)$titheStmt->fetchColumn();
+
+// 3. Welfare Fund (Total collected ever)
+$globalWelfareFund = (float)$db->query("SELECT SUM(amount) FROM welfare_contributions")->fetchColumn();
 
 // ── Ministries List with Member Counts ───────────────────────────────────────
 $minStmt = $db->query(
@@ -223,6 +248,40 @@ foreach ($rawMinistries as $m) {
       <?php renderToastAlerts($successMsg, $errorMsg); ?>
 
       <div class="content">
+        
+        <!-- Dashboard Stats -->
+        <div class="grid-3" style="margin-bottom:24px;">
+            <div class="stat-card" style="background:var(--white); padding:24px; border-radius:16px; border:1px solid #EDE8DF; display:flex; align-items:center; gap:16px;">
+                <div style="width:50px; height:50px; border-radius:12px; background:#FEE2E2; color:#DC2626; display:flex; align-items:center; justify-content:center; font-size:24px;">
+                    <i class="ph-fill ph-heart"></i>
+                </div>
+                <div>
+                    <div style="font-size:13px; color:var(--muted); margin-bottom:4px; font-weight:500; text-transform:uppercase; letter-spacing:0.5px;">Welfare Fund</div>
+                    <div style="font-family:'Cormorant Garamond', serif; font-size:28px; font-weight:700; color:var(--deep2); line-height:1;"><?= formatGhc($globalWelfareFund) ?></div>
+                </div>
+            </div>
+
+            <div class="stat-card" style="background:var(--white); padding:24px; border-radius:16px; border:1px solid #EDE8DF; display:flex; align-items:center; gap:16px;">
+                <div style="width:50px; height:50px; border-radius:12px; background:var(--gold-pale); color:var(--gold); display:flex; align-items:center; justify-content:center; font-size:24px;">
+                    <i class="ph-fill ph-coin"></i>
+                </div>
+                <div>
+                    <div style="font-size:13px; color:var(--muted); margin-bottom:4px; font-weight:500; text-transform:uppercase; letter-spacing:0.5px;">Monthly Tithe</div>
+                    <div style="font-family:'Cormorant Garamond', serif; font-size:28px; font-weight:700; color:var(--deep2); line-height:1;"><?= formatGhc($globalMonthlyTithe) ?></div>
+                </div>
+            </div>
+
+            <div class="stat-card" style="background:var(--white); padding:24px; border-radius:16px; border:1px solid #EDE8DF; display:flex; align-items:center; gap:16px;">
+                <div style="width:50px; height:50px; border-radius:12px; background:#D1FAE5; color:#059669; display:flex; align-items:center; justify-content:center; font-size:24px;">
+                    <i class="ph-fill ph-trend-up"></i>
+                </div>
+                <div>
+                    <div style="font-size:13px; color:var(--muted); margin-bottom:4px; font-weight:500; text-transform:uppercase; letter-spacing:0.5px;">Finance Summary</div>
+                    <div style="font-family:'Cormorant Garamond', serif; font-size:28px; font-weight:700; color:var(--deep2); line-height:1;"><?= formatGhc($globalMonthFinance) ?></div>
+                </div>
+            </div>
+        </div>
+
         <div class="grid-3" style="margin-bottom:24px;">
           <?php foreach ($ministries as $m): ?>
           <div class="ministry-card">

@@ -13,14 +13,25 @@ $reportType = $_GET['report'];
 
 $db = getDB();
 
-$filterMonth = $_GET['month'] ?? date('Y-m');
-if (!preg_match('/^\d{4}-\d{2}$/', $filterMonth)) {
-    $filterMonth = date('Y-m');
+$rawMonth = $_GET['month'] ?? date('Y-m');
+$isAllMonths = str_ends_with($rawMonth, '-all');
+if (!$isAllMonths && !preg_match('/^\d{4}-\d{2}$/', $rawMonth)) {
+    if (preg_match('/^\d{4}-all$/', $rawMonth)) {
+        $isAllMonths = true;
+    } else {
+        $rawMonth = date('Y-m');
+        $isAllMonths = false;
+    }
 }
-$currentYear = explode('-', $filterMonth)[0];
-$periodEndDate = date('jS F, Y', strtotime(date('Y-m-t', strtotime($filterMonth . '-01'))));
 
-// Calculate Ledger Balances
+$filterMonth = $rawMonth;
+$currentYear = explode('-', $filterMonth)[0];
+$finFilterMonth = $isAllMonths ? $currentYear . '-12' : $filterMonth;
+$periodEndDate = $isAllMonths 
+    ? "31st December, $currentYear" 
+    : date('jS F, Y', strtotime(date('Y-m-t', strtotime(str_replace('-all','-01',$filterMonth) . '-01'))));
+
+// Calculate Ledger Balances — Welfare Fund only
 $accountsStmt = $db->prepare("
     SELECT a.code, a.name, a.type, 
     SUM(CASE WHEN l.transaction_date <= LAST_DAY(STR_TO_DATE(CONCAT(?, '-01'), '%Y-%m-%d')) THEN l.debit ELSE 0 END) as total_debit,
@@ -29,9 +40,10 @@ $accountsStmt = $db->prepare("
     SUM(CASE WHEN YEAR(l.transaction_date) = ? AND l.transaction_date <= LAST_DAY(STR_TO_DATE(CONCAT(?, '-01'), '%Y-%m-%d')) THEN l.credit ELSE 0 END) as ytd_credit
     FROM finance_accounts a
     LEFT JOIN finance_ledger l ON a.id = l.account_id
+    WHERE a.fund = 'Welfare'
     GROUP BY a.id
 ");
-$accountsStmt->execute([$filterMonth, $filterMonth, $currentYear, $filterMonth, $currentYear, $filterMonth]);
+$accountsStmt->execute([$finFilterMonth, $finFilterMonth, $currentYear, $finFilterMonth, $currentYear, $finFilterMonth]);
 $accounts = $accountsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 $balances = [];
@@ -73,6 +85,7 @@ $openStmt = $db->prepare("
     JOIN finance_ledger l ON a.id = l.account_id 
     WHERE l.transaction_date <= ? 
       AND a.type IN ('Asset')
+      AND a.fund = 'Welfare'
     GROUP BY a.code
 ");
 $openStmt->execute([$prevYearEnd]);
@@ -108,7 +121,7 @@ header("Expires: 0");
 echo "<table border='1'>";
 
 if ($reportType === 'performance') {
-    echo "<tr><th colspan='3'>ADOM FIE CCR COMMUNITY WELFARE</th></tr>";
+    echo "<tr><th colspan='3'>ADOM FIE CCR COMMUNITY — WELFARE FUND</th></tr>";
     echo "<tr><th colspan='3'>Statement of Financial Performance (Income & Expenditure) For the period ended {$periodEndDate}</th></tr>";
     echo "<tr><th>Income</th><th>Ghc</th><th>Ghc</th></tr>";
     echo "<tr><td>Subscription for {$currentYear}</td><td></td><td>{$subIncome}</td></tr>";
@@ -123,7 +136,7 @@ if ($reportType === 'performance') {
     echo "<tr><td><b>Surplus</b></td><td></td><td><b>{$surplus}</b></td></tr>";
 
 } elseif ($reportType === 'cashflow') {
-    echo "<tr><th colspan='3'>Adom Fie CCR Community Welfare</th></tr>";
+    echo "<tr><th colspan='3'>Adom Fie CCR Community — Welfare Fund</th></tr>";
     echo "<tr><th colspan='3'>Statement of Cash Flows For the period ended {$periodEndDate}</th></tr>";
     echo "<tr><td><b>Operating Activities</b></td><td></td><td><b>Ghc</b></td></tr>";
     echo "<tr><td>Cash received from Members</td><td></td><td>{$cashReceived}</td></tr>";
@@ -144,7 +157,7 @@ if ($reportType === 'performance') {
     echo "<tr><td><b>Cash at Bank (Closing)</b></td><td></td><td><b>{$closeBank}</b></td></tr>";
 
 } elseif ($reportType === 'position') {
-    echo "<tr><th colspan='3'>Adom Fie CCR Community Welfare</th></tr>";
+    echo "<tr><th colspan='3'>Adom Fie CCR Community — Welfare Fund</th></tr>";
     echo "<tr><th colspan='3'>Statement of Financial Position As At {$periodEndDate}</th></tr>";
     echo "<tr><td><b>Assets</b></td><td><b>Ghc</b></td><td><b>Ghc</b></td></tr>";
     echo "<tr><td><b>Current Assets</b></td><td></td><td></td></tr>";
@@ -170,7 +183,7 @@ if ($reportType === 'performance') {
     echo "<tr><td><b>Total Net Assets</b></td><td></td><td><b>" . ($accumFund + $surplus) . "</b></td></tr>";
 
 } elseif ($reportType === 'trialbalance') {
-    echo "<tr><th rowspan='2'>Particulars</th><th colspan='2'>CCR COMMUNITY</th></tr>";
+    echo "<tr><th rowspan='2'>Particulars</th><th colspan='2'>CCR COMMUNITY — WELFARE FUND</th></tr>";
     echo "<tr><th colspan='2'>As At {$periodEndDate}</th></tr>";
     echo "<tr><th></th><th>Debit</th><th>Credit</th></tr>";
     echo "<tr><td><b>Capital Account</b></td><td></td><td><b>{$accumFund}</b></td></tr>";

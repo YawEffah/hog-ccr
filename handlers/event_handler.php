@@ -62,6 +62,17 @@ if ($action === 'add_event') {
 
         logActivity("Created new event: {$title}", 'events');
 
+        // Trigger notification
+        notifyRoles(
+            ['Administrator', 'Secretary', 'Finance Secretary', 'Head Pastor'],
+            'event_added',
+            'Upcoming Event',
+            "{$title} has been scheduled for {$date}.",
+            'events.php',
+            'ph ph-calendar-check',
+            '#F97316'
+        );
+
         // Broadcast if requested
         if (isset($_POST['notify_members'])) {
             broadcastEvent([
@@ -172,6 +183,17 @@ if ($action === 'add_announcement') {
         $stmt->execute([$title, $description, $pinned, $adminId]);
 
         logActivity("Posted announcement: {$title}", 'events');
+
+        // Trigger notification
+        notifyRoles(
+            ['Administrator', 'Secretary', 'Finance Secretary', 'Head Pastor'],
+            'announcement_added',
+            'New Announcement',
+            $title,
+            'events.php',
+            'ph ph-megaphone',
+            '#8B5CF6'
+        );
 
         // Broadcast if requested
         if (isset($_POST['notify_members'])) {

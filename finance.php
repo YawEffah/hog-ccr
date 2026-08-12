@@ -10,6 +10,10 @@ require_once 'includes/helpers.php';
 $pageTitle  = 'Finance';
 $activePage = 'finance';
 
+if (!hasPermission('perm_manage_finance')) {
+    redirect('dashboard.php');
+}
+
 // Flash messages
 $successMsg = flash('success');
 $errorMsg   = flash('error');
@@ -31,10 +35,10 @@ if (!$successMsg && !$errorMsg) {
 }
 
 $db = getDB();
-$filterMonth = $_GET['month'] ?? date('Y-m');
+$filterMonth = $_GET['month'] ?? date('Y') . '-all';
 // Ensure format is valid (YYYY-MM or YYYY-all), else fallback
 if (!preg_match('/^\d{4}-(\d{2}|all)$/', $filterMonth)) {
-    $filterMonth = date('Y-m');
+    $filterMonth = date('Y') . '-all';
 }
 
 $isAllMonths = false;
@@ -95,7 +99,7 @@ if ($isAllMonths) {
          FROM finance_transactions t
          WHERE DATE_FORMAT(t.transaction_date, '%Y') = ?
          ORDER BY t.transaction_date DESC, t.created_at DESC
-         LIMIT 100"
+         LIMIT 10"
     );
     $txnStmt->execute([$filterYear]);
 } else {
@@ -104,7 +108,7 @@ if ($isAllMonths) {
          FROM finance_transactions t
          WHERE DATE_FORMAT(t.transaction_date, '%Y-%m') = ?
          ORDER BY t.transaction_date DESC, t.created_at DESC
-         LIMIT 100"
+         LIMIT 10"
     );
     $txnStmt->execute([$filterMonth]);
 }
@@ -113,9 +117,11 @@ $rawTxns = $txnStmt->fetchAll();
 $typeBadges = [
     'Tithe'     => 'badge-yellow',
     'Offering'  => 'badge-green',
-    'Donation'  => 'badge-blue',
-    'Welfare'   => 'badge-purple',
-    'Pledge'    => 'badge-gray'
+    'Donation'  => 'badge-green',
+    'Pledge'    => 'badge-purple',
+    'Project Contribution' => 'badge-blue',
+    'Half Year Thanks Giving' => 'badge-yellow',
+    'End of Year Thanks Giving' => 'badge-purple'
 ];
 
 $transactions = array_map(function($t) use ($typeBadges) {
@@ -130,6 +136,25 @@ $transactions = array_map(function($t) use ($typeBadges) {
         'date'       => date('F j, Y', strtotime($t['transaction_date']))
     ];
 }, $rawTxns);
+
+// ── Expenses & Net Balance ───────────────────────────────────────────────────
+if ($isAllMonths) {
+    $expStmt = $db->prepare("SELECT SUM(amount) as total_expenses FROM finance_expenses WHERE DATE_FORMAT(expense_date, '%Y') = ?");
+    $expStmt->execute([$filterYear]);
+    
+    $expListStmt = $db->prepare("SELECT e.*, a.name as asset_name FROM finance_expenses e LEFT JOIN finance_accounts a ON e.asset_account_id = a.id WHERE DATE_FORMAT(e.expense_date, '%Y') = ? ORDER BY e.expense_date DESC, e.created_at DESC LIMIT 10");
+    $expListStmt->execute([$filterYear]);
+} else {
+    $expStmt = $db->prepare("SELECT SUM(amount) as total_expenses FROM finance_expenses WHERE DATE_FORMAT(expense_date, '%Y-%m') = ?");
+    $expStmt->execute([$filterMonth]);
+    
+    $expListStmt = $db->prepare("SELECT e.*, a.name as asset_name FROM finance_expenses e LEFT JOIN finance_accounts a ON e.asset_account_id = a.id WHERE DATE_FORMAT(e.expense_date, '%Y-%m') = ? ORDER BY e.expense_date DESC, e.created_at DESC LIMIT 10");
+    $expListStmt->execute([$filterMonth]);
+}
+$totalExpenses = (float)$expStmt->fetchColumn();
+$finance_expenses = $expListStmt->fetchAll();
+
+$netBalance = $totalIncome - $totalExpenses;
 
 // ── Income Breakdown ─────────────────────────────────────────────────────────
 if ($isAllMonths) {
@@ -155,8 +180,10 @@ $breakdownColors = [
     'Tithe'    => 'var(--gold)',
     'Offering' => 'var(--deep)',
     'Donation' => '#2E7D57',
-    'Welfare'  => 'var(--deep3)',
-    'Pledge'   => '#7C3AED'
+    'Pledge'   => '#7C3AED',
+    'Project Contribution' => '#0EA5E9',
+    'Half Year Thanks Giving' => '#F59E0B',
+    'End of Year Thanks Giving' => '#9333EA'
 ];
 
 $income_breakdown = array_map(function($b) use ($totalIncome, $breakdownColors) {
@@ -191,32 +218,7 @@ $income_breakdown = array_map(function($b) use ($totalIncome, $breakdownColors) 
           </button>
           <div class="topbar-title">Finance</div>
         </div>
-        <div class="topbar-actions">
-          <?php
-            $currentY = explode('-', $filterMonth)[0];
-            $currentM = explode('-', $filterMonth)[1];
-            $monthsList = [
-                '01' => 'January', '02' => 'February', '03' => 'March', '04' => 'April',
-                '05' => 'May', '06' => 'June', '07' => 'July', '08' => 'August',
-                '09' => 'September', '10' => 'October', '11' => 'November', '12' => 'December'
-            ];
-            $thisYear = date('Y');
-          ?>
-          <div style="display:flex;gap:8px;">
-            <select class="form-control" style="width:120px;padding:8px 12px;" id="financeMonthSelect" onchange="updateFinanceFilter()">
-              <option value="all" <?= $currentM === 'all' ? 'selected' : '' ?>>All Months</option>
-              <?php foreach($monthsList as $num => $name): ?>
-                <option value="<?= $num ?>" <?= $currentM === $num ? 'selected' : '' ?>><?= $name ?></option>
-              <?php endforeach; ?>
-            </select>
-            <select class="form-control" style="width:90px;padding:8px 12px;" id="financeYearSelect" onchange="updateFinanceFilter()">
-              <?php for($y = $thisYear; $y >= $thisYear - 5; $y--): ?>
-                <option value="<?= $y ?>" <?= (string)$currentY === (string)$y ? 'selected' : '' ?>><?= $y ?></option>
-              <?php endfor; ?>
-            </select>
-          </div>
-
-          <button class="btn btn-outline btn-sm" onclick="openModal('setTargetModal')">
+        <div class="topbar-actions">          <button class="btn btn-outline btn-sm" onclick="openModal('setTargetModal')">
             <i class="ph ph-target"></i> Set Target
           </button>
           <button class="btn btn-primary btn-sm" onclick="openModal('addFinanceModal')">+ Record Transaction</button>
@@ -254,7 +256,34 @@ $income_breakdown = array_map(function($b) use ($totalIncome, $breakdownColors) 
           </div>
         </div>
 
-        <div class="grid-2" style="gap:24px;">
+        <div class="grid-2" style="margin-bottom:24px; gap:24px;">
+          <div class="stat-card">
+            <div class="accent-bar" style="background:var(--danger);"></div>
+            <div class="label">Total Expenses</div>
+            <div class="value" style="font-size:28px;">GH₵<?= number_format($totalExpenses, 2) ?></div>
+            <div class="change" style="color:var(--muted);"><?= count($finance_expenses) ?> records</div>
+          </div>
+          <div class="stat-card">
+            <div class="accent-bar" style="background:<?= $netBalance >= 0 ? 'var(--success)' : 'var(--danger)' ?>;"></div>
+            <div class="label">Net Balance</div>
+            <div class="value" style="font-size:28px;">GH₵<?= number_format($netBalance, 2) ?></div>
+            <div class="change" style="color:<?= $netBalance >= 0 ? 'var(--success)' : 'var(--danger)' ?>;"><?= $netBalance >= 0 ? 'Surplus' : 'Deficit' ?></div>
+          </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tabs no-print" id="financeTabs" style="margin-bottom:20px;background:white;border:1px solid #EDE8DF;border-radius:10px;padding:4px;display:inline-flex;">
+          <button class="tab active" id="tabIncomeBtn" onclick="switchFinanceTab('income')" style="padding:7px 20px;font-size:13px;">
+            <i class="ph ph-trend-up"></i> Income
+          </button>
+          <button class="tab" id="tabExpensesBtn" onclick="switchFinanceTab('expenses')" style="padding:7px 20px;font-size:13px;">
+            <i class="ph ph-trend-down"></i> Expenses
+          </button>
+        </div>
+
+        <!-- INCOME TAB -->
+        <div id="financeIncomeTab">
+          <div class="grid-2" style="gap:24px;">
           <div class="card">
             <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
               <h3>Recent Transactions</h3>
@@ -323,6 +352,63 @@ $income_breakdown = array_map(function($b) use ($totalIncome, $breakdownColors) 
             </div>
           </div>
         </div>
+        </div>
+
+        <!-- EXPENSES TAB -->
+        <div id="financeExpensesTab" style="display:none;">
+          <div class="card">
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+              <h3>Recent Expenses</h3>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-danger-soft btn-sm" onclick="openModal('recordFinanceExpenseModal')">+ Record Expense</button>
+                <a href="finance_history.php?tab=expenses" class="btn btn-outline btn-sm">View All</a>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Paid From</th>
+                    <th>Description</th>
+                    <th>Reference</th>
+                    <th>Amount</th>
+                    <th style="text-align:right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php if (count($finance_expenses) > 0): ?>
+                    <?php foreach ($finance_expenses as $ex): ?>
+                    <tr>
+                      <td style="font-size:13px;"><?= date('M j, Y', strtotime($ex['expense_date'])) ?></td>
+                      <td style="font-weight:500;color:var(--deep2);"><?= htmlspecialchars($ex['type'] ?: 'Unknown') ?></td>
+                      <td style="font-size:13px;color:var(--muted);"><?= htmlspecialchars($ex['asset_name'] ?: 'Unknown') ?></td>
+                      <td style="font-size:13px;"><?= htmlspecialchars($ex['description']) ?></td>
+                      <td style="font-size:12px;color:var(--muted);"><?= htmlspecialchars($ex['reference_no']) ?></td>
+                      <td style="font-weight:600;color:var(--danger);">GH₵ <?= number_format($ex['amount'], 2) ?></td>
+                      <td style="text-align:right;">
+                        <div style="display:flex; gap:4px; justify-content:flex-end;">
+                          <button class="btn btn-outline btn-sm" title="Edit Expense" onclick='openEditFinanceExpenseModal(<?= json_encode($ex) ?>)'>
+                            <i class="ph ph-pencil-simple"></i>
+                          </button>
+                          <button class="btn btn-danger-soft btn-sm" title="Delete Expense"
+                            onclick="confirmDeleteExp(<?= $ex['id'] ?>)">
+                            <i class="ph ph-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    <?php endforeach; ?>
+                  <?php else: ?>
+                    <tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted);">No expenses recorded for this period.</td></tr>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -336,6 +422,15 @@ $income_breakdown = array_map(function($b) use ($totalIncome, $breakdownColors) 
     <?= csrfField() ?>
     <input type="hidden" name="action" value="delete_transaction">
     <input type="hidden" name="txn_id" id="deleteTxnId">
+    <input type="hidden" name="return_to" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
+  </form>
+
+  <!-- Hidden form to delete expense -->
+  <form method="POST" action="handlers/finance_handler.php" id="deleteExpForm" style="display:none;">
+    <?= csrfField() ?>
+    <input type="hidden" name="action" value="delete_finance_expense">
+    <input type="hidden" name="expense_id" id="deleteExpId">
+    <input type="hidden" name="return_to" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
   </form>
 
   <script src="assets/js/main.js"></script>
@@ -353,6 +448,34 @@ $income_breakdown = array_map(function($b) use ($totalIncome, $breakdownColors) 
       );
     }
 
+    function confirmDeleteExp(id) {
+      showConfirmModal(
+        'Delete Expense',
+        'Are you sure you want to delete this expense? This will also remove the ledger entry.',
+        'Delete',
+        function() {
+          document.getElementById('deleteExpId').value = id;
+          document.getElementById('deleteExpForm').submit();
+        },
+        'danger'
+      );
+    }
+
+    function switchFinanceTab(tabId) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      
+      document.getElementById('financeIncomeTab').style.display = 'none';
+      document.getElementById('financeExpensesTab').style.display = 'none';
+      
+      if (tabId === 'income') {
+        document.getElementById('tabIncomeBtn').classList.add('active');
+        document.getElementById('financeIncomeTab').style.display = 'block';
+      } else if (tabId === 'expenses') {
+        document.getElementById('tabExpensesBtn').classList.add('active');
+        document.getElementById('financeExpensesTab').style.display = 'block';
+      }
+    }
+
     function openReceiptModal(tx) {
       document.getElementById('receiptId').textContent     = '#' + tx.id;
       document.getElementById('receiptDate').textContent   = tx.date;
@@ -367,13 +490,6 @@ $income_breakdown = array_map(function($b) use ($totalIncome, $breakdownColors) 
       openModal('viewReceiptModal');
     }
 
-
-
-    function updateFinanceFilter() {
-      const y = document.getElementById('financeYearSelect').value;
-      const m = document.getElementById('financeMonthSelect').value;
-      window.location.href = `finance.php?month=${y}-${m}`;
-    }
   </script>
 </body>
 

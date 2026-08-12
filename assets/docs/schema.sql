@@ -208,7 +208,7 @@ CREATE TABLE IF NOT EXISTS attendance_records (
 CREATE TABLE IF NOT EXISTS finance_transactions (
   id               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   week_number      ENUM('Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5') DEFAULT 'Week 1',
-  type             ENUM('Tithe','Offering','Donation','Pledge','Project Contribution','Welfare') NOT NULL,
+  type             VARCHAR(100) NOT NULL,
   amount           DECIMAL(12,2) NOT NULL,
   payment_method   ENUM('Cash','MoMo','Bank Transfer','Cheque') DEFAULT 'Cash',
   reference_no     VARCHAR(100),
@@ -218,6 +218,24 @@ CREATE TABLE IF NOT EXISTS finance_transactions (
   recorded_by      INT UNSIGNED NULL,
   created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_txn_admin   FOREIGN KEY (recorded_by) REFERENCES admins(id)  ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ─────────────────────────────────────────────
+-- 9b. FINANCE EXPENSES
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS finance_expenses (
+  id                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  expense_date      DATE          NOT NULL,
+  amount            DECIMAL(12,2) NOT NULL,
+  type              VARCHAR(100)  NOT NULL,
+  asset_account_id  INT UNSIGNED  NOT NULL,   -- FK -> finance_accounts (Asset type)
+  description       VARCHAR(255)  NOT NULL,
+  reference_no      VARCHAR(50),
+  notes             TEXT,
+  recorded_by       INT UNSIGNED  NULL,
+  created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_fexp_asset    FOREIGN KEY (asset_account_id) REFERENCES finance_accounts(id),
+  CONSTRAINT fk_fexp_admin    FOREIGN KEY (recorded_by) REFERENCES admins(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- ─────────────────────────────────────────────
@@ -319,4 +337,21 @@ CREATE TABLE IF NOT EXISTS message_queue (
   error_log      TEXT,
   created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- ─────────────────────────────────────────────
+-- 16. NOTIFICATIONS
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS notifications (
+  id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  admin_id     INT UNSIGNED  NOT NULL,
+  type         VARCHAR(50)   NOT NULL,
+  title        VARCHAR(200)  NOT NULL,
+  message      TEXT          NOT NULL,
+  link         VARCHAR(255)  NULL,
+  icon         VARCHAR(50)   NULL,
+  color        VARCHAR(50)   NULL,
+  is_read      TINYINT(1)    DEFAULT 0,
+  created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_notif_admin FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
